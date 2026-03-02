@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Daily Tracker" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Daily Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { background: #0d1117; font-family: -apple-system, "Hiragino Sans", "Noto Sans JP",
+           "Noto Sans KR", "Noto Sans SC", system-ui, sans-serif; }
+    button, select, input { font-family: inherit; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #161b22; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    /* Tooltip via title — enhanced with CSS for custom styling */
+    [title] { position: relative; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script type="text/babel">
+// ─── i18n ──────────────────────────────────────────────────────────
+const LANG_MAP = {
+  ja: {
+    appTitle: "デイリートラッカー",
+    today: "今日", task: "タスク", yesterday: "昨日",
+    settings: "設定", record: "記録", loading: "読み込み中...",
+    noGames: "設定からゲームを追加してください",
+    gameName: "ゲーム名", resetLbl: "リセット", delete: "削除",
+    cancel: "キャンセル", addTask: "+ タスク追加", addGame: "+ ゲームを追加",
+    webReset: "Webリセット", resetDay: "リセット日", dayUnit: "日",
+    periodic: "定期タスク", allDone: "全完了", partial: "一部完了", incomplete: "未完了",
+    deleteMsg: n => `「${n}」を削除しますか？`, deleteBtn: "削除する",
+    prevTip: "昨日のチェック",
+    types: { daily:"デイリー", weekly:"ウィークリー", webdaily:"Webデイリー", monthly:"マンスリー", halfmonthly:"半月" },
+    cd: { d:"日", h:"時間", m:"分" },
+    everyDay: d => `毎月${d}日`,
+  },
+  zh: {
+    appTitle: "每日追踪器",
+    today: "今天", task: "任务", yesterday: "昨天",
+    settings: "设置", record: "记录", loading: "加载中...",
+    noGames: "请在设置中添加游戏",
+    gameName: "游戏名称", resetLbl: "重置", delete: "删除",
+    cancel: "取消", addTask: "+ 添加任务", addGame: "+ 添加游戏",
+    webReset: "网页重置", resetDay: "重置日", dayUnit: "日",
+    periodic: "定期任务", allDone: "全完成", partial: "部分完成", incomplete: "未完成",
+    deleteMsg: n => `确定删除「${n}」吗？`, deleteBtn: "删除",
+    prevTip: "昨天的签到",
+    types: { daily:"每日", weekly:"每周", webdaily:"网页每日", monthly:"每月", halfmonthly:"半月" },
+    cd: { d:"天", h:"时", m:"分" },
+    everyDay: d => `每月${d}日`,
+  },
+  ko: {
+    appTitle: "데일리 트래커",
+    today: "오늘", task: "작업", yesterday: "어제",
+    settings: "설정", record: "기록", loading: "로딩 중...",
+    noGames: "설정에서 게임을 추가하세요",
+    gameName: "게임 이름", resetLbl: "리셋", delete: "삭제",
+    cancel: "취소", addTask: "+ 작업 추가", addGame: "+ 게임 추가",
+    webReset: "웹 리셋", resetDay: "리셋 날", dayUnit: "일",
+    periodic: "정기 작업", allDone: "전부 완료", partial: "일부 완료", incomplete: "미완료",
+    deleteMsg: n => `「${n}」을 삭제하시겠습니까?`, deleteBtn: "삭제",
+    prevTip: "어제의 체크",
+    types: { daily:"데일리", weekly:"위클리", webdaily:"웹 데일리", monthly:"먼슬리", halfmonthly:"반월" },
+    cd: { d:"일", h:"시간", m:"분" },
+    everyDay: d => `매월 ${d}일`,
+  },
+  es: {
+    appTitle: "Rastreador Diario",
+    today: "Hoy", task: "Tarea", yesterday: "Ayer",
+    settings: "Config.", record: "Registro", loading: "Cargando...",
+    noGames: "Añade un juego desde Configuración",
+    gameName: "Nombre del juego", resetLbl: "Reinicio", delete: "Eliminar",
+    cancel: "Cancelar", addTask: "+ Añadir tarea", addGame: "+ Añadir juego",
+    webReset: "Reinicio web", resetDay: "Día de reinicio", dayUnit: "",
+    periodic: "Periódico", allDone: "Todo hecho", partial: "Parcial", incomplete: "Incompleto",
+    deleteMsg: n => `¿Eliminar "${n}"?`, deleteBtn: "Eliminar",
+    prevTip: "Verificación de ayer",
+    types: { daily:"Daily", weekly:"Weekly", webdaily:"Web Daily", monthly:"Monthly", halfmonthly:"Biweekly" },
+    cd: { d:"d", h:"h", m:"m" },
+    everyDay: d => `Day ${d}/mo`,
+  },
+  en: {
+    appTitle: "Daily Tracker",
+    today: "Today", task: "Task", yesterday: "Yesterday",
+    settings: "Settings", record: "History", loading: "Loading...",
+    noGames: "Add a game from Settings",
+    gameName: "Game name", resetLbl: "Reset", delete: "Delete",
+    cancel: "Cancel", addTask: "+ Add task", addGame: "+ Add game",
+    webReset: "Web reset", resetDay: "Reset day", dayUnit: "",
+    periodic: "Periodic", allDone: "All done", partial: "Partial", incomplete: "Incomplete",
+    deleteMsg: n => `Delete "${n}"?`, deleteBtn: "Delete",
+    prevTip: "Yesterday's check",
+    types: { daily:"Daily", weekly:"Weekly", webdaily:"Web Daily", monthly:"Monthly", halfmonthly:"Biweekly" },
+    cd: { d:"d", h:"h", m:"m" },
+    everyDay: d => `Day ${d}/mo`,
+  },
+};
+function getLang() {
+  const l = (navigator.language || "en").toLowerCase();
+  if (l.startsWith("ja")) return "ja";
+  if (l.startsWith("zh")) return "zh";
+  if (l.startsWith("ko")) return "ko";
+  if (l.startsWith("es")) return "es";
+  return "en";
+}
+const t = LANG_MAP[getLang()];
+
+// ─── Storage (localStorage for standalone PWA) ─────────────────────
+const GAMES_KEY  = "dailytracker:games";
+const CHECKS_KEY = "dailytracker:checks";
+function loadGames()  { try { const v = localStorage.getItem(GAMES_KEY);  return v ? JSON.parse(v) : null; } catch { return null; } }
+function saveGames(g) { try { localStorage.setItem(GAMES_KEY, JSON.stringify(g)); } catch {} }
+function loadChecks() { try { const v = localStorage.getItem(CHECKS_KEY); return v ? JSON.parse(v) : {}; } catch { return {}; } }
+function saveChecks(c){ try { localStorage.setItem(CHECKS_KEY, JSON.stringify(c)); } catch {} }
+
+// ─── Type constants ────────────────────────────────────────────────
+const TYPE_COLORS  = { daily:"#58a6ff", weekly:"#bc8cff", webdaily:"#3fb950", monthly:"#ff7b72", halfmonthly:"#ffa657" };
+const DAILY_TYPES  = new Set(["daily","webdaily"]);
+const PERIOD_TYPES = new Set(["weekly","monthly","halfmonthly"]);
+function getTaskDisplayName(tk) { return tk.name.trim() || t.types[tk.type] || tk.type; }
+
+// ─── Default data ──────────────────────────────────────────────────
+const DEFAULT_GAMES = [
+  { id:"g1", name:"Blue Fantasy", color:"#4a9eff", resetTime:"05:00", tasks:[
+    { id:"t1", name:"", type:"daily" },
+    { id:"t2", name:"", type:"weekly" },
+    { id:"t3", name:"Web Daily", type:"webdaily", webResetTime:"00:00" },
+  ]},
+  { id:"g2", name:"Genshin Impact", color:"#c8a96e", resetTime:"05:00", tasks:[
+    { id:"t4", name:"", type:"daily" },
+    { id:"t5", name:"", type:"weekly" },
+  ]},
+];
+
+// ─── Date helpers ──────────────────────────────────────────────────
+function parseHHMM(s) { const [h,m] = s.split(":").map(Number); return h*60+m; }
+function fmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function getGameDateKey(now, rt) {
+  const base = new Date(now);
+  if (now.getHours()*60+now.getMinutes() < parseHHMM(rt)) base.setDate(base.getDate()-1);
+  return fmtDate(base);
+}
+function shiftDate(dk, days) { const d = new Date(dk+"T12:00:00"); d.setDate(d.getDate()+days); return fmtDate(d); }
+function getPrevGameDateKey(now, rt) { return shiftDate(getGameDateKey(now, rt), -1); }
+function dateToWeekKey(dk) {
+  const d = new Date(dk+"T12:00:00"), day = d.getDay();
+  d.setDate(d.getDate()-(day===0?6:day-1));
+  return "W"+fmtDate(d);
+}
+function getMonthPeriodKey(dk, rd) {
+  const r = rd||1, day = parseInt(dk.slice(8)), y = parseInt(dk.slice(0,4)), mo = parseInt(dk.slice(5,7));
+  if (day >= r) return `M-${y}-${String(mo).padStart(2,"0")}-${String(r).padStart(2,"0")}`;
+  const p = new Date(y, mo-2, r);
+  return `M-${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,"0")}-${String(r).padStart(2,"0")}`;
+}
+function getPrevMonthPeriodKey(k) {
+  const [,y,mo,dd] = k.match(/M-(\d+)-(\d+)-(\d+)/);
+  const p = new Date(parseInt(y), parseInt(mo)-2, parseInt(dd));
+  return `M-${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;
+}
+function dateToHalfMonthKey(dk) { return "H-"+dk.slice(0,7)+"-"+(parseInt(dk.slice(8))>=16?"B":"A"); }
+function prevHalfMonthKey(k) {
+  const [,y,mo,half] = k.match(/H-(\d+)-(\d+)-([AB])/);
+  if (half==="B") return `H-${y}-${mo}-A`;
+  const p = new Date(parseInt(y), parseInt(mo)-2, 1);
+  return `H-${p.getFullYear()}-${String(p.getMonth()+1).padStart(2,"0")}-B`;
+}
+function getTaskRT(task, game) { return task.type==="webdaily"?(task.webResetTime||game.resetTime):game.resetTime; }
+function getPeriodKey(task, game, now) {
+  const dk = getGameDateKey(now, getTaskRT(task,game));
+  if (task.type==="weekly") return dateToWeekKey(dk);
+  if (task.type==="monthly") return getMonthPeriodKey(dk, task.monthlyResetDay||1);
+  if (task.type==="halfmonthly") return dateToHalfMonthKey(dk);
+  return dk;
+}
+function getPrevPeriodKey(task, game, now) {
+  const rt = getTaskRT(task,game), dk = getGameDateKey(now, rt);
+  if (task.type==="weekly") return dateToWeekKey(shiftDate(dk,-7));
+  if (task.type==="monthly") return getPrevMonthPeriodKey(getMonthPeriodKey(dk,task.monthlyResetDay||1));
+  if (task.type==="halfmonthly") return prevHalfMonthKey(dateToHalfMonthKey(dk));
+  return getPrevGameDateKey(now, rt);
+}
+function msUntilReset(now, rt) {
+  const r = parseHHMM(rt), n = now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  let d = r-n; if (d<=0) d+=24*60; return d*60*1000;
+}
+function msUntilNextMonth(now, rt, rd) {
+  const r=parseHHMM(rt), d=now.getDate(), h=now.getHours()*60+now.getMinutes();
+  const day = rd||1;
+  let tgt;
+  if (d<day||(d===day&&h<r)) tgt=new Date(now.getFullYear(),now.getMonth(),day);
+  else tgt=new Date(now.getFullYear(),now.getMonth()+1,day);
+  tgt.setHours(Math.floor(r/60),r%60,0,0); return tgt-now;
+}
+function msUntilNextHalfMonth(now, rt) {
+  const r=parseHHMM(rt), d=now.getDate(), h=now.getHours()*60+now.getMinutes();
+  let tgt=new Date(now);
+  if (d<1||(d===1&&h<r)) tgt.setDate(1);
+  else if (d<16||(d===16&&h<r)) tgt.setDate(16);
+  else tgt=new Date(now.getFullYear(),now.getMonth()+1,1);
+  tgt.setHours(Math.floor(r/60),r%60,0,0); return tgt-now;
+}
+function msUntilTaskReset(task, game, now) {
+  const rt = getTaskRT(task,game);
+  if (task.type==="monthly") return msUntilNextMonth(now,rt,task.monthlyResetDay||1);
+  if (task.type==="halfmonthly") return msUntilNextHalfMonth(now,rt);
+  if (task.type==="weekly") {
+    const dow=now.getDay(), rtMin=parseHHMM(rt);
+    const tgt=new Date(now); tgt.setHours(Math.floor(rtMin/60),rtMin%60,0,0);
+    if (dow===1&&now<tgt) return tgt-now;
+    const days=dow===0?1:(8-dow)%7||7;
+    tgt.setDate(tgt.getDate()+(dow===1?7:days)); return tgt-now;
+  }
+  return msUntilReset(now,rt);
+}
+function formatCountdown(ms) {
+  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+  if (h>=24) return `${Math.floor(h/24)}${t.cd.d}`;
+  if (h>=1) return `${h}${t.cd.h}`;
+  return `${m}${t.cd.m}`;
+}
+function checkKey(id, pk) { return `${id}__${pk}`; }
+function getDaysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
+let _id = Date.now();
+function uid() { return "i"+(_id++).toString(36); }
+
+// ─── Sound ─────────────────────────────────────────────────────────
+function playCheckSound() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type="sine";
+    o.frequency.setValueAtTime(880,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1320,ctx.currentTime+0.08);
+    g.gain.setValueAtTime(0.18,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.25);
+    o.start(); o.stop(ctx.currentTime+0.25);
+  } catch {}
+}
+function playAllDoneSound() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [523,659,784,1047].forEach((freq,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type="sine";
+      const t2=ctx.currentTime+i*0.1;
+      o.frequency.setValueAtTime(freq,t2); g.gain.setValueAtTime(0.15,t2);
+      g.gain.exponentialRampToValueAtTime(0.001,t2+0.3);
+      o.start(t2); o.stop(t2+0.3);
+    });
+  } catch {}
+}
+
+// ─── Layout constants ──────────────────────────────────────────────
+const L = {
+  ROW_PL: 14, ROW_PR: 14,   // row padding left/right
+  BAR_SLOT: 11,              // total width reserved for prev-bar slot
+  BAR_W: 3,                  // bar width in px
+  CB_W: 26,                  // checkbox width
+  CB_GAP: 8,                 // gap: checkbox → content
+  PAGE_M: 12,                // page margin
+  CARD_BORDER: 3,            // card left-border width
+};
+// Header left-offset = page margin + card border + row left-padding
+const HDR_L = L.PAGE_M + L.CARD_BORDER + L.ROW_PL;
+
+// ─── Confirm Dialog ────────────────────────────────────────────────
+function ConfirmDialog({ message, onConfirm, onCancel }) {
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.78)", backdropFilter:"blur(4px)",
+                  display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:"#161b22", border:"1px solid rgba(248,81,73,0.4)", borderRadius:14,
+                    padding:"24px", maxWidth:300, width:"100%", textAlign:"center", boxShadow:"0 20px 60px rgba(0,0,0,0.6)" }}>
+        <div style={{ fontSize:30, marginBottom:10 }}>🗑️</div>
+        <div style={{ fontSize:14, color:"#e6edf3", marginBottom:20, lineHeight:1.7, whiteSpace:"pre-line" }}>{message}</div>
+        <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+          <button onClick={onCancel} style={{ background:"#21262d", border:"1px solid #30363d", borderRadius:8,
+                                              color:"#8b949e", padding:"8px 18px", fontSize:13, cursor:"pointer" }}>{t.cancel}</button>
+          <button onClick={onConfirm} style={{ background:"#3d1f1f", border:"1px solid #f8514988", borderRadius:8,
+                                               color:"#f85149", padding:"8px 18px", fontSize:13, cursor:"pointer", fontWeight:700 }}>{t.deleteBtn}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Prev Bar component ────────────────────────────────────────────
+// A thin colored vertical bar shown to the left of the checkbox.
+// Green = yesterday was checked, red = missed, transparent = n/a (periodic tasks)
+function PrevBar({ show, checked, partial }) {
+  if (!show) return <div style={{ width:L.BAR_SLOT, flexShrink:0 }} />;
+  const color = checked ? "#2ea043" : partial ? "#e3b341" : "#6e3535";
+  return (
+    <div title={t.prevTip}
+         style={{ width:L.BAR_SLOT, display:"flex", alignItems:"center", justifyContent:"center",
+                  flexShrink:0, cursor:"help" }}>
+      <div style={{ width:L.BAR_W, height:18, borderRadius:2, background:color,
+                    boxShadow:checked ? `0 0 4px ${color}88` : "none" }} />
+    </div>
+  );
+}
+
+// ─── Main App ──────────────────────────────────────────────────────
+const { useState, useEffect, useCallback } = React;
+
+function App() {
+  const [games, setGames]   = useState(null);
+  const [checks, setChecks] = useState({});
+  const [now, setNow]       = useState(new Date());
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [confirm, setConfirm]           = useState(null);
+
+  useEffect(() => { const id = setInterval(()=>setNow(new Date()),30000); return ()=>clearInterval(id); }, []);
+  useEffect(() => {
+    const g = loadGames(), c = loadChecks();
+    setGames(g || DEFAULT_GAMES);
+    setChecks(c || {});
+  }, []);
+  useEffect(() => { if (games!==null) saveGames(games); }, [games]);
+
+  const soloId = g => g.id+"_solo";
+  const getDailyTasks = useCallback(game => {
+    const tasks = game.tasks.length ? game.tasks : [{id:soloId(game),type:"daily"}];
+    return tasks.filter(tk => DAILY_TYPES.has(tk.type));
+  }, []);
+  const isAllDone = useCallback(game => {
+    const dt = getDailyTasks(game);
+    return dt.length > 0 && dt.every(tk => !!checks[checkKey(tk.id, getPeriodKey(tk,game,now))]);
+  }, [checks, now, getDailyTasks]);
+
+  const sorted = games ? [...games].sort((a,b)=>{
+    const aD=isAllDone(a),bD=isAllDone(b); return aD===bD?0:aD?1:-1;
+  }) : [];
+
+  const toggle = useCallback((taskId, game, isMaster=false) => {
+    setChecks(prev => {
+      const next = {...prev};
+      const dailyTasks = getDailyTasks(game);
+      if (isMaster) {
+        const allDone = dailyTasks.every(tk=>!!prev[checkKey(tk.id,getPeriodKey(tk,game,now))]);
+        dailyTasks.forEach(tk=>{ next[checkKey(tk.id,getPeriodKey(tk,game,now))]=!allDone; });
+        if (!allDone) playAllDoneSound(); else playCheckSound();
+      } else {
+        const allTasks = game.tasks.length ? game.tasks : [{id:soloId(game),type:"daily"}];
+        const task = allTasks.find(tk=>tk.id===taskId);
+        if (!task) return prev;
+        const k = checkKey(task.id, getPeriodKey(task,game,now));
+        const was = !!prev[k];
+        next[k] = !was;
+        if (!was) {
+          const allAfter = dailyTasks.every(tk=>{
+            const tk2 = checkKey(tk.id,getPeriodKey(tk,game,now));
+            return tk2===k?true:!!prev[tk2];
+          });
+          if (allAfter&&DAILY_TYPES.has(task.type)) playAllDoneSound(); else playCheckSound();
+        }
+      }
+      saveChecks(next);
+      return next;
+    });
+  }, [now, getDailyTasks]);
+
+  const showConfirm = (msg, fn) => setConfirm({message:msg, onConfirm:fn});
+
+  if (!games) return (
+    <div style={{background:"#0d1117",color:"#8b949e",height:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      {t.loading}
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight:"100vh",
+                  background:"linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%)",
+                  color:"#e6edf3" }}>
+      {/* App header */}
+      <header style={{ background:"rgba(22,27,34,0.95)", backdropFilter:"blur(10px)",
+                       borderBottom:"1px solid rgba(255,255,255,0.08)",
+                       padding:"13px 18px", display:"flex", alignItems:"center", justifyContent:"space-between",
+                       position:"sticky", top:0, zIndex:100 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:17, fontWeight:800,
+                         background:"linear-gradient(90deg,#58a6ff,#bc8cff)",
+                         WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
+            {t.appTitle}
+          </span>
+          <span style={{ fontSize:11, color:"#8b949e", fontFamily:"monospace" }}>
+            {now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
+          </span>
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={()=>setShowCalendar(true)} style={btnStyle("#21262d","#58a6ff")}>📅 {t.record}</button>
+          <button onClick={()=>setShowSettings(true)} style={btnStyle("#21262d","#bc8cff")}>⚙️ {t.settings}</button>
+        </div>
+      </header>
+
+      <main style={{ padding:`12px ${L.PAGE_M}px 24px`, maxWidth:740, margin:"0 auto" }}>
+        {/* Global column header */}
+        {games.length > 0 && (
+          <div style={{ display:"flex", alignItems:"center",
+                        paddingLeft:HDR_L, paddingRight:L.PAGE_M+L.ROW_PR,
+                        marginBottom:5 }}>
+            {/* Yesterday — aligns with bar slot */}
+            <div style={{ width:L.BAR_SLOT, textAlign:"center", flexShrink:0 }}>
+              <span style={{ fontSize:10, color:"#484f58" }}>{t.yesterday}</span>
+            </div>
+            {/* Today — aligns with checkbox */}
+            <div style={{ width:L.CB_W, textAlign:"center", flexShrink:0 }}>
+              <span style={{ fontSize:10, color:"#484f58" }}>{t.today}</span>
+            </div>
+            {/* Task label */}
+            <div style={{ marginLeft:L.CB_GAP, flex:1 }}>
+              <span style={{ fontSize:10, color:"#484f58", letterSpacing:1 }}>{t.task}</span>
+            </div>
+          </div>
+        )}
+
+        {sorted.map(game => (
+          <GameCard key={game.id} game={game} checks={checks} now={now}
+            toggle={toggle} allDone={isAllDone(game)} getDailyTasks={getDailyTasks} />
+        ))}
+        {games.length === 0 && (
+          <div style={{ textAlign:"center", padding:"60px 20px", color:"#8b949e" }}>
+            {t.noGames}
+          </div>
+        )}
+      </main>
+
+      {showSettings && <SettingsModal games={games} setGames={setGames}
+        onClose={()=>setShowSettings(false)} showConfirm={showConfirm} />}
+      {showCalendar && <CalendarModal games={games} checks={checks} now={now}
+        onClose={()=>setShowCalendar(false)} />}
+      {confirm && <ConfirmDialog message={confirm.message}
+        onConfirm={()=>{ confirm.onConfirm(); setConfirm(null); }}
+        onCancel={()=>setConfirm(null)} />}
+    </div>
+  );
+}
+
+// ─── Row wrapper (shared flex structure) ──────────────────────────
+// [BAR_SLOT: prev bar] [CB_W: checkbox] [CB_GAP] [flex:1 content] [meta]
+function Row({ prevBar, checkbox, content, meta, bg, borderBottom, style }) {
+  return (
+    <div style={{ display:"flex", alignItems:"center",
+                  paddingLeft:L.ROW_PL, paddingRight:L.ROW_PR,
+                  paddingTop:10, paddingBottom:10,
+                  background:bg||"transparent",
+                  borderBottom:borderBottom||"none",
+                  ...style }}>
+      {prevBar}
+      {checkbox}
+      <div style={{ flex:1, display:"flex", alignItems:"center", gap:8, marginLeft:L.CB_GAP, minWidth:0 }}>
+        {content}
+      </div>
+      {meta && <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0, marginLeft:10 }}>{meta}</div>}
+    </div>
+  );
+}
+
+// ─── GameCard ──────────────────────────────────────────────────────
+function GameCard({ game, checks, now, toggle, allDone, getDailyTasks }) {
+  const hasTasks = game.tasks.length > 0;
+  const dailyTasks = getDailyTasks(game);
+  const allTodayDone = dailyTasks.length>0 && dailyTasks.every(tk=>!!checks[checkKey(tk.id,getPeriodKey(tk,game,now))]);
+
+  const prevCount = dailyTasks.filter(tk=>!!checks[checkKey(tk.id,getPrevPeriodKey(tk,game,now))]).length;
+  const prevAll  = dailyTasks.length>0 && prevCount===dailyTasks.length;
+  const prevPart = prevCount>0 && prevCount<dailyTasks.length;
+
+  const ms = msUntilReset(now, game.resetTime);
+  const h  = ms/3600000;
+  const cdColor = h<3?"#f85149":h<6?"#e3b341":"#8b949e";
+
+  const dailyGroup  = game.tasks.filter(tk=>DAILY_TYPES.has(tk.type));
+  const periodGroup = game.tasks.filter(tk=>PERIOD_TYPES.has(tk.type));
+
+  return (
+    <div style={{ background:"rgba(22,27,34,0.85)",
+                  border:`1px solid ${allDone?game.color+"55":"rgba(255,255,255,0.07)"}`,
+                  borderLeft:`${L.CARD_BORDER}px solid ${game.color}`,
+                  borderRadius:12, marginBottom:10, overflow:"hidden",
+                  opacity:allDone?0.62:1,
+                  transition:"opacity 0.5s, border-color 0.5s" }}>
+      <Row
+        prevBar={<PrevBar show={dailyTasks.length>0} checked={prevAll} partial={prevPart} />}
+        checkbox={
+          <button onClick={()=>toggle(null,game,true)} style={{
+            width:L.CB_W, height:L.CB_W, borderRadius:7, cursor:"pointer", flexShrink:0,
+            background:allTodayDone?game.color:"transparent",
+            border:`2px solid ${allTodayDone?game.color:"rgba(255,255,255,0.22)"}`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:13, color:"#fff", transition:"all 0.2s",
+            boxShadow:allTodayDone?`0 0 10px ${game.color}55`:"none",
+          }}>
+            {allTodayDone?"✓":""}
+          </button>
+        }
+        content={
+          <span style={{ fontWeight:700, fontSize:14, flex:1, minWidth:0,
+                         overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                         color:allDone?"#6e7681":game.color,
+                         textDecoration:allDone?"line-through":"none",
+                         transition:"all 0.3s" }}>
+            {game.name}
+          </span>
+        }
+        meta={<>
+          <span style={{ fontSize:11, color:"#6e7681" }}>{game.resetTime}</span>
+          <span style={{ fontSize:11, fontWeight:600, color:cdColor, fontFamily:"monospace" }}>⏱{formatCountdown(ms)}</span>
+        </>}
+        bg={`linear-gradient(90deg, ${game.color}14, transparent)`}
+        borderBottom={hasTasks?"1px solid rgba(255,255,255,0.055)":"none"}
+      />
+
+      {hasTasks && (
+        <div style={{ paddingTop:2, paddingBottom:4 }}>
+          {dailyGroup.map(tk=><TaskRow key={tk.id} task={tk} game={game} checks={checks} now={now} toggle={toggle} />)}
+
+          {dailyGroup.length>0 && periodGroup.length>0 && (
+            <div style={{ margin:"4px 0", borderTop:"1px solid rgba(255,255,255,0.07)", position:"relative" }}>
+              <span style={{ position:"absolute", top:-8, left:"50%", transform:"translateX(-50%)",
+                             background:"#0d1117", padding:"0 8px",
+                             fontSize:10, color:"#484f58", letterSpacing:1, whiteSpace:"nowrap" }}>
+                — {t.periodic} —
+              </span>
+            </div>
+          )}
+
+          {periodGroup.map(tk=><TaskRow key={tk.id} task={tk} game={game} checks={checks} now={now} toggle={toggle} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TaskRow ───────────────────────────────────────────────────────
+function TaskRow({ task, game, checks, now, toggle }) {
+  const isChecked  = !!checks[checkKey(task.id, getPeriodKey(task,game,now))];
+  const prevChecked= !!checks[checkKey(task.id, getPrevPeriodKey(task,game,now))];
+  const showPrev   = DAILY_TYPES.has(task.type);
+  const typeColor  = TYPE_COLORS[task.type]||"#8b949e";
+
+  const ms = msUntilTaskReset(task,game,now);
+  const h  = ms/3600000;
+  const cdColor = h<3?"#f85149":h<6?"#e3b341":"#6e7681";
+  const showCD = task.type==="monthly"||task.type==="halfmonthly"||
+    (task.type==="webdaily"&&task.webResetTime&&task.webResetTime!==game.resetTime);
+
+  return (
+    <Row
+      style={{ paddingTop:7, paddingBottom:7,
+               borderBottom:"1px solid rgba(255,255,255,0.03)",
+               transition:"background 0.12s",
+               onMouseEnter:undefined }}
+      prevBar={<PrevBar show={showPrev} checked={prevChecked} />}
+      checkbox={
+        <button onClick={()=>toggle(task.id,game)} style={{
+          width:L.CB_W, height:L.CB_W, borderRadius:6, cursor:"pointer", flexShrink:0,
+          background:isChecked?"#1a7f37":"transparent",
+          border:`2px solid ${isChecked?"#2ea043":"#30363d"}`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:14, transition:"all 0.15s", color:"#e6edf3",
+          transform:isChecked?"scale(1.08)":"scale(1)",
+        }}>
+          {isChecked?"✓":""}
+        </button>
+      }
+      content={<>
+        <span style={{ fontSize:10, background:typeColor+"18", color:typeColor,
+                       border:`1px solid ${typeColor}40`, borderRadius:4,
+                       padding:"1px 5px", flexShrink:0 }}>
+          {t.types[task.type]}
+        </span>
+        <span style={{ fontSize:13, color:isChecked?"#484f58":"#e6edf3",
+                       textDecoration:isChecked?"line-through":"none",
+                       transition:"color 0.2s",
+                       overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+          {getTaskDisplayName(task)}
+        </span>
+        {showCD && <span style={{ fontSize:11, color:cdColor, fontFamily:"monospace", flexShrink:0 }}>({formatCountdown(ms)})</span>}
+      </>}
+      meta={<>
+        {task.type==="webdaily"&&task.webResetTime&&task.webResetTime!==game.resetTime&&(
+          <span style={{ fontSize:10, color:"#6e7681" }}>{task.webResetTime}</span>
+        )}
+        {task.type==="monthly"&&(
+          <span style={{ fontSize:10, color:"#6e7681" }}>{t.everyDay(task.monthlyResetDay||1)}</span>
+        )}
+      </>}
+    />
+  );
+}
+
+// ─── Settings Modal ────────────────────────────────────────────────
+function SettingsModal({ games, setGames, onClose, showConfirm }) {
+  const [newGame, setNewGame] = useState({name:"",color:"#4a9eff",resetTime:"05:00"});
+  const [showNG, setShowNG]   = useState(false);
+  const [newTask, setNewTask] = useState({name:"",type:"daily",webResetTime:"00:00",monthlyResetDay:1});
+  const [addTo, setAddTo]     = useState(null);
+
+  const upGame = (id,f,v) => setGames(g=>g.map(gm=>gm.id===id?{...gm,[f]:v}:gm));
+  const delGame = (id,name) => showConfirm(t.deleteMsg(name),()=>setGames(g=>g.filter(gm=>gm.id!==id)));
+  const addGame = () => {
+    if (!newGame.name.trim()) return;
+    setGames(g=>[...g,{id:uid(),...newGame,tasks:[]}]);
+    setNewGame({name:"",color:"#4a9eff",resetTime:"05:00"}); setShowNG(false);
+  };
+  const upTask = (gid,tid,f,v) => setGames(g=>g.map(gm=>gm.id===gid?{...gm,tasks:gm.tasks.map(tk=>tk.id===tid?{...tk,[f]:v}:tk)}:gm));
+  const delTask = (gid,tid) => setGames(g=>g.map(gm=>gm.id===gid?{...gm,tasks:gm.tasks.filter(tk=>tk.id!==tid)}:gm));
+  const addTask = (gid) => {
+    setGames(g=>g.map(gm=>gm.id===gid?{...gm,tasks:[...gm.tasks,{id:uid(),...newTask}]}:gm));
+    setNewTask({name:"",type:"daily",webResetTime:"00:00",monthlyResetDay:1}); setAddTo(null);
+  };
+
+  const TypeSel = ({val,onChange,style}) => (
+    <select value={val} onChange={onChange} style={{...IS,...style}}>
+      {["daily","weekly","webdaily","monthly","halfmonthly"].map(ty=>(
+        <option key={ty} value={ty}>{t.types[ty]}</option>
+      ))}
+    </select>
+  );
+
+  const TaskFields = ({task, onChange}) => (<>
+    {task.type==="webdaily"&&<>
+      <span style={{fontSize:10,color:"#8b949e"}}>{t.webReset}</span>
+      <input type="time" value={task.webResetTime||"00:00"} onChange={e=>onChange("webResetTime",e.target.value)}
+        style={{...IS,width:84,fontFamily:"monospace"}} />
+    </>}
+    {task.type==="monthly"&&<>
+      <span style={{fontSize:10,color:"#8b949e"}}>{t.resetDay}</span>
+      <input type="number" min="1" max="28" value={task.monthlyResetDay??1}
+        onChange={e=>onChange("monthlyResetDay",Math.max(1,Math.min(28,parseInt(e.target.value)||1)))}
+        style={{...IS,width:52,fontFamily:"monospace",textAlign:"center"}} />
+      <span style={{fontSize:10,color:"#8b949e"}}>{t.dayUnit}</span>
+    </>}
+  </>);
+
+  return (
+    <Modal title={`⚙️ ${t.settings}`} onClose={onClose}>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {games.map(game=>(
+          <div key={game.id} style={{background:"#161b22",border:`1px solid ${game.color}44`,borderRadius:10,overflow:"hidden"}}>
+            <div style={{padding:"10px 13px",display:"flex",alignItems:"center",gap:8,
+                         borderBottom:"1px solid rgba(255,255,255,0.06)",flexWrap:"wrap"}}>
+              <input type="color" value={game.color} onChange={e=>upGame(game.id,"color",e.target.value)}
+                style={{width:26,height:26,border:"none",background:"none",cursor:"pointer",flexShrink:0}} />
+              <input value={game.name} onChange={e=>upGame(game.id,"name",e.target.value)}
+                style={{...IS,flex:1,minWidth:80,fontWeight:700}} placeholder={t.gameName} />
+              <span style={{fontSize:11,color:"#8b949e"}}>{t.resetLbl}</span>
+              <input type="time" value={game.resetTime} onChange={e=>upGame(game.id,"resetTime",e.target.value)}
+                style={{...IS,width:86,fontFamily:"monospace"}} />
+              <button onClick={()=>delGame(game.id,game.name)} style={{...SB,color:"#f85149",borderColor:"#f8514944"}}>{t.delete}</button>
+            </div>
+            <div style={{padding:"8px 13px 10px"}}>
+              {game.tasks.map(task=>(
+                <div key={task.id} style={{display:"flex",alignItems:"center",gap:7,marginBottom:6,flexWrap:"wrap"}}>
+                  <TypeSel val={task.type} onChange={e=>upTask(game.id,task.id,"type",e.target.value)} style={{width:104}} />
+                  <input value={task.name} onChange={e=>upTask(game.id,task.id,"name",e.target.value)}
+                    style={{...IS,flex:1,minWidth:70}} placeholder={t.types[task.type]} />
+                  <TaskFields task={task} onChange={(f,v)=>upTask(game.id,task.id,f,v)} />
+                  <button onClick={()=>delTask(game.id,task.id)} style={{...SB,color:"#f85149"}}>✕</button>
+                </div>
+              ))}
+              {addTo===game.id?(
+                <div style={{display:"flex",alignItems:"center",gap:7,marginTop:6,flexWrap:"wrap"}}>
+                  <TypeSel val={newTask.type} onChange={e=>setNewTask(t2=>({...t2,type:e.target.value}))} style={{width:104}} />
+                  <input value={newTask.name} onChange={e=>setNewTask(t2=>({...t2,name:e.target.value}))}
+                    style={{...IS,flex:1,minWidth:70}} placeholder={t.types[newTask.type]} autoFocus />
+                  <TaskFields task={newTask} onChange={(f,v)=>setNewTask(t2=>({...t2,[f]:v}))} />
+                  <button onClick={()=>addTask(game.id)} style={{...SB,color:"#3fb950",borderColor:"#3fb95044"}}>{t.addTask.replace("+ ","")}</button>
+                  <button onClick={()=>setAddTo(null)} style={SB}>✕</button>
+                </div>
+              ):(
+                <button onClick={()=>{setAddTo(game.id);setNewTask({name:"",type:"daily",webResetTime:"00:00",monthlyResetDay:1});}}
+                  style={{...SB,marginTop:4,color:"#58a6ff",borderColor:"#58a6ff44"}}>{t.addTask}</button>
+              )}
+            </div>
+          </div>
+        ))}
+        {showNG?(
+          <div style={{background:"#161b22",border:"1px solid #30363d",borderRadius:10,padding:"12px 13px"}}>
+            <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10,flexWrap:"wrap"}}>
+              <input type="color" value={newGame.color} onChange={e=>setNewGame(g=>({...g,color:e.target.value}))}
+                style={{width:26,height:26,border:"none",background:"none",cursor:"pointer"}} />
+              <input value={newGame.name} onChange={e=>setNewGame(g=>({...g,name:e.target.value}))}
+                style={{...IS,flex:1,minWidth:80}} placeholder={t.gameName} autoFocus />
+              <span style={{fontSize:11,color:"#8b949e"}}>{t.resetLbl}</span>
+              <input type="time" value={newGame.resetTime} onChange={e=>setNewGame(g=>({...g,resetTime:e.target.value}))}
+                style={{...IS,width:86,fontFamily:"monospace"}} />
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={addGame} style={{...SB,color:"#3fb950",borderColor:"#3fb95044"}}>{t.addTask.replace("+ ","")}</button>
+              <button onClick={()=>setShowNG(false)} style={SB}>{t.cancel}</button>
+            </div>
+          </div>
+        ):(
+          <button onClick={()=>setShowNG(true)}
+            style={{background:"transparent",border:"2px dashed #30363d",borderRadius:10,
+                    color:"#8b949e",padding:"12px",cursor:"pointer",fontSize:14,transition:"all 0.15s"}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor="#58a6ff";e.currentTarget.style.color="#58a6ff";}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor="#30363d";e.currentTarget.style.color="#8b949e";}}>
+            {t.addGame}
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Calendar Modal ────────────────────────────────────────────────
+function CalendarModal({ games, checks, now, onClose }) {
+  const [year,  setYear]  = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const [selGame, setSelGame] = useState(games[0]?.id||null);
+  const [selTask, setSelTask] = useState(null);
+  const game = games.find(g=>g.id===selGame);
+  const tasks = game?.tasks||[];
+  useEffect(()=>{ setSelTask(null); },[selGame]);
+
+  const days = getDaysInMonth(year,month);
+  const fd   = new Date(year,month,1).getDay();
+  const today = fmtDate(now);
+
+  function getStatus(dk) {
+    if (!game) return "none";
+    const tt = selTask?tasks.filter(tk=>tk.id===selTask):(tasks.length?tasks:[{id:game.id+"_solo",type:"daily"}]);
+    const n = tt.filter(task=>{
+      let pk;
+      if (task.type==="weekly") pk=dateToWeekKey(dk);
+      else if (task.type==="monthly") pk=getMonthPeriodKey(dk,task.monthlyResetDay||1);
+      else if (task.type==="halfmonthly") pk=dateToHalfMonthKey(dk);
+      else pk=dk;
+      return !!checks[checkKey(task.id,pk)];
+    }).length;
+    if (n===0) return "none";
+    return n===tt.length?"all":"partial";
+  }
+
+  const dayNames = getLang()==="ja"?["日","月","火","水","木","金","土"]:
+                   getLang()==="zh"?["日","一","二","三","四","五","六"]:
+                   getLang()==="ko"?["일","월","화","수","목","금","토"]:
+                   getLang()==="es"?["D","L","M","X","J","V","S"]:
+                   ["Su","Mo","Tu","We","Th","Fr","Sa"];
+
+  return (
+    <Modal title={`📅 ${t.record}`} onClose={onClose}>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+        <select value={selGame||""} onChange={e=>setSelGame(e.target.value)} style={{...IS,flex:1,minWidth:120}}>
+          {games.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}
+        </select>
+        {tasks.length>0&&(
+          <select value={selTask||""} onChange={e=>setSelTask(e.target.value||null)} style={{...IS,flex:1,minWidth:100}}>
+            <option value="">{t.task} (all)</option>
+            {tasks.map(tk=><option key={tk.id} value={tk.id}>{getTaskDisplayName(tk)}</option>)}
+          </select>
+        )}
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+        <button onClick={()=>{const d=new Date(year,month-1);setYear(d.getFullYear());setMonth(d.getMonth());}} style={SB}>‹</button>
+        <span style={{fontWeight:700,fontSize:15}}>{new Date(year,month,1).toLocaleDateString([],{year:"numeric",month:"long"})}</span>
+        <button onClick={()=>{const d=new Date(year,month+1);setYear(d.getFullYear());setMonth(d.getMonth());}} style={SB}>›</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
+        {dayNames.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"#8b949e",padding:"3px 0"}}>{d}</div>)}
+        {Array.from({length:fd}).map((_,i)=><div key={"e"+i}/>)}
+        {Array.from({length:days}).map((_,i)=>{
+          const day=i+1, dk=`${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+          const s=getStatus(dk), isToday=dk===today;
+          return (
+            <div key={day} style={{
+              aspectRatio:"1", borderRadius:7, display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:13, fontWeight:isToday?700:400,
+              background:s==="all"?"#1a7f37":s==="partial"?"#1f3a27":"rgba(255,255,255,0.03)",
+              border:isToday?"2px solid #58a6ff":"1px solid rgba(255,255,255,0.05)",
+              color:s==="all"?"#56d364":s==="partial"?"#3fb950":"#484f58",
+            }}>{day}</div>
+          );
+        })}
+      </div>
+      <div style={{display:"flex",gap:14,marginTop:12,fontSize:12,color:"#8b949e"}}>
+        {[["#1a7f37",t.allDone],["#1f3a27",t.partial],["rgba(255,255,255,0.05)",t.incomplete]].map(([bg,lbl])=>(
+          <span key={lbl}><span style={{display:"inline-block",width:11,height:11,background:bg,
+            border:bg.includes("rgba")?"1px solid rgba(255,255,255,0.1)":"none",borderRadius:3,marginRight:4}}/>{lbl}</span>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Modal shell ───────────────────────────────────────────────────
+function Modal({ title, onClose, children }) {
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.72)",backdropFilter:"blur(4px)",
+                 display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"18px 14px",overflowY:"auto"}}
+         onClick={e=>{if(e.target===e.currentTarget) onClose();}}>
+      <div style={{background:"#0d1117",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,
+                   width:"100%",maxWidth:580,padding:"22px",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <span style={{fontWeight:800,fontSize:16}}>{title}</span>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#8b949e",fontSize:20,cursor:"pointer"}}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Shared styles ─────────────────────────────────────────────────
+const IS = { background:"#21262d", border:"1px solid #30363d", borderRadius:6,
+             color:"#e6edf3", padding:"6px 9px", fontSize:13, outline:"none" };
+const SB = { background:"transparent", border:"1px solid #30363d", borderRadius:6,
+             color:"#8b949e", padding:"5px 10px", fontSize:12, cursor:"pointer", whiteSpace:"nowrap" };
+function btnStyle(bg,col) {
+  return { background:bg, border:`1px solid ${col}44`, borderRadius:8, color:col,
+           padding:"7px 13px", fontSize:13, cursor:"pointer", fontWeight:600 };
+}
+
+// ─── Hover effect for task rows ────────────────────────────────────
+// (applied via event handlers in Row usage above — TaskRow uses wrapper div)
+
+// ─── Mount ─────────────────────────────────────────────────────────
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+// ─── PWA Service Worker registration ──────────────────────────────
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
+  </script>
+</body>
+</html>
