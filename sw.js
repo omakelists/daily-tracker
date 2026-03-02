@@ -6,8 +6,8 @@ const LOCAL_ASSETS = [
   './locales/en.json', './locales/ja.json', './locales/zh.json',
   './locales/ko.json', './locales/es.json',
   './src/main.js', './src/i18n.js', './src/storage.js',
-  './src/constants.js', './src/helpers.js', './src/App.js',
-  './src/GameCard.js', './src/TaskRow.js',
+  './src/constants.js', './src/helpers.js', './src/dnd.js',
+  './src/App.js', './src/GameCard.js', './src/TaskRow.js',
   './src/Settings.js', './src/Calendar.js', './src/UI.js',
 ];
 

@@ -13,6 +13,7 @@ export const PERIOD_TYPES = new Set(['weekly', 'monthly', 'halfmonthly']);
 
 /** Layout pixel constants shared across components */
 export const L = {
+  DRAG_W:      16,  // drag-handle column width
   ROW_PL:      14,  // row left padding
   ROW_PR:      14,  // row right padding
   BAR_SLOT:    11,  // prev-bar column width
@@ -22,6 +23,11 @@ export const L = {
   PAGE_M:      12,  // page outer margin
   CARD_BORDER:  3,  // card left border width
 };
+
+/** Returns true when the app is running as an installed PWA (standalone mode). */
+export const isPWA = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  !!window.navigator.standalone;
 
 let _idCtr = Date.now();
 export const uid = () => 'i' + (_idCtr++).toString(36);
