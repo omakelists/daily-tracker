@@ -50,5 +50,9 @@
   "updateAvail": "有新版本",
   "updateBtn": "更新",
   "updateCancel": "稍後",
-  "updateMsg": "是否更新應用程式？\n\n目前版本：{current}\n新版本：{next}"
+  "updateMsg": "是否更新應用程式？\n\n目前版本：{current}\n新版本：{next}",
+  "exportSettings": "匯出設定",
+  "importSettings": "匯入設定",
+  "importConfirm": "將目前設定替換為匯入的 {n} 個遊戲？",
+  "importError": "設定檔案無效。"
 }

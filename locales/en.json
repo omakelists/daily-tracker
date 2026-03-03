@@ -50,5 +50,9 @@
   "updateAvail": "App update available",
   "updateBtn": "Update",
   "updateCancel": "Later",
-  "updateMsg": "Update the app?\n\nCurrent: {current}\nNew:     {next}"
+  "updateMsg": "Update the app?\n\nCurrent: {current}\nNew:     {next}",
+  "exportSettings": "Export settings",
+  "importSettings": "Import settings",
+  "importConfirm": "Replace all settings with {n} imported game(s)?",
+  "importError": "Invalid settings file."
 }

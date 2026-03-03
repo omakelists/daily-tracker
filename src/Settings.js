@@ -1,5 +1,5 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { t } from './i18n.js';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from './constants.js';
 import { IS, Modal } from './UI.js';
@@ -58,6 +58,44 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
   const [showNG,  setShowNG]  = useState(false);
   const [newTask, setNewTask] = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1, url: '' });
   const [addTo,   setAddTo]   = useState(null);
+  const importRef = useRef(null);
+
+  // ── Export ────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    const json = JSON.stringify({ games }, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `daily-tracker-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Import ────────────────────────────────────────────────────────────
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        const imported = parsed.games ?? parsed; // accept {games:[]} or bare []
+        if (!Array.isArray(imported)) throw new Error('invalid');
+        // Re-assign fresh IDs to avoid collisions with existing data
+        const fresh = imported.map((g) => ({
+          ...g,
+          id: uid(),
+          tasks: (g.tasks ?? []).map((tk) => ({ ...tk, id: uid() })),
+        }));
+        showConfirm(t('importConfirm', { n: fresh.length }), () => setGames(fresh));
+      } catch {
+        alert(t('importError'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';   // allow re-importing same file
+  };
 
   // ── Drag state ──────────────────────────────────────────────────────
   const [dgFrom, setDgFrom] = useState(null);
@@ -123,6 +161,29 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
 
   return jsx(Modal, {
     title: `⚙️ ${t('settings')}`,
+    titleExtra: jsxs(Fragment, {
+      children: [
+        jsx('button', {
+          onClick: handleExport,
+          className: 'dt-btn dt-btn-add',
+          title: t('exportSettings'),
+          children: '📤',
+        }),
+        jsx('button', {
+          onClick: () => importRef.current?.click(),
+          className: 'dt-btn dt-btn-add',
+          title: t('importSettings'),
+          children: '📥',
+        }),
+        jsx('input', {
+          ref: importRef,
+          type: 'file',
+          accept: '.json,application/json',
+          style: { display: 'none' },
+          onChange: handleImportFile,
+        }),
+      ],
+    }),
     onClose,
     children: jsx('div', {
       style: { display: 'flex', flexDirection: 'column', gap: 0 },

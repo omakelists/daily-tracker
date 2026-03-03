@@ -50,5 +50,9 @@
   "updateAvail": "Actualización disponible",
   "updateBtn": "Actualizar",
   "updateCancel": "Después",
-  "updateMsg": "¿Actualizar la app?\n\nActual: {current}\nNueva:  {next}"
+  "updateMsg": "¿Actualizar la app?\n\nActual: {current}\nNueva:  {next}",
+  "exportSettings": "Exportar ajustes",
+  "importSettings": "Importar ajustes",
+  "importConfirm": "¿Reemplazar los ajustes actuales con {n} juego(s) importado(s)?",
+  "importError": "Archivo de ajustes no válido."
 }

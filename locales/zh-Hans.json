@@ -50,5 +50,9 @@
   "updateAvail": "有新版本",
   "updateBtn": "更新",
   "updateCancel": "稍后",
-  "updateMsg": "是否更新应用？\n\n当前版本：{current}\n新版本：{next}"
+  "updateMsg": "是否更新应用？\n\n当前版本：{current}\n新版本：{next}",
+  "exportSettings": "导出设置",
+  "importSettings": "导入设置",
+  "importConfirm": "将当前设置替换为导入的 {n} 个游戏？",
+  "importError": "设置文件无效。"
 }

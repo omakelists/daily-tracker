@@ -49,7 +49,7 @@ export function PrevBar({ show, checked, partial }) {
 }
 
 // ── Modal ────────────────────────────────────────────────────────────
-export function Modal({ title, onClose, children }) {
+export function Modal({ title, titleExtra, onClose, children }) {
   return jsx('div', {
     style: { position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '18px 14px', overflowY: 'auto' },
     onClick: (e) => { if (e.target === e.currentTarget) onClose(); },
@@ -59,7 +59,13 @@ export function Modal({ title, onClose, children }) {
         jsxs('div', {
           style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
           children: [
-            jsx('span', { style: { fontWeight: 800, fontSize: 16 }, children: title }),
+            jsxs('div', {
+              style: { display: 'flex', alignItems: 'center', gap: 8 },
+              children: [
+                jsx('span', { style: { fontWeight: 800, fontSize: 16 }, children: title }),
+                titleExtra,
+              ],
+            }),
             jsx('button', { onClick: onClose, style: { background: 'none', border: 'none', color: 'var(--muted)', fontSize: 20, cursor: 'pointer' }, children: '✕' }),
           ],
         }),
