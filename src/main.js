@@ -1,16 +1,14 @@
-import { html, render } from 'htm/preact';
+import { createRoot } from 'react-dom/client';
+import { jsx } from 'react/jsx-runtime';
+import { StrictMode } from 'react';
 import { initI18n } from './i18n.js';
 import { App } from './App.js';
 
 async function main() {
   await initI18n();
-  render(html`<${App} />`, document.getElementById('root'));
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
-  }
+  createRoot(document.getElementById('root')).render(
+    jsx(StrictMode, { children: jsx(App, {}) })
+  );
 }
 
 main();

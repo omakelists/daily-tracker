@@ -13,6 +13,7 @@ export async function initI18n() {
   const lang = detectLang();
   try {
     const res = await fetch(`./locales/${lang}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     _locale = await res.json();
   } catch {
     const res = await fetch('./locales/en.json');
@@ -23,13 +24,14 @@ export async function initI18n() {
   return _locale;
 }
 
-/**
- * Translate a key with optional variable substitution.
- * Supports dot-notation for nested keys: t('types.daily')
- * Supports placeholders: t('deleteMsg', { name: 'Foo' }) → 'Delete "Foo"?'
- */
+/** Translate key with optional variable substitution. Supports dot-notation. */
 export function t(key, vars = {}) {
   const val = key.split('.').reduce((o, k) => o?.[k], _locale);
   if (typeof val !== 'string') return val ?? key;
   return val.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+}
+
+/** Return a raw array value from the locale (e.g. dayNames). */
+export function ta(key) {
+  return key.split('.').reduce((o, k) => o?.[k], _locale) ?? [];
 }
