@@ -70,7 +70,7 @@ export function Modal({ title, onClose, children }) {
 }
 
 // ── ConfirmDialog ────────────────────────────────────────────────────
-export function ConfirmDialog({ message, onConfirm, onCancel }) {
+export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
   return jsx('div', {
     style: { position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
     children: jsxs('div', {
@@ -81,8 +81,8 @@ export function ConfirmDialog({ message, onConfirm, onCancel }) {
         jsxs('div', {
           style: { display: 'flex', gap: 10, justifyContent: 'center' },
           children: [
-            jsx('button', { onClick: onCancel,  className: 'dt-btn',               children: t('cancel') }),
-            jsx('button', { onClick: onConfirm, className: 'dt-btn dt-btn-danger',  children: t('deleteBtn') }),
+            jsx('button', { onClick: onCancel,  className: 'dt-btn',              children: t('cancel') }),
+            jsx('button', { onClick: onConfirm, className: 'dt-btn dt-btn-danger', children: confirmLabel ?? t('deleteBtn') }),
           ],
         }),
       ],

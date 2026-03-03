@@ -32,7 +32,23 @@
     "monthly": "Mensual",
     "halfmonthly": "Quincenal"
   },
-  "cd": { "d": "d", "h": "h", "m": "m" },
+  "cd": {
+    "d": "d",
+    "h": "h",
+    "m": "m"
+  },
   "everyDay": "Día {day}/mes",
-  "dayNames": ["D","L","M","X","J","V","S"]
+  "dayNames": [
+    "D",
+    "L",
+    "M",
+    "X",
+    "J",
+    "V",
+    "S"
+  ],
+  "updateAvail": "Actualización disponible",
+  "updateBtn": "Actualizar",
+  "updateCancel": "Después",
+  "updateMsg": "¿Actualizar la app?\n\nActual: {current}\nNueva:  {next}"
 }

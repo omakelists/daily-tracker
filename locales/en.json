@@ -32,7 +32,23 @@
     "monthly": "Monthly",
     "halfmonthly": "Biweekly"
   },
-  "cd": { "d": "d", "h": "h", "m": "m" },
+  "cd": {
+    "d": "d",
+    "h": "h",
+    "m": "m"
+  },
   "everyDay": "Day {day}/mo",
-  "dayNames": ["Su","Mo","Tu","We","Th","Fr","Sa"]
+  "dayNames": [
+    "Su",
+    "Mo",
+    "Tu",
+    "We",
+    "Th",
+    "Fr",
+    "Sa"
+  ],
+  "updateAvail": "App update available",
+  "updateBtn": "Update",
+  "updateCancel": "Later",
+  "updateMsg": "Update the app?\n\nCurrent: {current}\nNew:     {next}"
 }

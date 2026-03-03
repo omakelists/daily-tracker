@@ -32,7 +32,23 @@
     "monthly": "먼슬리",
     "halfmonthly": "반월"
   },
-  "cd": { "d": "일", "h": "시간", "m": "분" },
+  "cd": {
+    "d": "일",
+    "h": "시간",
+    "m": "분"
+  },
   "everyDay": "매월 {day}일",
-  "dayNames": ["일","월","화","수","목","금","토"]
+  "dayNames": [
+    "일",
+    "월",
+    "화",
+    "수",
+    "목",
+    "금",
+    "토"
+  ],
+  "updateAvail": "앱 업데이트 가능",
+  "updateBtn": "업데이트",
+  "updateCancel": "나중에",
+  "updateMsg": "앱을 업데이트하시겠습니까?\n\n현재: {current}\n새버전: {next}"
 }

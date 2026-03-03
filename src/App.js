@@ -18,6 +18,7 @@ export function App() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [confirm,      setConfirm]      = useState(null);
   const [collapsed,    setCollapsed]    = useState(new Set());
+  const [updateInfo,   setUpdateInfo]   = useState(null); // {current, next} when update available
 
   // Track per-game all-done state across renders so we can detect reset transitions
   const prevAllDoneRef = useRef({});
@@ -53,6 +54,46 @@ export function App() {
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
+
+  // ── SW update detection ────────────────────────────────────────────
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    // Fetch the cached (current) version and the network (new) version,
+    // then compare. version.json?check=1 bypasses the SW cache (see sw.js).
+    const checkVersions = async () => {
+      try {
+        const [cachedRes, netRes] = await Promise.all([
+          fetch('./version.json'),
+          fetch('./version.json?check=1'),
+        ]);
+        if (!cachedRes.ok || !netRes.ok) return;
+        const [cached, net] = await Promise.all([cachedRes.json(), netRes.json()]);
+        if (net.version && net.version !== cached.version) {
+          setUpdateInfo({ current: cached.version, next: net.version });
+        }
+      } catch {}
+    };
+
+    navigator.serviceWorker.ready.then((reg) => {
+      // Trigger a background check for a new SW
+      reg.update();
+
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          // new SW is installed and waiting — a controller exists = this is an update
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            checkVersions();
+          }
+        });
+      });
+
+      // Also show if a waiting SW already existed (e.g. tab was opened later)
+      if (reg.waiting && navigator.serviceWorker.controller) checkVersions();
+    });
+  }, []);
 
   const cd     = { d: t('cd.d'), h: t('cd.h'), m: t('cd.m') };
   const soloId = (game) => `${game.id}_solo`;
@@ -137,6 +178,13 @@ export function App() {
     });
   }, []);
 
+  const handleUpdate = useCallback(async () => {
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    // Reload as soon as the new SW takes control
+    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+  }, []);
+
   const showConfirm = (msg, fn) => setConfirm({ message: msg, onConfirm: fn });
 
   if (!games) {
@@ -168,6 +216,16 @@ export function App() {
           jsxs('div', {
             style: { display: 'flex', gap: 8 },
             children: [
+              updateInfo && jsx('button', {
+                onClick: () => setConfirm({
+                  message: t('updateMsg', { current: updateInfo.current, next: updateInfo.next }),
+                  onConfirm: handleUpdate,
+                  confirmLabel: t('updateBtn'),
+                }),
+                className: 'dt-btn-update',
+                title: t('updateAvail'),
+                children: '⬆️',
+              }),
               jsx('button', { onClick: () => setShowCalendar(true), className: 'dt-btn-record',   children: `📅 ${t('record')}` }),
               jsx('button', { onClick: () => setShowSettings(true), className: 'dt-btn-settings', children: `⚙️ ${t('settings')}` }),
             ],
@@ -195,6 +253,7 @@ export function App() {
       showCalendar && jsx(CalendarModal, { games, checks, now, onClose: () => setShowCalendar(false) }),
       confirm && jsx(ConfirmDialog, {
         message: confirm.message,
+        confirmLabel: confirm.confirmLabel,
         onConfirm: () => { confirm.onConfirm(); setConfirm(null); },
         onCancel:  () => setConfirm(null),
       }),

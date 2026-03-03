@@ -1,10 +1,11 @@
-const CACHE = 'daily-tracker-v9';
+const CACHE = 'daily-tracker-v10';
 
 const LOCAL_ASSETS = [
   './',
   './index.html',
   './style.css',
   './manifest.json',
+  './version.json',
   './icon-192.png',
   './icon-512.png',
   './locales/en.json',
@@ -28,9 +29,11 @@ const LOCAL_ASSETS = [
 
 const CDN_ORIGINS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net'];
 
+// Install: cache all assets but do NOT call skipWaiting().
+// The new SW waits until the user confirms the update in the app UI,
+// at which point the app sends a SKIP_WAITING message.
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(LOCAL_ASSETS)));
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
@@ -42,8 +45,21 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// When the app sends SKIP_WAITING (after user confirms update), take over immediately.
+self.addEventListener('message', (e) => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 self.addEventListener('fetch', (e) => {
-  const { hostname } = new URL(e.request.url);
+  const url = new URL(e.request.url);
+
+  // version.json?check=1  →  always fetch from network (bypass cache) for update checks
+  if (url.pathname.endsWith('/version.json') && url.searchParams.has('check')) {
+    e.respondWith(fetch(url.pathname).catch(() => new Response('{}', { status: 503 })));
+    return;
+  }
+
+  const { hostname } = url;
   if (CDN_ORIGINS.includes(hostname)) {
     e.respondWith(
       caches.open(CACHE).then((cache) =>

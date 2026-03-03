@@ -32,7 +32,23 @@
     "monthly": "マンスリー",
     "halfmonthly": "半月"
   },
-  "cd": { "d": "日", "h": "時間", "m": "分" },
+  "cd": {
+    "d": "日",
+    "h": "時間",
+    "m": "分"
+  },
   "everyDay": "毎月{day}日",
-  "dayNames": ["日","月","火","水","木","金","土"]
+  "dayNames": [
+    "日",
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土"
+  ],
+  "updateAvail": "アプリの更新があります",
+  "updateBtn": "更新",
+  "updateCancel": "後で",
+  "updateMsg": "アプリを更新しますか？\n\n現在: {current}\n新しい: {next}"
 }
