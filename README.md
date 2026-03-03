@@ -1,119 +1,104 @@
 # Daily Tracker
 
-A progressive web app for tracking daily, weekly, and periodic tasks in games — with per-game reset times, yesterday's check history, and offline support.
+A no-build-step PWA for tracking daily, weekly, monthly, and biweekly tasks across multiple games.
 
-> **Note:** This project was generated with the assistance of [Claude](https://claude.ai) by Anthropic.
-
----
+![Preview](preview.png)
 
 ## Features
 
-- **Multiple game groups** — each with its own daily reset time and color
-- **Task types** — Daily, Weekly, Web Daily (separate reset time), Monthly (custom reset day), and Biweekly (1st & 16th)
-- **Master checkbox** — checks/unchecks all daily tasks in a group at once
-- **Yesterday indicator** — a subtle colored bar on the left of each row shows whether yesterday's tasks were completed (green = done, red = missed)
-- **Countdown timer** — shows time remaining until the next reset; turns yellow under 6 hours, red under 3 hours
-- **Auto-sort** — fully completed game groups slide to the bottom automatically
-- **Check-off sound** — audio feedback on task completion, with a fanfare when all tasks are done
-- **Calendar history** — review past completion by game and task in a monthly calendar view
-- **Multilingual** — automatically adapts to the browser's language setting: English, Japanese (日本語), Chinese (中文), Korean (한국어), and Spanish (Español)
-- **PWA / installable** — works offline and can be installed to the desktop or home screen
-- **localStorage persistence** — all data is stored locally in the browser; no account or server required
+- **Task types** — Daily · Weekly · Monthly · Biweekly · Web Daily (each with independent reset time)
+- **Accordion cards** — Tap ▼ on any game to collapse its daily tasks; auto-collapses when all daily tasks are checked; unchecked periodic tasks remain visible even when collapsed
+- **Drag & drop reordering** — Reorder games and individual tasks freely inside Settings
+- **Yesterday indicator** — Thin colored bar on each daily task shows prior-period completion
+- **Sound effects** — Subtle audio feedback on check / all-done
+- **PWA installable** — Works offline after first load (Service Worker caches all assets + CDN)
+- **UTC time storage** — All reset times stored as UTC; Settings UI displays and accepts your local timezone
+- **CSS design tokens** — All layout measurements and palette colors live in `style.css` as `--custom-properties`
 
----
+## Supported Languages
+
+| Code | Language |
+|------|----------|
+| `en` | English |
+| `ja` | 日本語 |
+| `zh-Hans` | 简体中文 |
+| `zh-Hant` | 繁體中文 |
+| `ko` | 한국어 |
+| `es` | Español |
+
+Language is detected automatically from `navigator.language`.  
+Traditional Chinese loads for `zh-Hant`, `zh-TW`, `zh-HK`, `zh-MO`, and `zh-hant` script-tag variants; all other `zh-*` codes use Simplified Chinese.
+
+## Time Zone Handling
+
+Reset times are **stored internally as UTC**. The Settings UI converts UTC to your local browser time for display, and converts back to UTC when you save. This ensures consistent behavior regardless of where a device is used.
+
+> **Example:** A Japanese player setting "05:00" local time (JST = UTC+9) sees "05:00" in Settings. The stored value is "20:00 UTC". Another device in UTC+0 shows "20:00".
+
+## Deployment
+
+### GitHub Pages
+
+1. Push the repository contents to a branch (e.g. `main`)
+2. Enable **Pages** in repository Settings → Source: `main` / `/ (root)`
+3. Access via `https://<user>.github.io/<repo>/`
+
+### Local development
+
+```bash
+python -m http.server 8080   # Python 3
+npx serve .                  # Node.js
+```
+
+Open `http://localhost:8080`. Service Worker requires HTTP (not `file://`).
 
 ## File Structure
 
 ```
-daily-tracker/
-├── index.html      # Full application (React + Babel, loaded from CDN)
-├── manifest.json   # PWA manifest (name, icons, display mode)
-├── sw.js           # Service Worker (offline caching)
-├── icon-192.png    # App icon (192×192)
-└── icon-512.png    # App icon (512×512)
+├── index.html          # Import map + entry point
+├── manifest.json       # PWA manifest
+├── sw.js               # Service Worker (cache-first)
+├── style.css           # Global styles + CSS design tokens (:root variables)
+├── preview.png         # README preview image
+├── icon-192.png
+├── icon-512.png
+├── locales/
+│   ├── en.json
+│   ├── ja.json
+│   ├── zh-Hans.json      # Simplified Chinese
+│   ├── zh-Hant.json      # Traditional Chinese
+│   ├── ko.json
+│   └── es.json
+└── src/
+    ├── main.js         # Entry — i18n init → render
+    ├── App.js          # Root component, state management
+    ├── GameCard.js     # Game card with accordion
+    ├── TaskRow.js      # Individual task row
+    ├── Settings.js     # Settings modal with drag & drop
+    ├── Calendar.js     # History calendar modal
+    ├── UI.js           # Shared primitives (Row, Modal, …)
+    ├── i18n.js         # Locale loading & t()
+    ├── storage.js      # localStorage wrapper
+    ├── helpers.js      # UTC date / countdown / sound helpers
+    └── constants.js    # Task types, UTC utils, default data
 ```
 
----
+## CSS Design Tokens
 
-## Deploying to GitHub Pages
+All magic numbers and palette colors are declared as CSS custom properties in `style.css`:
 
-1. Create a new GitHub repository (e.g. `daily-tracker`)
-2. Upload all five files to the repository root
-3. Go to **Settings → Pages → Source**, select the `main` branch and `/ (root)`, then click **Save**
-4. Your app will be available at `https://<your-username>.github.io/daily-tracker/`
-5. Visit the URL in Chrome or Edge — an install button will appear in the address bar
-
----
-
-## Local Usage
-
-No build step is required. Simply open `index.html` in a browser.
-
-```bash
-# Option 1: open directly
-open index.html
-
-# Option 2: serve locally (recommended for PWA install prompt)
-npx serve .
-# or
-python3 -m http.server 8080
+```css
+:root {
+  --row-pl: 14px;         /* Row left padding */
+  --bar-slot: 18px;       /* Width of accordion/prev-bar slot */
+  --cb-w: 26px;           /* Checkbox size */
+  --type-daily: #58a6ff;  /* Task type colors */
+  --cd-urgent: #f85149;   /* Countdown urgency colors */
+  /* … */
+}
 ```
 
-> The Service Worker and PWA install prompt require the page to be served over HTTPS or `localhost`. Opening as a plain `file://` URL disables those features but the app itself will still work.
+## Browser Requirements
 
----
-
-## Task Types
-
-| Type | Label | Reset schedule |
-|---|---|---|
-| `daily` | Daily | Every day at the game's reset time |
-| `weekly` | Weekly | Every Monday at the game's reset time |
-| `webdaily` | Web Daily | Every day at a separately configured reset time |
-| `monthly` | Monthly | On a configurable day of the month (default: 1st) |
-| `halfmonthly` | Biweekly | On the 1st and 16th of each month |
-
----
-
-## Data Storage
-
-All game configurations and check history are stored in the browser's `localStorage` under the keys:
-
-- `dailytracker:games` — game and task configuration
-- `dailytracker:checks` — per-period check records
-
-No data is sent to any server.
-
----
-
-## Supported Languages
-
-The UI language is selected automatically based on `navigator.language`:
-
-| Language | Code |
-|---|---|
-| English | `en` (default) |
-| Japanese | `ja` |
-| Chinese (Simplified) | `zh` |
-| Korean | `ko` |
-| Spanish | `es` |
-
----
-
-## Technology
-
-- [React 18](https://react.dev) — UI rendering (loaded via CDN, no build required)
-- [Babel Standalone](https://babeljs.io/docs/babel-standalone) — JSX transpilation in the browser
-- Web Audio API — check-off sounds
-- Service Worker API — offline caching
-- localStorage — persistent data storage
-
----
-
-## License
-
-MIT — free to use, modify, and distribute.
-
----
-
-*Generated with [Claude](https://claude.ai) by Anthropic.*
+- Import maps: Chrome 89+, Firefox 108+, Safari 16.4+
+- No Babel, no build tools

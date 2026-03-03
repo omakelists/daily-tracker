@@ -1,3 +1,4 @@
+/* ── Reset ────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
@@ -8,35 +9,273 @@ body {
 }
 button, select, input { font-family: inherit; }
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #161b22; }
-::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
-:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }
+/* ── Design tokens ──────────────────────────────────────────────── */
+:root {
+  /* Layout */
+  --row-pl:      14px;
+  --row-pr:      14px;
+  --bar-slot:    18px;
+  --bar-w:        3px;
+  --cb-w:        26px;
+  --cb-gap:       8px;
+  --page-m:      12px;
+  --card-border:  2px;
 
-.task-row { transition: background 0.12s; }
+  /* Task-type colors */
+  --type-daily:        #58a6ff;
+  --type-weekly:       #bc8cff;
+  --type-webdaily:     #3fb950;
+  --type-monthly:      #ff7b72;
+  --type-halfmonthly:  #ffa657;
+
+  /* UI palette */
+  --bg-app:      #0d1117;
+  --bg-card:     rgba(22, 27, 34, 0.85);
+  --bg-surface:  #161b22;
+  --bg-header:   rgba(22, 27, 34, 0.95);
+  --bg-input:    #21262d;
+  --border:      #30363d;
+  --text:        #e6edf3;
+  --muted:       #8b949e;
+  --dim:         #6e7681;
+  --link:        #58a6ff;
+  --purple:      #bc8cff;
+  --green:       #3fb950;
+  --danger:      #f85149;
+  --warn:        #e3b341;
+  --checked-bg:  #1a7f37;
+  --checked-br:  #2ea043;
+
+  /* Prev-bar status */
+  --prev-done:    #2ea043;
+  --prev-partial: #e3b341;
+  --prev-miss:    #6e3535;
+
+  /* Countdown urgency */
+  --cd-urgent: #f85149;
+  --cd-warn:   #e3b341;
+  --cd-ok:     #6e7681;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* ── Row layout ──────────────────────────────────────────────────── */
+.dt-row {
+  display: flex;
+  align-items: center;
+  padding: 10px var(--row-pr) 10px var(--row-pl);
+}
+.dt-bar-slot {
+  width: var(--bar-slot);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dt-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: var(--cb-gap);
+  min-width: 0;
+}
+.dt-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+.dt-right { flex-shrink: 0; margin-left: 6px; }
+
+/* ── Task row ────────────────────────────────────────────────────── */
+.task-row {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.12s;
+}
 .task-row:hover { background: rgba(255, 255, 255, 0.025); }
 
+/* ── Checkbox ────────────────────────────────────────────────────── */
+.dt-cb {
+  width: var(--cb-w);
+  height: var(--cb-w);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+/* Game-header master checkbox — same shape as task checkbox but slightly bigger radius */
+.dt-cb-game {
+  border-radius: 7px;
+  font-size: 13px;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+/* Checked state — same green for both task and game checkboxes */
+.dt-cb-checked {
+  background: var(--checked-bg) !important;
+  border-color: var(--checked-br) !important;
+  transform: scale(1.08);
+}
+
+/* ── Type badges ─────────────────────────────────────────────────── */
+.type-badge {
+  font-size: 10px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+.type-badge-daily        { color: var(--type-daily);       background: rgba(88,166,255,.09);  border-color: rgba(88,166,255,.25); }
+.type-badge-weekly       { color: var(--type-weekly);      background: rgba(188,140,255,.09); border-color: rgba(188,140,255,.25); }
+.type-badge-webdaily     { color: var(--type-webdaily);    background: rgba(63,185,80,.09);   border-color: rgba(63,185,80,.25); }
+.type-badge-monthly      { color: var(--type-monthly);     background: rgba(255,123,114,.09); border-color: rgba(255,123,114,.25); }
+.type-badge-halfmonthly  { color: var(--type-halfmonthly); background: rgba(255,166,87,.09);  border-color: rgba(255,166,87,.25); }
+
+/* ── Form controls ───────────────────────────────────────────────── */
+.dt-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 9px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+.dt-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.dt-btn-danger  { color: var(--danger);  border-color: rgba(248, 81, 73, .27); }
+.dt-btn-add     { color: var(--link);    border-color: rgba(88, 166, 255, .27); }
+.dt-btn-confirm { color: var(--green);   border-color: rgba(63, 185, 80, .27); }
+
+/* ── Header action buttons ───────────────────────────────────────── */
+.dt-btn-record {
+  background: var(--bg-surface);
+  border: 1px solid rgba(88, 166, 255, .27);
+  border-radius: 8px;
+  color: var(--link);
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+}
+.dt-btn-settings {
+  background: var(--bg-surface);
+  border: 1px solid rgba(188, 140, 255, .27);
+  border-radius: 8px;
+  color: var(--purple);
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+/* ── Link button (↗) ─────────────────────────────────────────────── */
+.dt-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  background: rgba(88, 166, 255, .12);
+  color: var(--link);
+  text-decoration: none;
+  font-size: 12px;
+  border: 1px solid rgba(88, 166, 255, .3);
+  transition: background 0.15s;
+}
+.dt-link-btn:hover { background: rgba(88, 166, 255, .25); }
+
+/* ── Game card ───────────────────────────────────────────────────── */
+.game-card {
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: var(--card-border) solid var(--border);
+  transition: opacity 0.5s;
+}
+.game-card-done { opacity: 0.62; }
+.game-card-body { background: rgba(13, 17, 23, 0.5); padding-top: 2px; padding-bottom: 4px; }
+
+/* ── Accordion toggle ────────────────────────────────────────────── */
+.dt-accordion-btn {
+  width: var(--bar-slot);
+  height: var(--bar-slot);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 9px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.dt-accordion-btn:hover { color: var(--text); }
+
+/* ── Prev-bar dot (collapsed state) ─────────────────────────────── */
+.dt-prev-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: help;
+}
+
+/* ── Separator label ─────────────────────────────────────────────── */
 .sep-label {
   position: absolute; top: -8px; left: 50%;
   transform: translateX(-50%);
-  background: #0d1117; padding: 0 8px;
+  background: var(--bg-app); padding: 0 8px;
   font-size: 10px; color: #484f58;
   letter-spacing: 1px; white-space: nowrap;
 }
 
+/* ── Add-game dashed button ──────────────────────────────────────── */
 .add-game-btn {
   background: transparent;
-  border: 2px dashed #30363d;
+  border: 2px dashed var(--border);
   border-radius: 10px;
-  color: #8b949e;
+  color: var(--muted);
   padding: 12px;
   cursor: pointer;
   font-size: 14px;
   width: 100%;
+  font-family: inherit;
   transition: border-color 0.15s, color 0.15s;
 }
-.add-game-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+.add-game-btn:hover { border-color: var(--link); color: var(--link); }
 
+/* ── Calendar day cell ───────────────────────────────────────────── */
 .cal-day {
   aspect-ratio: 1;
   border-radius: 7px;
@@ -45,3 +284,15 @@ button, select, input { font-family: inherit; }
   justify-content: center;
   font-size: 13px;
 }
+
+/* ── Settings drag handle ────────────────────────────────────────── */
+.dt-drag-handle {
+  font-size: 14px;
+  color: #484f58;
+  cursor: grab;
+  user-select: none;
+  line-height: 1;
+  padding-right: 2px;
+  flex-shrink: 0;
+}
+.dt-drag-handle:active { cursor: grabbing; }

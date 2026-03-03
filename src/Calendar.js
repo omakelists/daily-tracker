@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import { t, ta } from './i18n.js';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from './constants.js';
 import { checkKey } from './helpers.js';
-import { IS, SB, Modal } from './UI.js';
+import { IS, Modal } from './UI.js';
 
 export function CalendarModal({ games, checks, now, onClose }) {
-  const [year,    setYear]    = useState(now.getFullYear());
-  const [month,   setMonth]   = useState(now.getMonth());
+  const [year,    setYear]    = useState(now.getUTCFullYear());
+  const [month,   setMonth]   = useState(now.getUTCMonth());
   const [selGame, setSelGame] = useState(games[0]?.id ?? null);
   const [selTask, setSelTask] = useState(null);
 
@@ -17,10 +17,10 @@ export function CalendarModal({ games, checks, now, onClose }) {
   useEffect(() => { setSelTask(null); }, [selGame]);
 
   const daysInMonth = getDaysInMonth(year, month);
-  const firstDay    = new Date(year, month, 1).getDay();
+  const firstDay    = new Date(Date.UTC(year, month, 1)).getUTCDay();
   const today       = fmtDate(now);
 
-  function getStatus(dk) {
+  const getStatus = (dk) => {
     if (!game) return 'none';
     const tt   = selTask ? dailyTasks.filter((tk) => tk.id === selTask) : dailyTasks;
     if (!tt.length) return 'none';
@@ -28,12 +28,11 @@ export function CalendarModal({ games, checks, now, onClose }) {
     if (done === 0)         return 'none';
     if (done === tt.length) return 'all';
     return 'partial';
-  }
+  };
 
   const nav = (delta) => {
-    const d = new Date(year, month + delta);
-    setYear(d.getFullYear());
-    setMonth(d.getMonth());
+    const d = new Date(Date.UTC(year, month + delta, 1));
+    setYear(d.getUTCFullYear()); setMonth(d.getUTCMonth());
   };
 
   const dayNames = ta('dayNames');
@@ -43,7 +42,6 @@ export function CalendarModal({ games, checks, now, onClose }) {
     onClose,
     children: jsxs('div', {
       children: [
-        // Game / task selectors
         jsxs('div', {
           style: { display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
           children: [
@@ -62,22 +60,18 @@ export function CalendarModal({ games, checks, now, onClose }) {
             }),
           ],
         }),
-
-        // Month navigation
         jsxs('div', {
           style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
           children: [
-            jsx('button', { onClick: () => nav(-1), style: SB, children: '‹' }),
-            jsx('span', { style: { fontWeight: 700, fontSize: 15 }, children: new Date(year, month, 1).toLocaleDateString([], { year: 'numeric', month: 'long' }) }),
-            jsx('button', { onClick: () => nav(1), style: SB, children: '›' }),
+            jsx('button', { onClick: () => nav(-1), className: 'dt-btn', children: '‹' }),
+            jsx('span', { style: { fontWeight: 700, fontSize: 15 }, children: new Date(Date.UTC(year, month, 1)).toLocaleDateString([], { year: 'numeric', month: 'long' }) }),
+            jsx('button', { onClick: () => nav(1),  className: 'dt-btn', children: '›' }),
           ],
         }),
-
-        // Calendar grid
         jsx('div', {
           style: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 },
           children: [
-            ...dayNames.map((d) => jsx('div', { style: { textAlign: 'center', fontSize: 11, color: '#8b949e', padding: '3px 0' }, children: d }, d)),
+            ...dayNames.map((d) => jsx('div', { style: { textAlign: 'center', fontSize: 11, color: 'var(--muted)', padding: '3px 0' }, children: d }, d)),
             ...Array.from({ length: firstDay }, (_, i) => jsx('div', {}, `e${i}`)),
             ...Array.from({ length: daysInMonth }, (_, i) => {
               const day = i + 1;
@@ -87,22 +81,20 @@ export function CalendarModal({ games, checks, now, onClose }) {
                 className: 'cal-day',
                 style: {
                   fontWeight: dk === today ? 700 : 400,
-                  background: s === 'all' ? '#1a7f37' : s === 'partial' ? '#1f3a27' : 'rgba(255,255,255,0.03)',
-                  border:     dk === today ? '2px solid #58a6ff' : '1px solid rgba(255,255,255,0.05)',
-                  color:      s === 'all' ? '#56d364' : s === 'partial' ? '#3fb950' : '#484f58',
+                  background: s === 'all' ? 'var(--checked-bg)' : s === 'partial' ? '#1f3a27' : 'rgba(255,255,255,0.03)',
+                  border: dk === today ? '2px solid var(--link)' : '1px solid rgba(255,255,255,0.05)',
+                  color: s === 'all' ? 'var(--green)' : s === 'partial' ? 'var(--green)' : 'var(--dim)',
                 },
                 children: day,
               }, dk);
             }),
           ],
         }),
-
-        // Legend
         jsx('div', {
-          style: { display: 'flex', gap: 14, marginTop: 12, fontSize: 12, color: '#8b949e' },
+          style: { display: 'flex', gap: 14, marginTop: 12, fontSize: 12, color: 'var(--muted)' },
           children: [
-            ['#1a7f37', t('allDone')],
-            ['#1f3a27', t('partial')],
+            ['var(--checked-bg)', t('allDone')],
+            ['#1f3a27',          t('partial')],
             ['rgba(255,255,255,0.05)', t('incomplete')],
           ].map(([bg, lbl]) => jsxs('span', {
             children: [

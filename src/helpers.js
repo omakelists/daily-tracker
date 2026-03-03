@@ -1,41 +1,61 @@
 import { fmtDate } from './constants.js';
 
-export const parseHHMM = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+export const parseHHMM = (s) => { const [h, m] = (s || '00:00').split(':').map(Number); return h * 60 + m; };
 
-export function getGameDateKey(now, resetTime) {
-  const base = new Date(now);
-  if (now.getHours() * 60 + now.getMinutes() < parseHHMM(resetTime)) base.setDate(base.getDate() - 1);
+// ── UTC-based date key calculation ─────────────────────────────────
+/**
+ * The "game date key" for a UTC reset time.
+ * If the current UTC time is before the reset, we're still in yesterday's game day.
+ */
+export function getGameDateKey(now, resetTimeUTC) {
+  const utcMin  = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const resetMin = parseHHMM(resetTimeUTC);
+  const base    = new Date(now);
+  if (utcMin < resetMin) base.setUTCDate(base.getUTCDate() - 1);
   return fmtDate(base);
 }
+
+/** Shift a YYYY-MM-DD UTC date key by `days` days. */
 export function shiftDate(dateKey, days) {
-  const d = new Date(dateKey + 'T12:00:00'); d.setDate(d.getDate() + days); return fmtDate(d);
+  const d = new Date(dateKey + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return fmtDate(d);
 }
+
 export const getPrevGameDateKey = (now, rt) => shiftDate(getGameDateKey(now, rt), -1);
 
+// ── Period key helpers ─────────────────────────────────────────────
 export function dateToWeekKey(dk) {
-  const d = new Date(dk + 'T12:00:00'), day = d.getDay();
-  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  const d   = new Date(dk + 'T00:00:00Z');
+  const day = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1));
   return 'W' + fmtDate(d);
 }
+
 export function getMonthPeriodKey(dk, rd) {
-  const r = rd || 1, day = parseInt(dk.slice(8)), y = parseInt(dk.slice(0, 4)), mo = parseInt(dk.slice(5, 7));
-  if (day >= r) return `M-${y}-${String(mo).padStart(2, '0')}-${String(r).padStart(2, '0')}`;
-  const p = new Date(y, mo - 2, r);
-  return `M-${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}-${String(r).padStart(2, '0')}`;
+  const r  = rd || 1;
+  const day = parseInt(dk.slice(8));
+  const y   = parseInt(dk.slice(0, 4));
+  const mo  = parseInt(dk.slice(5, 7));
+  if (day >= r) return `M-${y}-${String(mo).padStart(2,'0')}-${String(r).padStart(2,'0')}`;
+  const p = new Date(Date.UTC(y, mo - 2, r));
+  return `M-${p.getUTCFullYear()}-${String(p.getUTCMonth()+1).padStart(2,'0')}-${String(r).padStart(2,'0')}`;
 }
+
 export function getPrevMonthPeriodKey(k) {
   const [, y, mo, dd] = k.match(/M-(\d+)-(\d+)-(\d+)/);
-  const p = new Date(parseInt(y), parseInt(mo) - 2, parseInt(dd));
-  return `M-${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+  const p = new Date(Date.UTC(parseInt(y), parseInt(mo) - 2, parseInt(dd)));
+  return `M-${p.getUTCFullYear()}-${String(p.getUTCMonth()+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
 }
+
 export const dateToHalfMonthKey = (dk) =>
   'H-' + dk.slice(0, 7) + '-' + (parseInt(dk.slice(8)) >= 16 ? 'B' : 'A');
 
 export function prevHalfMonthKey(k) {
   const [, y, mo, half] = k.match(/H-(\d+)-(\d+)-([AB])/);
   if (half === 'B') return `H-${y}-${mo}-A`;
-  const p = new Date(parseInt(y), parseInt(mo) - 2, 1);
-  return `H-${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}-B`;
+  const p = new Date(Date.UTC(parseInt(y), parseInt(mo) - 2, 1));
+  return `H-${p.getUTCFullYear()}-${String(p.getUTCMonth()+1).padStart(2,'0')}-B`;
 }
 
 export const getTaskRT = (task, game) =>
@@ -48,59 +68,74 @@ export function getPeriodKey(task, game, now) {
   if (task.type === 'halfmonthly') return dateToHalfMonthKey(dk);
   return dk;
 }
+
 export function getPrevPeriodKey(task, game, now) {
-  const rt = getTaskRT(task, game), dk = getGameDateKey(now, rt);
+  const rt = getTaskRT(task, game);
+  const dk = getGameDateKey(now, rt);
   if (task.type === 'weekly')      return dateToWeekKey(shiftDate(dk, -7));
   if (task.type === 'monthly')     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay || 1));
   if (task.type === 'halfmonthly') return prevHalfMonthKey(dateToHalfMonthKey(dk));
   return getPrevGameDateKey(now, rt);
 }
 
-export function msUntilReset(now, rt) {
-  const r = parseHHMM(rt), n = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-  let d = r - n; if (d <= 0) d += 24 * 60; return d * 60 * 1000;
+// ── Countdown helpers (all UTC) ────────────────────────────────────
+export function msUntilReset(now, rtUTC) {
+  const r = parseHHMM(rtUTC);
+  const n = now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60;
+  let d = r - n;
+  if (d <= 0) d += 24 * 60;
+  return d * 60 * 1000;
 }
-export function msUntilNextMonth(now, rt, rd) {
-  const r = parseHHMM(rt), day = rd || 1;
-  const d = now.getDate(), h = now.getHours() * 60 + now.getMinutes();
-  const tgt = (d < day || (d === day && h < r))
-    ? new Date(now.getFullYear(), now.getMonth(), day)
-    : new Date(now.getFullYear(), now.getMonth() + 1, day);
-  tgt.setHours(Math.floor(r / 60), r % 60, 0, 0);
+
+export function msUntilNextMonth(now, rtUTC, rd) {
+  const r   = parseHHMM(rtUTC);
+  const day = rd || 1;
+  const utcDay = now.getUTCDate();
+  const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const tgt = (utcDay < day || (utcDay === day && utcMin < r))
+    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     day, Math.floor(r/60), r%60))
+    : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, day, Math.floor(r/60), r%60));
   return tgt - now;
 }
-export function msUntilNextHalfMonth(now, rt) {
-  const r = parseHHMM(rt), d = now.getDate(), h = now.getHours() * 60 + now.getMinutes();
-  let tgt = new Date(now);
-  if (d < 1 || (d === 1 && h < r)) tgt.setDate(1);
-  else if (d < 16 || (d === 16 && h < r)) tgt.setDate(16);
-  else tgt = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  tgt.setHours(Math.floor(r / 60), r % 60, 0, 0);
+
+export function msUntilNextHalfMonth(now, rtUTC) {
+  const r      = parseHHMM(rtUTC);
+  const utcDay = now.getUTCDate();
+  const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  let tgt;
+  if      (utcDay < 1  || (utcDay === 1  && utcMin < r)) tgt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     1,  Math.floor(r/60), r%60));
+  else if (utcDay < 16 || (utcDay === 16 && utcMin < r)) tgt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     16, Math.floor(r/60), r%60));
+  else                                                    tgt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1,  Math.floor(r/60), r%60));
   return tgt - now;
 }
+
 export function msUntilTaskReset(task, game, now) {
   const rt = getTaskRT(task, game);
   if (task.type === 'monthly')     return msUntilNextMonth(now, rt, task.monthlyResetDay || 1);
   if (task.type === 'halfmonthly') return msUntilNextHalfMonth(now, rt);
   if (task.type === 'weekly') {
-    const dow = now.getDay(), rtMin = parseHHMM(rt);
-    const tgt = new Date(now); tgt.setHours(Math.floor(rtMin / 60), rtMin % 60, 0, 0);
+    const rtMin = parseHHMM(rt);
+    const dow   = now.getUTCDay();
+    const tgt   = new Date(now);
+    tgt.setUTCHours(Math.floor(rtMin/60), rtMin%60, 0, 0);
     if (dow === 1 && now < tgt) return tgt - now;
     const days = dow === 0 ? 1 : (8 - dow) % 7 || 7;
-    tgt.setDate(tgt.getDate() + (dow === 1 ? 7 : days));
+    tgt.setUTCDate(tgt.getUTCDate() + (dow === 1 ? 7 : days));
     return tgt - now;
   }
   return msUntilReset(now, rt);
 }
+
 export function formatCountdown(ms, cd) {
   const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
-  if (h >= 24) return `${Math.floor(h / 24)}${cd.d}`;
+  if (h >= 24) return `${Math.floor(h/24)}${cd.d}`;
   if (h >= 1)  return `${h}${cd.h}`;
   return `${m}${cd.m}`;
 }
+
 export const checkKey = (id, pk) => `${id}__${pk}`;
 
-// ── Sound ──────────────────────────────────────────────────────────
+// ── Sound effects ──────────────────────────────────────────────────
 export function playCheckSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -113,6 +148,7 @@ export function playCheckSound() {
     o.start(); o.stop(ctx.currentTime + 0.25);
   } catch {}
 }
+
 export function playAllDoneSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();

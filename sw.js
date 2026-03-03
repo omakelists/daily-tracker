@@ -1,4 +1,4 @@
-const CACHE = 'daily-tracker-v6';
+const CACHE = 'daily-tracker-v9';
 
 const LOCAL_ASSETS = [
   './',
@@ -9,7 +9,8 @@ const LOCAL_ASSETS = [
   './icon-512.png',
   './locales/en.json',
   './locales/ja.json',
-  './locales/zh.json',
+  './locales/zh-Hans.json',
+  './locales/zh-Hant.json',
   './locales/ko.json',
   './locales/es.json',
   './src/main.js',
@@ -25,8 +26,7 @@ const LOCAL_ASSETS = [
   './src/constants.js',
 ];
 
-// jsdelivr serves React ESM modules (jsx-runtime, react-dom/client, etc.)
-const CDN_ORIGINS = ['cdn.jsdelivr.net'];
+const CDN_ORIGINS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(LOCAL_ASSETS)));
@@ -44,7 +44,6 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const { hostname } = new URL(e.request.url);
-
   if (CDN_ORIGINS.includes(hostname)) {
     e.respondWith(
       caches.open(CACHE).then((cache) =>
@@ -59,7 +58,6 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-
   e.respondWith(
     caches.match(e.request).then(
       (cached) => cached || fetch(e.request).catch(() => caches.match('./index.html'))
