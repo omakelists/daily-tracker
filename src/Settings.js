@@ -44,19 +44,14 @@ function TaskExtraFields({ task, onChange }) {
           jsx('span', { style: { fontSize: 10, color: 'var(--muted)' }, children: t('dayUnit') }),
         ],
       }),
-      jsx('input', {
-        type: 'url', value: task.url ?? '', placeholder: t('taskUrl'),
-        onChange: (e) => onChange('url', e.target.value),
-        style: { ...IS, width: 130, minWidth: 0 },
-      }),
     ],
   });
 }
 
 export function SettingsModal({ games, setGames, onClose, showConfirm }) {
-  const [newGame, setNewGame] = useState({ name: '', color: '#4a9eff', resetTime: '00:00', launchUrl: '' });
+  const [newGame, setNewGame] = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,  setShowNG]  = useState(false);
-  const [newTask, setNewTask] = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1, url: '' });
+  const [newTask, setNewTask] = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
   const [addTo,   setAddTo]   = useState(null);
   const importRef = useRef(null);
 
@@ -108,7 +103,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
   const addGame = () => {
     if (!newGame.name.trim()) return;
     setGames((g) => [...g, { id: uid(), ...newGame, resetTime: localToUtcHHMM(newGame.resetTime), tasks: [] }]);
-    setNewGame({ name: '', color: '#4a9eff', resetTime: '00:00', launchUrl: '' });
+    setNewGame({ name: '', color: '#4a9eff', resetTime: '00:00' });
     setShowNG(false);
   };
 
@@ -117,12 +112,12 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
   const delTask = (gid, tid)        => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm));
   const addTask = (gid) => {
     setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...newTask }] } : gm));
-    setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1, url: '' });
+    setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
     setAddTo(null);
   };
   const openAddTask = (gid) => {
     setAddTo(gid);
-    setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1, url: '' });
+    setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
   };
 
   // ── Game drag handlers ────────────────────────────────────────────────
@@ -207,7 +202,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
                 jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), style: { ...IS, flex: 1, minWidth: 80, fontWeight: 700 }, placeholder: t('gameName') }),
                 jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetLbl') }),
                 jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), style: { ...IS, width: 86, fontFamily: 'monospace' } }),
-                jsx('input', { type: 'url', value: game.launchUrl ?? '', placeholder: t('launchUrl'), onChange: (e) => upGame(game.id, 'launchUrl', e.target.value), style: { ...IS, flex: 1, minWidth: 100 } }),
                 jsx('button', { onClick: () => delGame(game.id, game.name), className: 'dt-btn dt-btn-danger', children: t('delete') }),
               ],
             }),
@@ -255,7 +249,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
                     jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), style: { ...IS, flex: 1, minWidth: 80 }, placeholder: t('gameName'), autoFocus: true }),
                     jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetLbl') }),
                     jsx('input', { type: 'time', value: newGame.resetTime, onChange: (e) => setNewGame((g) => ({ ...g, resetTime: e.target.value })), style: { ...IS, width: 86, fontFamily: 'monospace' } }),
-                    jsx('input', { type: 'url', value: newGame.launchUrl ?? '', placeholder: t('launchUrl'), onChange: (e) => setNewGame((g) => ({ ...g, launchUrl: e.target.value })), style: { ...IS, flex: 1, minWidth: 100 } }),
                   ],
                 }),
                 jsxs('div', {

@@ -21,9 +21,6 @@
   "deleteMsg": "「{name}」を削除しますか？",
   "deleteBtn": "削除する",
   "prevTip": "昨日のチェック",
-  "launchUrl": "起動URL",
-  "taskUrl": "URL",
-  "openLink": "開く",
   "taskAll": "全タスク",
   "types": {
     "daily": "デイリー",

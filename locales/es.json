@@ -21,9 +21,6 @@
   "deleteMsg": "¿Eliminar \"{name}\"?",
   "deleteBtn": "Eliminar",
   "prevTip": "Verificación de ayer",
-  "launchUrl": "URL de juego",
-  "taskUrl": "URL",
-  "openLink": "Abrir",
   "taskAll": "Todas las tareas",
   "types": {
     "daily": "Diario",

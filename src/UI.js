@@ -96,13 +96,4 @@ export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
   });
 }
 
-// ── LinkButton ────────────────────────────────────────────────────────
-export function LinkButton({ url, label }) {
-  if (!url) return null;
-  return jsx('a', {
-    href: url, target: '_blank', rel: 'noopener noreferrer', title: label ?? url,
-    className: 'dt-link-btn',
-    onClick: (e) => e.stopPropagation(),
-    children: '↗',
-  });
-}
+

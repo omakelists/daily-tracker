@@ -21,9 +21,6 @@
   "deleteMsg": "「{name}」을 삭제하시겠습니까?",
   "deleteBtn": "삭제",
   "prevTip": "어제의 체크",
-  "launchUrl": "실행 URL",
-  "taskUrl": "URL",
-  "openLink": "열기",
   "taskAll": "모든 작업",
   "types": {
     "daily": "데일리",

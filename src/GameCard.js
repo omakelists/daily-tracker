@@ -2,7 +2,7 @@ import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { t } from './i18n.js';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from './constants.js';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from './helpers.js';
-import { Row, PrevBar, LinkButton } from './UI.js';
+import { Row, PrevBar } from './UI.js';
 import { TaskRow } from './TaskRow.js';
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse }) {
@@ -82,7 +82,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
             jsx('span', { style: { fontSize: 11, color: 'var(--dim)' }, children: localReset }),
           ],
         }),
-        rightSlot: jsx(LinkButton, { url: game.launchUrl, label: t('launchUrl') }),
+        rightSlot: null,
       }),
 
       // ── Tasks ──────────────────────────────────────────────────────

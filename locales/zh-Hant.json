@@ -21,9 +21,6 @@
   "deleteMsg": "確定刪除「{name}」嗎？",
   "deleteBtn": "刪除",
   "prevTip": "昨天的打卡",
-  "launchUrl": "啟動連結",
-  "taskUrl": "連結",
-  "openLink": "開啟",
   "taskAll": "全部任務",
   "types": {
     "daily": "每日",

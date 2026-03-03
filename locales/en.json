@@ -21,9 +21,6 @@
   "deleteMsg": "Delete \"{name}\"?",
   "deleteBtn": "Delete",
   "prevTip": "Yesterday's check",
-  "launchUrl": "Launch URL",
-  "taskUrl": "URL",
-  "openLink": "Open",
   "taskAll": "All tasks",
   "types": {
     "daily": "Daily",

@@ -53,13 +53,11 @@ export const DEFAULT_GAMES = [
   {
     id: 'g1', name: 'Blue Archive', color: '#4a9eff',
     resetTime: '19:00',
-    launchUrl: '',
     tasks: [],
   },
   {
     id: 'g2', name: 'Genshin Impact', color: '#c8a96e',
     resetTime: '20:00',
-    launchUrl: '',
     tasks: [
       { id: 't1',  name: '',                    type: 'daily' },
       { id: 't2',  name: 'HoYoLAB',             type: 'webdaily',    webResetTime: '16:00' },
@@ -72,7 +70,6 @@ export const DEFAULT_GAMES = [
   {
     id: 'g3', name: 'Zenless Zone Zero', color: '#000000',
     resetTime: '20:00',
-    launchUrl: '',
     tasks: [
       { id: 't7',  name: '',             type: 'daily' },
       { id: 't8',  name: 'HoYoLAB',     type: 'webdaily', webResetTime: '16:00' },
@@ -83,7 +80,6 @@ export const DEFAULT_GAMES = [
   {
     id: 'g4', name: 'Arknight: Endfield', color: '#FF6666',
     resetTime: '20:00',
-    launchUrl: '',
     tasks: [
       { id: 't11', name: '',       type: 'daily' },
       { id: 't12', name: 'SKPORT', type: 'webdaily', webResetTime: '16:00' },

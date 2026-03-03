@@ -2,7 +2,7 @@ import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { t } from './i18n.js';
 import { DAILY_TYPES, utcToLocalHHMM } from './constants.js';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from './helpers.js';
-import { Row, PrevBar, LinkButton } from './UI.js';
+import { Row, PrevBar } from './UI.js';
 
 export function TaskRow({ task, game, checks, now, onToggle, cd }) {
   const isChecked   = !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
@@ -55,6 +55,6 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
           jsx('span', { style: { fontSize: 10, color: 'var(--dim)' }, children: t('everyDay', { day: task.monthlyResetDay ?? 1 }) }),
       ],
     }),
-    rightSlot: jsx(LinkButton, { url: task.url, label: t('openLink') }),
+    rightSlot: null,
   });
 }
