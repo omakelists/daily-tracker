@@ -11,7 +11,8 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
 
   const ms      = msUntilTaskReset(task, game, now);
   const h       = ms / 3600000;
-  const cdClass = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--cd-ok)';
+  // Same urgency thresholds and color tokens as game card header
+  const cdColor = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
   const showCD  = task.type === 'monthly' || task.type === 'halfmonthly' ||
     (task.type === 'webdaily' && task.webResetTime && task.webResetTime !== game.resetTime);
 
@@ -39,14 +40,15 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
           },
           children: task.name.trim() || t(`types.${task.type}`),
         }),
-        showCD && jsx('span', {
-          style: { fontSize: 11, color: cdClass, fontFamily: 'monospace', flexShrink: 0 },
-          children: `(${formatCountdown(ms, cd)})`,
-        }),
       ],
     }),
+    // meta: [⏱countdown?] [reset time / monthly day] — mirrors game card meta layout
     meta: jsxs(Fragment, {
       children: [
+        showCD && !isChecked && jsxs('span', {
+          style: { fontSize: 11, fontWeight: 600, color: cdColor, fontFamily: 'monospace', flexShrink: 0 },
+          children: ['⏱', formatCountdown(ms, cd)],
+        }),
         task.type === 'webdaily' && localWebReset && localWebReset !== utcToLocalHHMM(game.resetTime) &&
           jsx('span', { style: { fontSize: 10, color: 'var(--dim)' }, children: localWebReset }),
         task.type === 'monthly' &&

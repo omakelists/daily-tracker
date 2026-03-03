@@ -32,15 +32,14 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   const visColor = ensureContrast(game.color);
   const localReset = utcToLocalHHMM(game.resetTime);
 
-  // ── Accordion toggle ──────────────────────────────────────────────
-  const accordionBtn = hasDailyTasks
-    ? jsx('button', {
+  // ── Accordion indicator (visual only — the whole header row is the click target) ─
+  const accordionIcon = hasDailyTasks
+    ? jsx('span', {
         className: 'dt-accordion-btn',
-        onClick: () => onToggleCollapse(game.id),
-        title: collapsed ? 'Expand' : 'Collapse',
+        style: { pointerEvents: 'none' },   // row's onClick handles it; don't double-fire
         children: collapsed ? '▶' : '▼',
       })
-    : jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial });
+    : null;
 
   return jsxs('div', {
     className: `game-card${allDone ? ' game-card-done' : ''}`,
@@ -50,9 +49,15 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
       jsx(Row, {
         bg: `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`,
         borderBottom: hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none',
-        barSlot: accordionBtn,
+        // Clicking anywhere on the header row toggles collapse (except stopPropagation elements)
+        onClick: hasDailyTasks ? () => onToggleCollapse(game.id) : undefined,
+        style: hasDailyTasks ? { cursor: 'pointer' } : undefined,
+        // accordion icon in preSlot; prev-bar in barSlot — aligns with sub-task prev-bars
+        preSlot: accordionIcon,
+        barSlot: jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial }),
         checkbox: jsx('button', {
-          onClick: () => onToggle(null, game, true),
+          // stopPropagation so toggling the checkbox doesn't also collapse the card
+          onClick: (e) => { e.stopPropagation(); onToggle(null, game, true); },
           className: `dt-cb dt-cb-game${allTodayDone ? ' dt-cb-checked' : ''}`,
           children: allTodayDone ? '✓' : '',
         }),
@@ -67,16 +72,10 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           },
           children: game.name,
         }),
-        // meta: countdown first, then reset time (right-aligns reset time with task meta column)
+        // meta: countdown (hidden when all done) then reset time
         meta: jsxs(Fragment, {
           children: [
-            // Condensed prev-bar dot when accordion toggle is visible
-            hasDailyTasks && jsx('div', {
-              className: 'dt-prev-dot',
-              title: t('prevTip'),
-              style: { background: prevAll ? 'var(--prev-done)' : prevPartial ? 'var(--prev-partial)' : 'var(--prev-miss)' },
-            }),
-            jsxs('span', {
+            !allTodayDone && jsxs('span', {
               style: { fontSize: 11, fontWeight: 600, color: cdColor, fontFamily: 'monospace' },
               children: ['⏱', formatCountdown(ms, cd)],
             }),

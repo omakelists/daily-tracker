@@ -1,9 +1,10 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { t } from './i18n.js';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './storage.js';
-import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound } from './helpers.js';
+import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
+         msUntilTaskReset } from './helpers.js';
 import { ConfirmDialog } from './UI.js';
 import { GameCard } from './GameCard.js';
 import { SettingsModal } from './Settings.js';
@@ -18,10 +19,33 @@ export function App() {
   const [confirm,      setConfirm]      = useState(null);
   const [collapsed,    setCollapsed]    = useState(new Set());
 
+  // Track per-game all-done state across renders so we can detect reset transitions
+  const prevAllDoneRef = useRef({});
+
+  // 30-second heartbeat (fallback)
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(id);
   }, []);
+
+  // Precise wakeup: fire setNow exactly when the next task/game reset boundary is crossed
+  useEffect(() => {
+    if (!games) return;
+    let minMs = Infinity;
+    games.forEach((game) => {
+      const tasks = game.tasks.length
+        ? game.tasks
+        : [{ id: game.id + '_solo', type: 'daily' }];
+      tasks.forEach((task) => {
+        const ms = msUntilTaskReset(task, game, now);
+        if (ms > 0 && ms < minMs) minMs = ms;
+      });
+    });
+    if (!isFinite(minMs)) return;
+    // +200 ms buffer so the clock has clearly passed the boundary
+    const id = setTimeout(() => setNow(new Date()), minMs + 200);
+    return () => clearTimeout(id);
+  }, [now, games]);
 
   useEffect(() => {
     setGames(loadGames() ?? DEFAULT_GAMES);
@@ -43,21 +67,24 @@ export function App() {
     return dt.length > 0 && dt.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }, [checks, now, getDailyTasks]);
 
-  // Auto-collapse games that become all-done (they sort to the bottom)
+  // When now advances past a reset boundary, isAllDone flips true→false for that game.
+  // Detect that transition and auto-expand the card so pending tasks become visible.
   useEffect(() => {
     if (!games) return;
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      let changed = false;
-      games.forEach((game) => {
-        if (isAllDone(game) && !prev.has(game.id)) {
-          next.add(game.id);
-          changed = true;
-        }
-      });
-      return changed ? next : prev;
+    const toExpand = [];
+    games.forEach((game) => {
+      const done = isAllDone(game);
+      if (prevAllDoneRef.current[game.id] === true && !done) toExpand.push(game.id);
+      prevAllDoneRef.current[game.id] = done;
     });
-  }, [checks, games, isAllDone]);
+    if (toExpand.length) {
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        toExpand.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
+  }, [now, games, isAllDone]);
 
   const sorted = (games ?? []).slice().sort((a, b) => {
     const aD = isAllDone(a), bD = isAllDone(b);
@@ -65,6 +92,10 @@ export function App() {
   });
 
   const toggle = useCallback((taskId, game, isMaster = false) => {
+    // shouldCollapse is set synchronously inside the setChecks updater,
+    // then read immediately after — safe because React calls updaters synchronously.
+    let shouldCollapse = false;
+
     setChecks((prev) => {
       const next       = { ...prev };
       const dailyTasks = getDailyTasks(game);
@@ -72,7 +103,8 @@ export function App() {
       if (isMaster) {
         const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
         dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
-        if (!allDone) playAllDoneSound(); else playCheckSound();
+        if (!allDone) { playAllDoneSound(); shouldCollapse = true; }
+        else playCheckSound();
       } else {
         const task = allTasks.find((tk) => tk.id === taskId);
         if (!task) return prev;
@@ -82,12 +114,19 @@ export function App() {
         if (!was) {
           const fanfare = DAILY_TYPES.has(task.type) &&
             dailyTasks.every((tk) => { const k2 = checkKey(tk.id, getPeriodKey(tk, game, now)); return k2 === k ? true : !!prev[k2]; });
-          if (fanfare) playAllDoneSound(); else playCheckSound();
+          if (fanfare) { playAllDoneSound(); shouldCollapse = true; }
+          else playCheckSound();
         }
       }
       saveChecks(next);
       return next;
     });
+
+    // Auto-collapse only at the moment a game transitions to all-done.
+    // Never collapses again after the user manually expands it.
+    if (shouldCollapse) {
+      setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; });
+    }
   }, [now, getDailyTasks]);
 
   const toggleCollapse = useCallback((gameId) => {

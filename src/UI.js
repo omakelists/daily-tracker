@@ -9,18 +9,24 @@ export const IS = {
 
 // ── Row ─────────────────────────────────────────────────────────────
 /**
- * [barSlot] [checkbox] [content flex:1] [meta] [rightSlot]
- * Layout values come entirely from CSS (.dt-row, .dt-bar-slot, .dt-content, etc.)
+ * [preSlot?] [barSlot] [checkbox] [content flex:1] [meta] [rightSlot]
+ *
+ * preSlot – optional extra slot rendered before barSlot, same width as barSlot.
+ *           Used on game-card headers to place the accordion toggle there while
+ *           keeping the prev-bar in barSlot, so prev-bars align vertically with
+ *           sub-task prev-bars.
  */
-export function Row({ barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style }) {
+export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
   return jsxs('div', {
     className: `dt-row${className ? ` ${className}` : ''}`,
     style: { background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style },
+    onClick,
     children: [
+      preSlot != null && jsx('div', { className: 'dt-pre-slot', children: preSlot }),
       jsx('div', { className: 'dt-bar-slot', children: barSlot }),
       checkbox,
       jsx('div', { className: 'dt-content', children: content }),
-      meta    && jsx('div', { className: 'dt-meta',  children: meta }),
+      meta      && jsx('div', { className: 'dt-meta',  children: meta }),
       rightSlot && jsx('div', { className: 'dt-right', children: rightSlot }),
     ],
   });
@@ -90,6 +96,7 @@ export function LinkButton({ url, label }) {
   return jsx('a', {
     href: url, target: '_blank', rel: 'noopener noreferrer', title: label ?? url,
     className: 'dt-link-btn',
+    onClick: (e) => e.stopPropagation(),
     children: '↗',
   });
 }

@@ -4,7 +4,8 @@ A simple TODO app for tracking game daily/weekly/monthly tasks.
 
 > **Note:** This project was generated with the assistance of [Claude](https://claude.ai) by Anthropic.
 
-[![Preview](preview.png) **Demo**](https://omakelists.github.io/daily-tracker)
+[![Preview](preview.png)](https://omakelists.github.io/daily-tracker)
+[**Demo**](https://omakelists.github.io/daily-tracker)
 
 ## Supported Languages
 
