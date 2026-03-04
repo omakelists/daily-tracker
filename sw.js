@@ -6,6 +6,8 @@ const LOCAL_ASSETS = [
   './style.css',
   './manifest.json',
   './version.json',
+  './favicon.ico',
+  './favicon-32.png',
   './icon-192.png',
   './icon-512.png',
   './locales/en.json',
