@@ -12,15 +12,18 @@ const s = {
   card:     css({ borderRadius: 12, marginBottom: 10, overflow: 'hidden', border: 'var(--card-border) solid var(--border)', transition: 'opacity 0.5s', position: 'relative' }),
   cardDone: css({ opacity: 0.62 }),
 
-  // Background image layer — absolute, fills the card, sits behind content
+  // Background image layer — fully opaque image
   bgLayer: css({
     position: 'absolute', inset: 0,
     backgroundSize: 'cover', backgroundPosition: 'center',
     zIndex: 0,
   }),
 
-  // Content wrapper — sits above bg layer
-  content: css({ position: 'relative', zIndex: 1 }),
+  // Black overlay on top of image; opacity = 1 - bgOpacity (inline style)
+  bgOverlay: css({ position: 'absolute', inset: 0, background: 'black', zIndex: 1 }),
+
+  // Content wrapper — sits above both layers
+  content: css({ position: 'relative', zIndex: 2 }),
 
   accordionBtn: css({
     width: 'var(--bar-slot)', height: 'var(--bar-slot)',
@@ -85,8 +88,11 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
       // ── Background image layer ────────────────────────────────
       bgDataUrl && jsx('div', {
         className: s.bgLayer,
-        style: { backgroundImage: `url(${bgDataUrl})`, opacity: bgOpacity },
+        style: { backgroundImage: `url(${bgDataUrl})` },
       }),
+
+      // ── Black overlay (dims the image) ───────────────────────
+      bgDataUrl && jsx('div', { className: s.bgOverlay, style: { opacity: 1 - bgOpacity } }),
 
       // ── All content above bg layer ────────────────────────────
       jsxs('div', {
