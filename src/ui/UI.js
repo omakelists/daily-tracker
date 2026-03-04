@@ -58,11 +58,11 @@ export const sharedStyles = {
 
   // Type badges
   badge:           css({ fontSize: 10, borderRadius: 4, padding: '1px 5px', flexShrink: 0, border: '1px solid transparent' }),
-  badgeDaily:       css({ color: 'var(--type-daily)',       background: 'rgba(88,166,255,.09)',  borderColor: 'rgba(88,166,255,.25)' }),
-  badgeWeekly:      css({ color: 'var(--type-weekly)',      background: 'rgba(188,140,255,.09)', borderColor: 'rgba(188,140,255,.25)' }),
-  badgeWebdaily:    css({ color: 'var(--type-webdaily)',    background: 'rgba(63,185,80,.09)',   borderColor: 'rgba(63,185,80,.25)' }),
-  badgeMonthly:     css({ color: 'var(--type-monthly)',     background: 'rgba(255,123,114,.09)', borderColor: 'rgba(255,123,114,.25)' }),
-  badgeHalfmonthly: css({ color: 'var(--type-halfmonthly)', background: 'rgba(255,166,87,.09)',  borderColor: 'rgba(255,166,87,.25)' }),
+  badgeDaily:       css({ color: 'var(--type-daily)',       background: 'rgba(0,0,0,0.4)',       borderColor: '#3a6ea8' }),
+  badgeWeekly:      css({ color: 'var(--type-weekly)',      background: 'rgba(0,0,0,0.4)',       borderColor: '#7a5aaa' }),
+  badgeWebdaily:    css({ color: 'var(--type-webdaily)',    background: 'rgba(0,0,0,0.4)',       borderColor: '#2a7a35' }),
+  badgeMonthly:     css({ color: 'var(--type-monthly)',     background: 'rgba(0,0,0,0.4)',       borderColor: '#a8453f' }),
+  badgeHalfmonthly: css({ color: 'var(--type-halfmonthly)', background: 'rgba(0,0,0,0.4)',       borderColor: '#a86030' }),
 
   // Buttons
   btn:        css({ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--muted)', padding: '5px 10px', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }),

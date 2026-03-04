@@ -38,7 +38,7 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   --border:      #30363d;
   --text:        #e6edf3;
   --muted:       #8b949e;
-  --dim:         #6e7681;
+  --dim:         #ccd0d5;
   --link:        #58a6ff;
   --purple:      #bc8cff;
   --green:       #3fb950;
@@ -51,9 +51,9 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   --prev-partial: #e3b341;
   --prev-miss:    #6e3535;
 
-  --cd-urgent: #f85149;
-  --cd-warn:   #e3b341;
-  --cd-ok:     #6e7681;
+  --cd-urgent: #ff7474;
+  --cd-warn:   #ffd600;
+  --cd-ok:     #ccd0d5;
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────── */
