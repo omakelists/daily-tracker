@@ -9,268 +9,290 @@ const s = {
     background: 'rgba(0,0,0,0.92)',
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
-    padding: 20,
+    padding: 20, gap: 10,
+    overflowY: 'auto',
   }),
-  heading: css({ color: 'white', fontSize: 14, fontWeight: 700, marginBottom: 10, textAlign: 'center' }),
-  hint:    css({ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginBottom: 10, textAlign: 'center' }),
-  // Transform toolbar
-  toolbar: css({ display: 'flex', gap: 6, marginBottom: 10 }),
+  heading: css({ color: 'white', fontSize: 14, fontWeight: 700, textAlign: 'center' }),
+  hint:    css({ color: 'rgba(255,255,255,0.45)', fontSize: 11, textAlign: 'center' }),
+  toolbar: css({ display: 'flex', gap: 6 }),
   toolBtn: css({
     background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: 6, color: 'white', padding: '5px 10px', fontSize: 14,
+    borderRadius: 6, color: 'white', padding: '5px 12px', fontSize: 16,
     cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1,
     transition: 'background 0.12s',
-    '&:hover': { background: 'rgba(255,255,255,0.2)' },
+    '&:hover': { background: 'rgba(255,255,255,0.22)' },
   }),
-  // inline-block shrinks wrapper to exactly image rendered size
-  wrap: css({
-    position: 'relative',
-    display: 'inline-block',
-    lineHeight: 0,
-    touchAction: 'none',
-    cursor: 'crosshair',
-    maxWidth: '100%',
-  }),
-  img: css({
+  // The crop canvas: set to display size via inline style
+  cropCanvas: css({
     display: 'block',
+    cursor: 'crosshair',
+    touchAction: 'none',
+    // Prevent the canvas from exceeding viewport
     maxWidth: 'min(88vw, 700px)',
     maxHeight: '55vh',
-    objectFit: 'contain',
   }),
-  canvas: css({
-    position: 'absolute',
-    top: 0, left: 0,
-    pointerEvents: 'none',
-  }),
-  actions: css({ display: 'flex', gap: 12, marginTop: 14 }),
+  actions: css({ display: 'flex', gap: 12 }),
 };
 
+const MAX_DISPLAY = 700; // px — max display dimension
+
 export function CropModal({ file, onConfirm, onCancel }) {
-  const [imageSrc, setImageSrc] = useState(null);
-  const [disp, setDisp] = useState({ w: 0, h: 0 });
-  const [nat,  setNat]  = useState({ w: 0, h: 0 });
+  // transformedBitmap: ImageBitmap of the full image with flips/rotation baked in
+  const [transformedBitmap, setTransformedBitmap] = useState(null);
+  // dispSize: the actual CSS display size of the crop canvas (≤ MAX_DISPLAY)
+  const [dispSize, setDispSize] = useState({ w: 0, h: 0 });
+  // crop: selection in dispSize-space
   const [crop, setCrop] = useState(null);
 
-  // Transform state
-  const [flipH, setFlipH]  = useState(false);
-  const [flipV, setFlipV]  = useState(false);
-  const [rot,   setRot]    = useState(0);   // 0 | 90 | 180 | 270
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
+  const [rot,   setRot]   = useState(0); // 0 | 90 | 180 | 270
 
-  const dragRef   = useRef(null);
-  const imgRef    = useRef(null);
-  const canvasRef = useRef(null);
+  // Raw HTMLImageElement loaded once from the file
+  const rawImgRef   = useRef(null);
+  const cropCanvasRef = useRef(null);
+  const dragRef     = useRef(null); // { mode:'draw'|'move', ox,oy,cx,cy }
 
-  // ── Load file ─────────────────────────────────────────────────
+  // ── 1. Load the file into a hidden <img> ─────────────────────
   useEffect(() => {
     const url = URL.createObjectURL(file);
-    setImageSrc(url);
-    return () => URL.revokeObjectURL(url);
+    const img = new Image();
+    img.onload = () => {
+      rawImgRef.current = img;
+      URL.revokeObjectURL(url);
+      rebuildBitmap(img, false, false, 0);
+    };
+    img.src = url;
   }, [file]);
 
-  // ── Measure image after render ────────────────────────────────
-  const onImgLoad = () => {
-    const img = imgRef.current;
-    const dw = img.offsetWidth, dh = img.offsetHeight;
-    setNat({ w: img.naturalWidth, h: img.naturalHeight });
-    setDisp({ w: dw, h: dh });
-    setCrop({ x: 0, y: 0, w: dw, h: dh });
-  };
+  // ── 2. Rebuild the transformed bitmap whenever transforms change ──
+  const rebuildBitmap = useCallback((imgEl, fH, fV, r) => {
+    const nw = imgEl.naturalWidth, nh = imgEl.naturalHeight;
+    const swapped = r === 90 || r === 270;
+    const bw = swapped ? nh : nw;
+    const bh = swapped ? nw : nh;
 
-  // Re-measure when rotation changes (90°/270° swaps displayed width/height)
+    const tmp = document.createElement('canvas');
+    tmp.width  = bw;
+    tmp.height = bh;
+    const ctx = tmp.getContext('2d');
+    ctx.save();
+    ctx.translate(bw / 2, bh / 2);
+    if (r)  ctx.rotate(r * Math.PI / 180);
+    if (fH) ctx.scale(-1, 1);
+    if (fV) ctx.scale(1, -1);
+    ctx.drawImage(imgEl, -nw / 2, -nh / 2, nw, nh);
+    ctx.restore();
+
+    createImageBitmap(tmp).then((bmp) => {
+      setTransformedBitmap(bmp);
+      // Compute display size (fit within MAX_DISPLAY × 55 vh equivalent)
+      const maxW = Math.min(MAX_DISPLAY, window.innerWidth * 0.88);
+      const maxH = window.innerHeight * 0.55;
+      const scale = Math.min(1, maxW / bw, maxH / bh);
+      const dw = Math.floor(bw * scale);
+      const dh = Math.floor(bh * scale);
+      setDispSize({ w: dw, h: dh });
+      setCrop({ x: 0, y: 0, w: dw, h: dh });
+    });
+  }, []);
+
+  // Rebuild when user changes a transform
   useEffect(() => {
-    if (!imgRef.current || !disp.w) return;
-    const img = imgRef.current;
-    const dw = img.offsetWidth, dh = img.offsetHeight;
-    setDisp({ w: dw, h: dh });
-    setCrop({ x: 0, y: 0, w: dw, h: dh });
-  }, [rot]);
+    if (rawImgRef.current) rebuildBitmap(rawImgRef.current, flipH, flipV, rot);
+  }, [flipH, flipV, rot, rebuildBitmap]);
 
-  // ── CSS transform string for the preview image ────────────────
-  const transform = [
-    rot  ? `rotate(${rot}deg)` : '',
-    flipH ? 'scaleX(-1)' : '',
-    flipV ? 'scaleY(-1)' : '',
-  ].filter(Boolean).join(' ') || 'none';
-
-  // For 90°/270° rotations the image's visual width/height are swapped;
-  // we need to constrain the *other* axis so it still fits in the box.
-  const swapped = rot === 90 || rot === 270;
-
-  // ── Draw overlay ──────────────────────────────────────────────
+  // ── 3. Paint crop canvas whenever bitmap, dispSize or crop changes ──
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !disp.w || !disp.h) return;
-    canvas.width  = disp.w;
-    canvas.height = disp.h;
-    canvas.style.width  = `${disp.w}px`;
-    canvas.style.height = `${disp.h}px`;
+    const canvas = cropCanvasRef.current;
+    if (!canvas || !transformedBitmap || !dispSize.w) return;
+
+    // Internal resolution = display size (1:1 pixel mapping, no DPR scaling)
+    canvas.width  = dispSize.w;
+    canvas.height = dispSize.h;
 
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, disp.w, disp.h);
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(0, 0, disp.w, disp.h);
+
+    // Draw transformed image scaled to display size
+    ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h);
+
+    // Dark overlay
+    ctx.fillStyle = 'rgba(0,0,0,0.52)';
+    ctx.fillRect(0, 0, dispSize.w, dispSize.h);
 
     if (crop && crop.w > 2 && crop.h > 2) {
       const { x, y, w, h } = crop;
-      ctx.clearRect(x, y, w, h);
+      // Clear selection area back to the image
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillRect(x, y, w, h);
+      ctx.restore();
+      // Re-draw image pixels in the selection only
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+      ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h);
+      ctx.restore();
+
+      // Border
       ctx.strokeStyle = 'rgba(255,255,255,0.9)';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5);
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+
+      // Rule-of-thirds
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
       ctx.lineWidth = 0.5;
       for (let i = 1; i < 3; i++) {
-        ctx.beginPath(); ctx.moveTo(x + w * i / 3, y); ctx.lineTo(x + w * i / 3, y + h); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x, y + h * i / 3); ctx.lineTo(x + w, y + h * i / 3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + w*i/3, y); ctx.lineTo(x + w*i/3, y+h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, y + h*i/3); ctx.lineTo(x+w, y + h*i/3); ctx.stroke();
       }
+
+      // Corner handles
       const hs = 8;
       ctx.fillStyle = 'white';
       [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy]) =>
         ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs));
+
+      // Centre move handle
+      const cx2 = x + w/2, cy2 = y + h/2;
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✥', cx2, cy2);
     }
-  }, [crop, disp]);
+  }, [transformedBitmap, dispSize, crop]);
 
-  // ── Coordinate helper (relative to <img> element) ─────────────
+  // ── 4. Pointer coordinate helper ─────────────────────────────
   const getRelXY = useCallback((e) => {
-    const rect = imgRef.current.getBoundingClientRect();
+    const canvas = cropCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    // getBoundingClientRect gives CSS px; canvas.width gives internal px.
+    // They're the same here (we set canvas.width = dispSize.w), but guard anyway.
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
     return {
-      x: Math.max(0, Math.min(disp.w, e.clientX - rect.left)),
-      y: Math.max(0, Math.min(disp.h, e.clientY - rect.top)),
+      x: Math.max(0, Math.min(dispSize.w, (e.clientX - rect.left)  * scaleX)),
+      y: Math.max(0, Math.min(dispSize.h, (e.clientY - rect.top)   * scaleY)),
     };
-  }, [disp]);
+  }, [dispSize]);
 
-  const inCrop = useCallback((px, py) =>
-    !!crop && px >= crop.x && px <= crop.x + crop.w &&
-              py >= crop.y && py <= crop.y + crop.h
-  , [crop]);
+  // Is (px,py) within the centre move handle?
+  const inMoveHandle = useCallback((px, py) => {
+    if (!crop || crop.w < 10 || crop.h < 10) return false;
+    const cx2 = crop.x + crop.w / 2;
+    const cy2 = crop.y + crop.h / 2;
+    return Math.hypot(px - cx2, py - cy2) <= 14;
+  }, [crop]);
 
-  // ── Pointer handlers ──────────────────────────────────────────
+  // ── 5. Pointer handlers ───────────────────────────────────────
   const onPointerDown = useCallback((e) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     const { x, y } = getRelXY(e);
-    if (inCrop(x, y)) {
+
+    if (inMoveHandle(x, y)) {
+      // Move existing crop
       dragRef.current = { mode: 'move', ox: x, oy: y, cx: crop.x, cy: crop.y };
     } else {
+      // Always start drawing a new crop rectangle
       dragRef.current = { mode: 'draw', ox: x, oy: y };
       setCrop({ x, y, w: 0, h: 0 });
     }
-  }, [getRelXY, inCrop, crop]);
+  }, [getRelXY, inMoveHandle, crop]);
 
   const onPointerMove = useCallback((e) => {
     if (!dragRef.current) return;
     const d = dragRef.current;
     const { x, y } = getRelXY(e);
+
     if (d.mode === 'draw') {
-      const nx = Math.min(d.ox, x), ny = Math.min(d.oy, y);
-      setCrop({ x: nx, y: ny,
-        w: Math.min(Math.abs(x - d.ox), disp.w - nx),
-        h: Math.min(Math.abs(y - d.oy), disp.h - ny) });
+      const nx = Math.min(d.ox, x);
+      const ny = Math.min(d.oy, y);
+      setCrop({
+        x: nx, y: ny,
+        w: Math.min(Math.abs(x - d.ox), dispSize.w - nx),
+        h: Math.min(Math.abs(y - d.oy), dispSize.h - ny),
+      });
     } else {
       setCrop((prev) => {
         if (!prev) return prev;
-        return { ...prev,
-          x: Math.max(0, Math.min(disp.w - prev.w, d.cx + (x - d.ox))),
-          y: Math.max(0, Math.min(disp.h - prev.h, d.cy + (y - d.oy))) };
+        return {
+          ...prev,
+          x: Math.max(0, Math.min(dispSize.w - prev.w, d.cx + (x - d.ox))),
+          y: Math.max(0, Math.min(dispSize.h - prev.h, d.cy + (y - d.oy))),
+        };
       });
     }
-  }, [getRelXY, disp]);
+  }, [getRelXY, dispSize]);
 
   const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
 
-  // ── Transform buttons ─────────────────────────────────────────
-  const rotateCW  = () => { setRot((r) => (r + 90)  % 360); };
-  const rotateCCW = () => { setRot((r) => (r + 270) % 360); };
+  // ── 6. Cursor: pointer over move handle, crosshair elsewhere ─
+  const onPointerMoveForCursor = useCallback((e) => {
+    const canvas = cropCanvasRef.current;
+    if (!canvas) return;
+    const { x, y } = getRelXY(e);
+    canvas.style.cursor = inMoveHandle(x, y) ? 'move' : 'crosshair';
+    onPointerMove(e);
+  }, [getRelXY, inMoveHandle, onPointerMove]);
 
-  // ── Export ────────────────────────────────────────────────────
-  // We draw the original image onto an offscreen canvas applying all
-  // transforms, then crop the requested region from that result.
+  // ── 7. Export ─────────────────────────────────────────────────
   const handleConfirm = () => {
-    if (!crop || crop.w < 5 || crop.h < 5) { onCancel(); return; }
-
-    const img = imgRef.current;
-    const nw = img.naturalWidth, nh = img.naturalHeight;
-
-    // 1. Build a "transformed" canvas of the full image
-    const swapped90 = rot === 90 || rot === 270;
-    const tW = swapped90 ? nh : nw;
-    const tH = swapped90 ? nw : nh;
-    const tCanvas = document.createElement('canvas');
-    tCanvas.width  = tW;
-    tCanvas.height = tH;
-    const tCtx = tCanvas.getContext('2d');
-    tCtx.save();
-    tCtx.translate(tW / 2, tH / 2);
-    if (rot)   tCtx.rotate(rot * Math.PI / 180);
-    if (flipH) tCtx.scale(-1, 1);
-    if (flipV) tCtx.scale(1, -1);
-    tCtx.drawImage(img, -nw / 2, -nh / 2, nw, nh);
-    tCtx.restore();
-
-    // 2. Map crop rect (in disp-space) to tCanvas-space
-    const scaleX = tW / disp.w;
-    const scaleY = tH / disp.h;
+    if (!crop || crop.w < 5 || crop.h < 5 || !transformedBitmap) { onCancel(); return; }
+    // Map from disp-space to bitmap-space
+    const scaleX = transformedBitmap.width  / dispSize.w;
+    const scaleY = transformedBitmap.height / dispSize.h;
     const sx = Math.round(crop.x * scaleX);
     const sy = Math.round(crop.y * scaleY);
     const sw = Math.round(crop.w * scaleX);
     const sh = Math.round(crop.h * scaleY);
 
-    // 3. Write final cropped + resized output
     const MAX_PX = 1920;
     const ratio  = Math.min(1, MAX_PX / Math.max(sw, sh));
     const out    = document.createElement('canvas');
     out.width  = Math.round(sw * ratio);
     out.height = Math.round(sh * ratio);
-    out.getContext('2d').drawImage(tCanvas, sx, sy, sw, sh, 0, 0, out.width, out.height);
+    out.getContext('2d').drawImage(transformedBitmap, sx, sy, sw, sh, 0, 0, out.width, out.height);
     onConfirm(out.toDataURL('image/jpeg', 0.85));
   };
 
-  if (!imageSrc) return null;
+  const loading = !transformedBitmap || !dispSize.w;
 
   return jsx('div', {
     className: s.overlay,
-    children: jsxs('div', {
-      style: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
-      children: [
-        jsx('div', { className: s.heading, children: '📐 トリミング範囲を選択' }),
-        jsx('div', { className: s.hint,   children: 'ドラッグして範囲を描く ／ 内側をドラッグして移動' }),
+    children: [
+      jsx('div', { className: s.heading, children: '📐 トリミング範囲を選択' }),
+      jsx('div', { className: s.hint, children: 'ドラッグで範囲を描く ／ 中央の ✥ をドラッグして移動' }),
 
-        // ── Transform toolbar ─────────────────────────────────
-        jsxs('div', { className: s.toolbar, children: [
-          jsx('button', { className: s.toolBtn, onClick: () => setFlipH((v) => !v), title: '左右反転',       children: '↔' }),
-          jsx('button', { className: s.toolBtn, onClick: () => setFlipV((v) => !v), title: '上下反転',       children: '↕' }),
-          jsx('button', { className: s.toolBtn, onClick: rotateCCW,                 title: '反時計回りに回転', children: '↺' }),
-          jsx('button', { className: s.toolBtn, onClick: rotateCW,                  title: '時計回りに回転',  children: '↻' }),
-        ]}),
+      // Transform toolbar
+      jsxs('div', { className: s.toolbar, children: [
+        jsx('button', { className: s.toolBtn, onClick: () => setFlipH(v => !v), title: '左右反転',        children: '↔' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setFlipV(v => !v), title: '上下反転',        children: '↕' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+270)%360), title: '反時計回り', children: '↺' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+90)%360),  title: '時計回り',   children: '↻' }),
+      ]}),
 
-        // ── Image + canvas overlay ────────────────────────────
-        jsxs('div', {
-          className: s.wrap,
-          onPointerDown, onPointerMove, onPointerUp,
-          children: [
-            jsx('img', {
-              ref: imgRef, src: imageSrc,
-              className: s.img,
-              onLoad: onImgLoad,
-              draggable: false,
-              style: {
-                transform,
-                // For 90°/270° the rotated image overflows its box unless we
-                // constrain the short axis. We swap maxWidth/maxHeight so the
-                // browser re-lays out and offsetWidth/Height reflect the visual size.
-                maxWidth:  swapped ? 'min(55vh, 700px)' : 'min(88vw, 700px)',
-                maxHeight: swapped ? 'min(88vw, 700px)' : '55vh',
-              },
-            }),
-            disp.w > 0 && jsx('canvas', { ref: canvasRef, className: s.canvas }),
-          ],
-        }),
+      // Crop canvas (image + overlay combined)
+      loading
+        ? jsx('div', { style: { color: 'rgba(255,255,255,0.5)', fontSize: 13 }, children: '読み込み中…' })
+        : jsx('canvas', {
+            ref: cropCanvasRef,
+            className: s.cropCanvas,
+            style: { width: dispSize.w, height: dispSize.h },
+            onPointerDown, onPointerMove: onPointerMoveForCursor, onPointerUp,
+          }),
 
-        // ── Action buttons ────────────────────────────────────
-        jsxs('div', { className: s.actions, children: [
-          jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: '✓ 確定' }),
-          jsx('button', { onClick: onCancel,      className: ss.btn,                    children: 'キャンセル' }),
-        ]}),
-      ],
-    }),
+      // Action buttons
+      jsxs('div', { className: s.actions, children: [
+        jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: '✓ 確定' }),
+        jsx('button', { onClick: onCancel,      className: ss.btn,                    children: 'キャンセル' }),
+      ]}),
+    ],
   });
 }
