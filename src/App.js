@@ -188,33 +188,27 @@ export function App() {
   const showConfirm = (msg, fn) => setConfirm({ message: msg, onConfirm: fn });
 
   if (!games) {
-    return jsx('div', {
-      style: { background: 'var(--bg-app)', color: 'var(--muted)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-      children: t('loading'),
-    });
+    return jsx('div', { className: 'dt-app-loading', children: t('loading') });
   }
 
   return jsxs('div', {
-    style: { minHeight: '100vh', background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%)', color: 'var(--text)' },
+    className: 'dt-app-root',
     children: [
       jsxs('header', {
-        style: { background: 'var(--bg-header)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 },
+        className: 'dt-header',
         children: [
           jsxs('div', {
-            style: { display: 'flex', alignItems: 'center', gap: 10 },
+            className: 'dt-header-left',
             children: [
+              jsx('span', { className: 'dt-app-title', children: t('appTitle') }),
               jsx('span', {
-                style: { fontSize: 17, fontWeight: 800, background: 'linear-gradient(90deg, var(--link), var(--purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-                children: t('appTitle'),
-              }),
-              jsx('span', {
-                style: { fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' },
+                className: 'dt-header-clock',
                 children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               }),
             ],
           }),
           jsxs('div', {
-            style: { display: 'flex', gap: 8 },
+            className: 'dt-header-actions',
             children: [
               updateInfo && jsx('button', {
                 onClick: () => setConfirm({
@@ -233,7 +227,7 @@ export function App() {
         ],
       }),
       jsxs('main', {
-        style: { padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto' },
+        className: 'dt-main',
         children: [
           sorted.map((game) => jsx(GameCard, {
             game, checks, now, onToggle: toggle,
@@ -243,10 +237,7 @@ export function App() {
             collapsed: collapsed.has(game.id),
             onToggleCollapse: toggleCollapse,
           }, game.id)),
-          games.length === 0 && jsx('div', {
-            style: { textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' },
-            children: t('noGames'),
-          }),
+          games.length === 0 && jsx('div', { className: 'dt-no-games', children: t('noGames') }),
         ],
       }),
       showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm }),

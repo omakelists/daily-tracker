@@ -75,10 +75,11 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
         meta: jsxs(Fragment, {
           children: [
             !allTodayDone && jsxs('span', {
-              style: { fontSize: 11, fontWeight: 600, color: cdColor, fontFamily: 'monospace' },
+              className: 'dt-card-countdown',
+              style: { color: cdColor },
               children: ['⏱', formatCountdown(ms, cd)],
             }),
-            jsx('span', { style: { fontSize: 11, color: 'var(--dim)' }, children: localReset }),
+            jsx('span', { className: 'dt-card-reset', children: localReset }),
           ],
         }),
         rightSlot: null,
@@ -90,7 +91,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
         children: [
           visibleDaily.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
           visibleDaily.length > 0 && visiblePeriod.length > 0 && jsx('div', {
-            style: { margin: '5px 0', borderTop: '1px solid rgba(255,255,255,0.07)', position: 'relative' },
+            className: 'dt-card-divider',
             children: jsxs('span', { className: 'sep-label', children: ['— ', t('periodic'), ' —'] }),
           }),
           visiblePeriod.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),

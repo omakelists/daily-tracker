@@ -43,7 +43,7 @@ export function CalendarModal({ games, checks, now, onClose }) {
     children: jsxs('div', {
       children: [
         jsxs('div', {
-          style: { display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
+          className: 'dt-cal-filters',
           children: [
             jsx('select', {
               value: selGame ?? '', onChange: (e) => setSelGame(e.target.value),
@@ -61,17 +61,17 @@ export function CalendarModal({ games, checks, now, onClose }) {
           ],
         }),
         jsxs('div', {
-          style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+          className: 'dt-cal-header',
           children: [
             jsx('button', { onClick: () => nav(-1), className: 'dt-btn', children: '‹' }),
-            jsx('span', { style: { fontWeight: 700, fontSize: 15 }, children: new Date(Date.UTC(year, month, 1)).toLocaleDateString([], { year: 'numeric', month: 'long' }) }),
+            jsx('span', { className: 'dt-cal-month', children: new Date(Date.UTC(year, month, 1)).toLocaleDateString([], { year: 'numeric', month: 'long' }) }),
             jsx('button', { onClick: () => nav(1),  className: 'dt-btn', children: '›' }),
           ],
         }),
         jsx('div', {
-          style: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 },
+          className: 'dt-cal-grid',
           children: [
-            ...dayNames.map((d) => jsx('div', { style: { textAlign: 'center', fontSize: 11, color: 'var(--muted)', padding: '3px 0' }, children: d }, d)),
+            ...dayNames.map((d) => jsx('div', { className: 'dt-cal-day-name', children: d }, d)),
             ...Array.from({ length: firstDay }, (_, i) => jsx('div', {}, `e${i}`)),
             ...Array.from({ length: daysInMonth }, (_, i) => {
               const day = i + 1;
@@ -91,14 +91,14 @@ export function CalendarModal({ games, checks, now, onClose }) {
           ],
         }),
         jsx('div', {
-          style: { display: 'flex', gap: 14, marginTop: 12, fontSize: 12, color: 'var(--muted)' },
+          className: 'dt-cal-legend',
           children: [
             ['var(--checked-bg)', t('allDone')],
             ['#1f3a27',          t('partial')],
             ['rgba(255,255,255,0.05)', t('incomplete')],
           ].map(([bg, lbl]) => jsxs('span', {
             children: [
-              jsx('span', { style: { display: 'inline-block', width: 11, height: 11, background: bg, border: bg.includes('rgba') ? '1px solid rgba(255,255,255,0.1)' : 'none', borderRadius: 3, marginRight: 4 } }),
+              jsx('span', { className: 'dt-cal-legend-dot', style: { background: bg, border: bg.includes('rgba') ? '1px solid rgba(255,255,255,0.1)' : 'none' } }),
               lbl,
             ],
           }, lbl)),

@@ -22,8 +22,7 @@ function TaskExtraFields({ task, onChange }) {
     children: [
       task.type === 'webdaily' && jsxs(Fragment, {
         children: [
-          // Use 'resetLbl' (shorter "Reset") instead of 'webReset' ("Web reset")
-          jsx('span', { style: { fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetLbl') }),
+          jsx('span', { className: 'dt-task-extra-lbl', children: t('resetLbl') }),
           jsx('input', {
             type: 'time',
             value: utcToLocalHHMM(task.webResetTime ?? '00:00'),
@@ -34,14 +33,14 @@ function TaskExtraFields({ task, onChange }) {
       }),
       task.type === 'monthly' && jsxs(Fragment, {
         children: [
-          jsx('span', { style: { fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetDay') }),
+          jsx('span', { className: 'dt-task-extra-lbl', children: t('resetDay') }),
           jsx('input', {
             type: 'number', min: '1', max: '28',
             value: task.monthlyResetDay ?? 1,
             onChange: (e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1))),
             style: { ...IS, width: 52, fontFamily: 'monospace', textAlign: 'center' },
           }),
-          jsx('span', { style: { fontSize: 10, color: 'var(--muted)' }, children: t('dayUnit') }),
+          jsx('span', { className: 'dt-task-extra-lbl', children: t('dayUnit') }),
         ],
       }),
     ],
@@ -181,32 +180,33 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
     }),
     onClose,
     children: jsx('div', {
-      style: { display: 'flex', flexDirection: 'column', gap: 0 },
+      className: 'dt-settings-list',
       children: [
         ...games.map((game, gi) => jsxs('div', {
           draggable: true,
           onDragStart: onGameDS(gi), onDragOver: onGameDO(gi),
           onDrop: onGameDrp(gi),    onDragEnd: onGameDE,
+          className: 'game-card',
           style: {
             ...gameDrop(gi),
-            background: 'var(--bg-surface)', border: `1px solid ${game.color}44`,
-            borderRadius: 10, overflow: 'hidden', marginBottom: 10,
+            border: `1px solid ${game.color}44`,
+            marginBottom: 10,
             opacity: dgFrom === gi ? 0.4 : 1, transition: 'opacity 0.15s',
           },
           children: [
             jsxs('div', {
-              style: { padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' },
+              className: 'dt-game-header',
               children: [
                 DragHandle,
                 jsx('input', { type: 'color', value: game.color, onChange: (e) => upGame(game.id, 'color', e.target.value), style: { width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 } }),
-                jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), style: { ...IS, flex: 1, minWidth: 0, fontWeight: 700 }, placeholder: t('gameName') }),
-                jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }, children: t('resetLbl') }),
+                jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), className: 'dt-game-name-input', style: IS, placeholder: t('gameName') }),
+                jsx('span', { className: 'dt-game-reset-lbl', children: t('resetLbl') }),
                 jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), style: { ...IS, width: 86, fontFamily: 'monospace', flexShrink: 0 } }),
                 jsx('button', { onClick: () => delGame(game.id, game.name), className: 'dt-btn dt-btn-danger', children: '✕' }),
               ],
             }),
             jsxs('div', {
-              style: { padding: '8px 13px 10px' },
+              className: 'dt-game-body',
               children: [
                 ...game.tasks.map((task, ti) => jsxs('div', {
                   draggable: true,
@@ -232,7 +232,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
                         jsx('button', { onClick: () => setAddTo(null),    className: 'dt-btn',               children: '✕' }),
                       ],
                     })
-                  : jsx('button', { onClick: () => openAddTask(game.id), className: 'dt-btn dt-btn-add', style: { marginTop: 4 }, children: t('addTask') }),
+                  : jsx('button', { onClick: () => openAddTask(game.id), className: 'dt-btn dt-btn-add dt-add-task-btn', children: t('addTask') }),
               ],
             }),
           ],
@@ -240,22 +240,22 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
 
         showNG
           ? jsxs('div', {
-              style: { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 10 },
+              className: 'dt-new-game-box',
               children: [
                 jsxs('div', {
-                  style: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 },
+                  className: 'dt-new-game-header',
                   children: [
-                    jsx('input', { type: 'color', value: newGame.color, onChange: (e) => setNewGame((g) => ({ ...g, color: e.target.value })), style: { width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer' } }),
+                    jsx('input', { type: 'color', value: newGame.color, onChange: (e) => setNewGame((g) => ({ ...g, color: e.target.value })) }),
                     jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t('gameName'), autoFocus: true }),
-                    jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetLbl') }),
+                    jsx('span', { className: 'dt-game-reset-lbl', children: t('resetLbl') }),
                     jsx('input', { type: 'time', value: newGame.resetTime, onChange: (e) => setNewGame((g) => ({ ...g, resetTime: e.target.value })), style: { ...IS, width: 86, fontFamily: 'monospace' } }),
                   ],
                 }),
                 jsxs('div', {
-                  style: { display: 'flex', gap: 8 },
+                  className: 'dt-new-game-actions',
                   children: [
-                    jsx('button', { onClick: addGame,          className: 'dt-btn dt-btn-confirm', children: t('add') }),
-                    jsx('button', { onClick: () => setShowNG(false), className: 'dt-btn',          children: t('cancel') }),
+                    jsx('button', { onClick: addGame,               className: 'dt-btn dt-btn-confirm', children: t('add') }),
+                    jsx('button', { onClick: () => setShowNG(false), className: 'dt-btn',               children: t('cancel') }),
                   ],
                 }),
               ],

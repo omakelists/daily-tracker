@@ -46,13 +46,14 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
     meta: jsxs(Fragment, {
       children: [
         showCD && !isChecked && jsxs('span', {
-          style: { fontSize: 11, fontWeight: 600, color: cdColor, fontFamily: 'monospace', flexShrink: 0 },
+          className: 'dt-task-countdown',
+          style: { color: cdColor },
           children: ['⏱', formatCountdown(ms, cd)],
         }),
         task.type === 'webdaily' && localWebReset && localWebReset !== utcToLocalHHMM(game.resetTime) &&
-          jsx('span', { style: { fontSize: 10, color: 'var(--dim)' }, children: localWebReset }),
+          jsx('span', { className: 'dt-task-web-reset', children: localWebReset }),
         task.type === 'monthly' &&
-          jsx('span', { style: { fontSize: 10, color: 'var(--dim)' }, children: t('everyDay', { day: task.monthlyResetDay ?? 1 }) }),
+          jsx('span', { className: 'dt-task-reset', children: t('everyDay', { day: task.monthlyResetDay ?? 1 }) }),
       ],
     }),
     rightSlot: null,

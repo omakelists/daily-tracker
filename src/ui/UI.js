@@ -34,11 +34,11 @@ export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, 
 
 // ── PrevBar ──────────────────────────────────────────────────────────
 export function PrevBar({ show, checked, partial }) {
-  if (!show) return null;  // barSlot div already exists in Row
+  if (!show) return null;
   const color = checked ? 'var(--prev-done)' : partial ? 'var(--prev-partial)' : 'var(--prev-miss)';
   return jsx('div', {
     title: t('prevTip'),
-    style: { cursor: 'help', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' },
+    className: 'dt-prevbar-wrap',
     children: jsx('div', {
       style: {
         width: 'var(--bar-w)', height: 18, borderRadius: 2, background: color,
@@ -51,22 +51,22 @@ export function PrevBar({ show, checked, partial }) {
 // ── Modal ────────────────────────────────────────────────────────────
 export function Modal({ title, titleExtra, onClose, children }) {
   return jsx('div', {
-    style: { position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '18px 14px', overflowY: 'auto' },
+    className: 'dt-modal-overlay',
     onClick: (e) => { if (e.target === e.currentTarget) onClose(); },
     children: jsxs('div', {
-      style: { background: 'var(--bg-app)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, width: '100%', padding: '22px', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' },
+      className: 'dt-modal-box',
       children: [
         jsxs('div', {
-          style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+          className: 'dt-modal-header',
           children: [
             jsxs('div', {
-              style: { display: 'flex', alignItems: 'center', gap: 8 },
+              className: 'dt-modal-title-group',
               children: [
-                jsx('span', { style: { fontWeight: 800, fontSize: 16 }, children: title }),
+                jsx('span', { className: 'dt-modal-title', children: title }),
                 titleExtra,
               ],
             }),
-            jsx('button', { onClick: onClose, style: { background: 'none', border: 'none', color: 'var(--muted)', fontSize: 20, cursor: 'pointer' }, children: '✕' }),
+            jsx('button', { onClick: onClose, className: 'dt-modal-close', children: '✕' }),
           ],
         }),
         children,
@@ -78,14 +78,14 @@ export function Modal({ title, titleExtra, onClose, children }) {
 // ── ConfirmDialog ────────────────────────────────────────────────────
 export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
   return jsx('div', {
-    style: { position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
+    className: 'dt-confirm-overlay',
     children: jsxs('div', {
-      style: { background: 'var(--bg-surface)', border: '1px solid rgba(248,81,73,0.4)', borderRadius: 14, padding: '24px', maxWidth: 300, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' },
+      className: 'dt-confirm-box',
       children: [
-        jsx('div', { style: { fontSize: 30, marginBottom: 10 }, children: '🗑️' }),
-        jsx('div', { style: { fontSize: 14, color: 'var(--text)', marginBottom: 20, lineHeight: 1.7, whiteSpace: 'pre-line' }, children: message }),
+        jsx('div', { className: 'dt-confirm-icon', children: '🗑️' }),
+        jsx('div', { className: 'dt-confirm-msg',  children: message }),
         jsxs('div', {
-          style: { display: 'flex', gap: 10, justifyContent: 'center' },
+          className: 'dt-confirm-actions',
           children: [
             jsx('button', { onClick: onCancel,  className: 'dt-btn',              children: t('cancel') }),
             jsx('button', { onClick: onConfirm, className: 'dt-btn dt-btn-danger', children: confirmLabel ?? t('deleteBtn') }),
