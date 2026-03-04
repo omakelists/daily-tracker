@@ -1,6 +1,6 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState } from 'react';
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { t } from '../util/i18n.js';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants.js';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers.js';
@@ -9,8 +9,18 @@ import { TaskRow } from './TaskRow.js';
 
 // ── Styles ────────────────────────────────────────────────────────
 const s = {
-  card:     css({ borderRadius: 12, marginBottom: 10, overflow: 'hidden', border: 'var(--card-border) solid var(--border)', transition: 'opacity 0.5s' }),
+  card:     css({ borderRadius: 12, marginBottom: 10, overflow: 'hidden', border: 'var(--card-border) solid var(--border)', transition: 'opacity 0.5s', position: 'relative' }),
   cardDone: css({ opacity: 0.62 }),
+
+  // Background image layer — absolute, fills the card, sits behind content
+  bgLayer: css({
+    position: 'absolute', inset: 0,
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    zIndex: 0,
+  }),
+
+  // Content wrapper — sits above bg layer
+  content: css({ position: 'relative', zIndex: 1 }),
 
   accordionBtn: css({
     width: 'var(--bar-slot)', height: 'var(--bar-slot)',
@@ -21,18 +31,21 @@ const s = {
     '&:hover': { color: 'var(--text)' },
   }),
 
-  bodyWrap: css({ display: 'grid', gridTemplateRows: '0fr', transition: 'grid-template-rows 0.25s ease' }),
+  bodyWrap:     css({ display: 'grid', gridTemplateRows: '0fr', transition: 'grid-template-rows 0.25s ease' }),
   bodyWrapOpen: css({ gridTemplateRows: '1fr' }),
-  body: css({ overflow: 'hidden', minHeight: 0, background: 'rgba(13,17,23,0.5)', paddingTop: 2, paddingBottom: 4 }),
 
-  divider: css({ margin: '5px 0', borderTop: '1px solid rgba(255,255,255,0.07)', position: 'relative' }),
-  sepLabel: css({ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-app)', padding: '0 8px', fontSize: 10, color: '#484f58', letterSpacing: 1, whiteSpace: 'nowrap' }),
+  // Slightly more opaque when no bg image, more transparent to reveal image when present
+  body:      css({ overflow: 'hidden', minHeight: 0, background: 'rgba(13,17,23,0.50)', paddingTop: 2, paddingBottom: 4 }),
+  bodyWithBg: css({ background: 'rgba(13,17,23,0.30)' }),
+
+  divider:  css({ margin: '5px 0', borderTop: '1px solid rgba(255,255,255,0.07)', position: 'relative' }),
+  sepLabel: css({ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', background: 'transparent', padding: '0 8px', fontSize: 10, color: '#8b949e', letterSpacing: 1, whiteSpace: 'nowrap' }),
 
   countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0 }),
   resetTime: css({ fontSize: 11, color: 'var(--dim)' }),
 };
 
-export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse }) {
+export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl }) {
   const [masterPop, setMasterPop] = useState(false);
   const fireMasterPop = () => { setMasterPop(true); setTimeout(() => setMasterPop(false), 260); };
 
@@ -56,6 +69,11 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   const visColor = ensureContrast(game.color);
   const localReset = utcToLocalHHMM(game.resetTime);
 
+  // Header gradient: more transparent when bg image present so the image shows through
+  const headerBg = bgDataUrl
+    ? `linear-gradient(90deg, ${game.color}40 0%, ${game.color}18 40%, rgba(13,17,23,0.60) 100%)`
+    : `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`;
+
   const accordionIcon = hasDailyTasks
     ? jsx('span', { className: s.accordionBtn, style: { pointerEvents: 'none' }, children: collapsed ? '▶' : '▼' })
     : null;
@@ -64,42 +82,54 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
     className: cx(s.card, allDone && s.cardDone),
     style: { border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` },
     children: [
-      jsx(Row, {
-        bg: `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`,
-        borderBottom: hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none',
-        onClick: hasDailyTasks ? () => onToggleCollapse(game.id) : undefined,
-        style: hasDailyTasks ? { cursor: 'pointer' } : undefined,
-        preSlot: accordionIcon,
-        barSlot: jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial }),
-        checkbox: jsx('button', {
-          onClick: (e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); },
-          className: cx(ss.cb, ss.cbGame, allTodayDone && ss.cbChecked, masterPop && ss.cbPop),
-          children: allTodayDone ? '✓' : '',
-        }),
-        content: jsx('span', {
-          style: { fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: allDone ? 'var(--dim)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textShadow: '0 1px 3px rgba(0,0,0,0.85)', transition: 'all 0.3s' },
-          children: game.name,
-        }),
-        meta: jsxs(Fragment, { children: [
-          !allTodayDone && jsxs('span', { className: s.countdown, style: { color: cdColor }, children: ['⏱', formatCountdown(ms, cd)] }),
-          jsx('span', { className: s.resetTime, children: localReset }),
-        ]}),
-        rightSlot: null,
+      // ── Background image layer ────────────────────────────────
+      bgDataUrl && jsx('div', {
+        className: s.bgLayer,
+        style: { backgroundImage: `url(${bgDataUrl})` },
       }),
 
-      jsx('div', {
-        className: cx(s.bodyWrap, hasVisible && s.bodyWrapOpen),
-        children: jsxs('div', {
-          className: s.body,
-          children: [
-            visibleDaily.map((tk)  => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
-            visibleDaily.length > 0 && visiblePeriod.length > 0 && jsx('div', {
-              className: s.divider,
-              children: jsx('span', { className: s.sepLabel, children: `— ${t('periodic')} —` }),
+      // ── All content above bg layer ────────────────────────────
+      jsxs('div', {
+        className: s.content,
+        children: [
+          jsx(Row, {
+            bg: headerBg,
+            borderBottom: hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none',
+            onClick: hasDailyTasks ? () => onToggleCollapse(game.id) : undefined,
+            style: hasDailyTasks ? { cursor: 'pointer' } : undefined,
+            preSlot: accordionIcon,
+            barSlot: jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial }),
+            checkbox: jsx('button', {
+              onClick: (e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); },
+              className: cx(ss.cb, ss.cbGame, allTodayDone && ss.cbChecked, masterPop && ss.cbPop),
+              children: allTodayDone ? '✓' : '',
             }),
-            visiblePeriod.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
-          ],
-        }),
+            content: jsx('span', {
+              style: { fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: allDone ? 'var(--dim)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textShadow: bgDataUrl ? '0 1px 4px rgba(0,0,0,0.95)' : '0 1px 3px rgba(0,0,0,0.85)', transition: 'all 0.3s' },
+              children: game.name,
+            }),
+            meta: jsxs(Fragment, { children: [
+              !allTodayDone && jsxs('span', { className: s.countdown, style: { color: cdColor }, children: ['⏱', formatCountdown(ms, cd)] }),
+              jsx('span', { className: s.resetTime, children: localReset }),
+            ]}),
+            rightSlot: null,
+          }),
+
+          jsx('div', {
+            className: cx(s.bodyWrap, hasVisible && s.bodyWrapOpen),
+            children: jsxs('div', {
+              className: cx(s.body, bgDataUrl && s.bodyWithBg),
+              children: [
+                visibleDaily.map((tk)  => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
+                visibleDaily.length > 0 && visiblePeriod.length > 0 && jsx('div', {
+                  className: s.divider,
+                  children: jsx('span', { className: s.sepLabel, children: `— ${t('periodic')} —` }),
+                }),
+                visiblePeriod.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
+              ],
+            }),
+          }),
+        ],
       }),
     ],
   });

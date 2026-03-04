@@ -7,6 +7,7 @@ import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset } from './util/helpers.js';
+import { imgGet, imgPurgeOrphans } from './util/imageStorage.js';
 import { ConfirmDialog } from './ui/UI.js';
 import { GameCard } from './ui/GameCard.js';
 import { SettingsModal } from './ui/Settings.js';
@@ -20,14 +21,27 @@ const pulseUpdate = keyframes({
 
 const s = {
   loading: css({ background: 'var(--bg-app)', color: 'var(--muted)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
-  root:    css({ minHeight: '100vh', background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%)', color: 'var(--text)' }),
+  root:    css({ minHeight: '100vh', color: 'var(--text)', position: 'relative' }),
+  rootNoBg: css({ background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%)' }),
+
+  // App background image layers (position: fixed, behind content via negative z-index)
+  appBgImg: css({
+    position: 'fixed', inset: 0, zIndex: -2,
+    backgroundSize: 'cover', backgroundPosition: 'center',
+  }),
+  appBgOverlay: css({
+    position: 'fixed', inset: 0, zIndex: -1,
+    // Dark top-left, image revealed only at bottom-right
+    background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-app) 35%, rgba(13,17,23,0.82) 58%, rgba(13,17,23,0.28) 82%, rgba(13,17,23,0.05) 100%)',
+  }),
+
   header:  css({ background: 'var(--bg-header)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '13px 18px', position: 'sticky', top: 0, zIndex: 100 }),
   headerInner: css({ maxWidth: 740, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }),
   headerLeft:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
   title: css({ fontSize: 17, fontWeight: 800, background: 'linear-gradient(90deg, var(--link), var(--purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }),
   clock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }),
   actions: css({ display: 'flex', gap: 8 }),
-  main:    css({ padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto' }),
+  main:    css({ padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto', position: 'relative' }),
   noGames: css({ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }),
 
   btnRecord:   css({ background: 'var(--bg-surface)', border: '1px solid rgba(88,166,255,.27)',   borderRadius: 8, color: 'var(--link)',   padding: '7px 13px', fontSize: 13, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }),
@@ -44,6 +58,30 @@ export function App() {
   const [confirm,      setConfirm]      = useState(null);
   const [collapsed,    setCollapsed]    = useState(new Set());
   const [updateInfo,   setUpdateInfo]   = useState(null);
+
+  // ── Image states ──────────────────────────────────────────────
+  const [appBg,   setAppBg]   = useState(null);       // dataUrl | null
+  const [gameBgs, setGameBgs] = useState({});          // { [gameId]: dataUrl }
+  const [imgVer,  setImgVer]  = useState(0);           // increment to force re-load
+
+  const refreshImages = useCallback(() => setImgVer((v) => v + 1), []);
+
+  useEffect(() => {
+    if (!games) return;
+    let cancelled = false;
+    (async () => {
+      const ab = await imgGet('app-bg');
+      if (cancelled) return;
+      setAppBg(ab);
+      const bgs = {};
+      await Promise.all(games.map(async (g) => {
+        const url = await imgGet(`game-${g.id}`);
+        if (url) bgs[g.id] = url;
+      }));
+      if (!cancelled) setGameBgs(bgs);
+    })();
+    return () => { cancelled = true; };
+  }, [imgVer, games]);
 
   const prevAllDoneRef = useRef({});
 
@@ -74,7 +112,12 @@ export function App() {
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
 
-  // ── SW update detection ────────────────────────────────────────────
+  // Purge orphaned images whenever the games list changes
+  useEffect(() => {
+    if (games) imgPurgeOrphans(games.map((g) => g.id));
+  }, [games]);
+
+  // ── SW update detection ────────────────────────────────────────
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     const checkVersions = async () => {
@@ -177,13 +220,18 @@ export function App() {
     navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
   }, []);
 
-  const showConfirm = (msg, fn) => setConfirm({ message: msg, onConfirm: fn });
+  const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
   if (!games) return jsx('div', { className: s.loading, children: t('loading') });
 
   return jsxs('div', {
-    className: s.root,
+    className: cx(s.root, !appBg && s.rootNoBg),
     children: [
+      // ── App background image layers ──────────────────────────
+      appBg && jsx('div', { className: s.appBgImg, style: { backgroundImage: `url(${appBg})` } }),
+      appBg && jsx('div', { className: s.appBgOverlay }),
+
+      // ── Header ───────────────────────────────────────────────
       jsxs('header', {
         className: s.header,
         children: [jsxs('div', {
@@ -195,7 +243,7 @@ export function App() {
             ]}),
             jsxs('div', { className: s.actions, children: [
               updateInfo && jsx('button', {
-                onClick: () => setConfirm({ message: t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), onConfirm: handleUpdate, confirmLabel: t('updateBtn') }),
+                onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
                 className: s.btnUpdate, title: t('updateAvail'), children: '⬆️',
               }),
               jsx('button', { onClick: () => setShowCalendar(true), className: s.btnRecord,   title: t('record'),   children: '📅' }),
@@ -204,6 +252,8 @@ export function App() {
           ],
         })],
       }),
+
+      // ── Main content ─────────────────────────────────────────
       jsxs('main', {
         className: s.main,
         children: [
@@ -211,11 +261,13 @@ export function App() {
             game, checks, now, onToggle: toggle,
             allDone: isAllDone(game), dailyTasks: getDailyTasks(game), cd,
             collapsed: collapsed.has(game.id), onToggleCollapse: toggleCollapse,
+            bgDataUrl: gameBgs[game.id] || null,
           }, game.id)),
           games.length === 0 && jsx('div', { className: s.noGames, children: t('noGames') }),
         ],
       }),
-      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm }),
+
+      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm, refreshImages }),
       showCalendar && jsx(CalendarModal, { games, checks, now, onClose: () => setShowCalendar(false) }),
       confirm && jsx(ConfirmDialog, {
         message: confirm.message, confirmLabel: confirm.confirmLabel,
