@@ -1,6 +1,7 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
+import { css, cx, keyframes } from '@emotion/css';
 import { t } from './util/i18n.js';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
@@ -11,6 +12,29 @@ import { GameCard } from './ui/GameCard.js';
 import { SettingsModal } from './ui/Settings.js';
 import { CalendarModal } from './ui/Calendar.js';
 
+// ── Styles ────────────────────────────────────────────────────────
+const pulseUpdate = keyframes({
+  '0%, 100%': { boxShadow: '0 0 0 0 rgba(227,179,65,0)' },
+  '50%':      { boxShadow: '0 0 0 4px rgba(227,179,65,0.25)' },
+});
+
+const s = {
+  loading: css({ background: 'var(--bg-app)', color: 'var(--muted)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
+  root:    css({ minHeight: '100vh', background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%)', color: 'var(--text)' }),
+  header:  css({ background: 'var(--bg-header)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '13px 18px', position: 'sticky', top: 0, zIndex: 100 }),
+  headerInner: css({ maxWidth: 740, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }),
+  headerLeft:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
+  title: css({ fontSize: 17, fontWeight: 800, background: 'linear-gradient(90deg, var(--link), var(--purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }),
+  clock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }),
+  actions: css({ display: 'flex', gap: 8 }),
+  main:    css({ padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto' }),
+  noGames: css({ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }),
+
+  btnRecord:   css({ background: 'var(--bg-surface)', border: '1px solid rgba(88,166,255,.27)',   borderRadius: 8, color: 'var(--link)',   padding: '7px 13px', fontSize: 13, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }),
+  btnSettings: css({ background: 'var(--bg-surface)', border: '1px solid rgba(188,140,255,.27)', borderRadius: 8, color: 'var(--purple)', padding: '7px 13px', fontSize: 13, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }),
+  btnUpdate:   css({ background: 'var(--bg-surface)', border: '1px solid rgba(227,179,65,.4)',    borderRadius: 8, color: 'var(--warn)',   padding: '7px 10px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', animation: `${pulseUpdate} 2s ease-in-out infinite` }),
+};
+
 export function App() {
   const [games,        setGames]        = useState(null);
   const [checks,       setChecks]       = useState({});
@@ -19,32 +43,26 @@ export function App() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [confirm,      setConfirm]      = useState(null);
   const [collapsed,    setCollapsed]    = useState(new Set());
-  const [updateInfo,   setUpdateInfo]   = useState(null); // {current, next} when update available
+  const [updateInfo,   setUpdateInfo]   = useState(null);
 
-  // Track per-game all-done state across renders so we can detect reset transitions
   const prevAllDoneRef = useRef({});
 
-  // 30-second heartbeat (fallback)
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(id);
   }, []);
 
-  // Precise wakeup: fire setNow exactly when the next task/game reset boundary is crossed
   useEffect(() => {
     if (!games) return;
     let minMs = Infinity;
     games.forEach((game) => {
-      const tasks = game.tasks.length
-        ? game.tasks
-        : [{ id: game.id + '_solo', type: 'daily' }];
+      const tasks = game.tasks.length ? game.tasks : [{ id: game.id + '_solo', type: 'daily' }];
       tasks.forEach((task) => {
         const ms = msUntilTaskReset(task, game, now);
         if (ms > 0 && ms < minMs) minMs = ms;
       });
     });
     if (!isFinite(minMs)) return;
-    // +200 ms buffer so the clock has clearly passed the boundary
     const id = setTimeout(() => setNow(new Date()), minMs + 200);
     return () => clearTimeout(id);
   }, [now, games]);
@@ -59,39 +77,23 @@ export function App() {
   // ── SW update detection ────────────────────────────────────────────
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-
-    // Fetch the cached (current) version and the network (new) version,
-    // then compare. version.json?check=1 bypasses the SW cache (see sw.js).
     const checkVersions = async () => {
       try {
-        const [cachedRes, netRes] = await Promise.all([
-          fetch('./version.json'),
-          fetch('./version.json?check=1'),
-        ]);
+        const [cachedRes, netRes] = await Promise.all([fetch('./version.json'), fetch('./version.json?check=1')]);
         if (!cachedRes.ok || !netRes.ok) return;
         const [cached, net] = await Promise.all([cachedRes.json(), netRes.json()]);
-        if (net.version && net.version !== cached.version) {
-          setUpdateInfo({ current: cached.version, next: net.version });
-        }
+        if (net.version && net.version !== cached.version) setUpdateInfo({ current: cached.version, next: net.version });
       } catch {}
     };
-
     navigator.serviceWorker.ready.then((reg) => {
-      // Trigger a background check for a new SW
       reg.update();
-
       reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          // new SW is installed and waiting — a controller exists = this is an update
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            checkVersions();
-          }
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) checkVersions();
         });
       });
-
-      // Also show if a waiting SW already existed (e.g. tab was opened later)
       if (reg.waiting && navigator.serviceWorker.controller) checkVersions();
     });
   }, []);
@@ -109,8 +111,6 @@ export function App() {
     return dt.length > 0 && dt.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }, [checks, now, getDailyTasks]);
 
-  // When now advances past a reset boundary, isAllDone flips true→false for that game.
-  // Detect that transition and auto-expand the card so pending tasks become visible.
   useEffect(() => {
     if (!games) return;
     const toExpand = [];
@@ -120,11 +120,7 @@ export function App() {
       prevAllDoneRef.current[game.id] = done;
     });
     if (toExpand.length) {
-      setCollapsed((prev) => {
-        const next = new Set(prev);
-        toExpand.forEach((id) => next.delete(id));
-        return next;
-      });
+      setCollapsed((prev) => { const next = new Set(prev); toExpand.forEach((id) => next.delete(id)); return next; });
     }
   }, [now, games, isAllDone]);
 
@@ -137,8 +133,6 @@ export function App() {
     let shouldCollapse = false;
 
     const applyUpdates = () => {
-      // flushSync forces React to update the DOM synchronously inside
-      // startViewTransition so the browser can capture before/after states.
       flushSync(() => {
         setChecks((prev) => {
           const next       = { ...prev };
@@ -166,99 +160,65 @@ export function App() {
           return next;
         });
       });
-
-      if (shouldCollapse) {
-        flushSync(() => {
-          setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; });
-        });
-      }
+      if (shouldCollapse) flushSync(() => setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; }));
     };
 
-    if (document.startViewTransition) {
-      document.startViewTransition(applyUpdates);
-    } else {
-      applyUpdates();
-    }
+    if (document.startViewTransition) document.startViewTransition(applyUpdates);
+    else applyUpdates();
   }, [now, getDailyTasks]);
 
   const toggleCollapse = useCallback((gameId) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(gameId)) next.delete(gameId); else next.add(gameId);
-      return next;
-    });
+    setCollapsed((prev) => { const next = new Set(prev); if (next.has(gameId)) next.delete(gameId); else next.add(gameId); return next; });
   }, []);
 
   const handleUpdate = useCallback(async () => {
     const reg = await navigator.serviceWorker.ready;
     if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    // Reload as soon as the new SW takes control
     navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
   }, []);
 
   const showConfirm = (msg, fn) => setConfirm({ message: msg, onConfirm: fn });
 
-  if (!games) {
-    return jsx('div', { className: 'dt-app-loading', children: t('loading') });
-  }
+  if (!games) return jsx('div', { className: s.loading, children: t('loading') });
 
   return jsxs('div', {
-    className: 'dt-app-root',
+    className: s.root,
     children: [
       jsxs('header', {
-        className: 'dt-header',
+        className: s.header,
         children: [jsxs('div', {
-          className: 'dt-header-inner',
+          className: s.headerInner,
           children: [
-          jsxs('div', {
-            className: 'dt-header-left',
-            children: [
-              jsx('span', { className: 'dt-app-title', children: t('appTitle') }),
-              jsx('span', {
-                className: 'dt-header-clock',
-                children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              }),
-            ],
-          }),
-          jsxs('div', {
-            className: 'dt-header-actions',
-            children: [
+            jsxs('div', { className: s.headerLeft, children: [
+              jsx('span', { className: s.title, children: t('appTitle') }),
+              jsx('span', { className: s.clock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
+            ]}),
+            jsxs('div', { className: s.actions, children: [
               updateInfo && jsx('button', {
-                onClick: () => setConfirm({
-                  message: t('updateMsg', { current: updateInfo.current, next: updateInfo.next }),
-                  onConfirm: handleUpdate,
-                  confirmLabel: t('updateBtn'),
-                }),
-                className: 'dt-btn-update',
-                title: t('updateAvail'),
-                children: '⬆️',
+                onClick: () => setConfirm({ message: t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), onConfirm: handleUpdate, confirmLabel: t('updateBtn') }),
+                className: s.btnUpdate, title: t('updateAvail'), children: '⬆️',
               }),
-              jsx('button', { onClick: () => setShowCalendar(true), className: 'dt-btn-record',   title: t('record'),   children: '📅' }),
-              jsx('button', { onClick: () => setShowSettings(true), className: 'dt-btn-settings', title: t('settings'), children: '⚙️' }),
-            ],
-          }),
-        ],
-        })],  // close dt-header-inner, then header children array
+              jsx('button', { onClick: () => setShowCalendar(true), className: s.btnRecord,   title: t('record'),   children: '📅' }),
+              jsx('button', { onClick: () => setShowSettings(true), className: s.btnSettings, title: t('settings'), children: '⚙️' }),
+            ]}),
+          ],
+        })],
       }),
       jsxs('main', {
-        className: 'dt-main',
+        className: s.main,
         children: [
           sorted.map((game) => jsx(GameCard, {
             game, checks, now, onToggle: toggle,
-            allDone: isAllDone(game),
-            dailyTasks: getDailyTasks(game),
-            cd,
-            collapsed: collapsed.has(game.id),
-            onToggleCollapse: toggleCollapse,
+            allDone: isAllDone(game), dailyTasks: getDailyTasks(game), cd,
+            collapsed: collapsed.has(game.id), onToggleCollapse: toggleCollapse,
           }, game.id)),
-          games.length === 0 && jsx('div', { className: 'dt-no-games', children: t('noGames') }),
+          games.length === 0 && jsx('div', { className: s.noGames, children: t('noGames') }),
         ],
       }),
       showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm }),
       showCalendar && jsx(CalendarModal, { games, checks, now, onClose: () => setShowCalendar(false) }),
       confirm && jsx(ConfirmDialog, {
-        message: confirm.message,
-        confirmLabel: confirm.confirmLabel,
+        message: confirm.message, confirmLabel: confirm.confirmLabel,
         onConfirm: () => { confirm.onConfirm(); setConfirm(null); },
         onCancel:  () => setConfirm(null),
       }),

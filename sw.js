@@ -29,7 +29,7 @@ const LOCAL_ASSETS = [
   './src/constants.js',
 ];
 
-const CDN_ORIGINS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net'];
+const CDN_ORIGINS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'esm.sh'];
 
 // Install: cache all assets but do NOT call skipWaiting().
 // The new SW waits until the user confirms the update in the app UI,

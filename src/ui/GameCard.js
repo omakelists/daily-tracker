@@ -1,57 +1,69 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState } from 'react';
+import { css, cx, keyframes } from '@emotion/css';
 import { t } from '../util/i18n.js';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants.js';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers.js';
-import { Row, PrevBar } from './UI.js';
+import { Row, PrevBar, sharedStyles as ss } from './UI.js';
 import { TaskRow } from './TaskRow.js';
+
+// ── Styles ────────────────────────────────────────────────────────
+const s = {
+  card:     css({ borderRadius: 12, marginBottom: 10, overflow: 'hidden', border: 'var(--card-border) solid var(--border)', transition: 'opacity 0.5s' }),
+  cardDone: css({ opacity: 0.62 }),
+
+  accordionBtn: css({
+    width: 'var(--bar-slot)', height: 'var(--bar-slot)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'none', border: 'none', cursor: 'pointer',
+    color: 'var(--dim)', fontSize: 9, padding: 0, flexShrink: 0,
+    transition: 'color 0.15s',
+    '&:hover': { color: 'var(--text)' },
+  }),
+
+  bodyWrap: css({ display: 'grid', gridTemplateRows: '0fr', transition: 'grid-template-rows 0.25s ease' }),
+  bodyWrapOpen: css({ gridTemplateRows: '1fr' }),
+  body: css({ overflow: 'hidden', minHeight: 0, background: 'rgba(13,17,23,0.5)', paddingTop: 2, paddingBottom: 4 }),
+
+  divider: css({ margin: '5px 0', borderTop: '1px solid rgba(255,255,255,0.07)', position: 'relative' }),
+  sepLabel: css({ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-app)', padding: '0 8px', fontSize: 10, color: '#484f58', letterSpacing: 1, whiteSpace: 'nowrap' }),
+
+  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0 }),
+  resetTime: css({ fontSize: 11, color: 'var(--dim)' }),
+};
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse }) {
   const [masterPop, setMasterPop] = useState(false);
+  const fireMasterPop = () => { setMasterPop(true); setTimeout(() => setMasterPop(false), 260); };
 
-  const fireMasterPop = () => {
-    setMasterPop(true);
-    setTimeout(() => setMasterPop(false), 260);
-  };
-  const hasTasks    = game.tasks.length > 0;
   const dailyGroup  = game.tasks.filter((tk) => !PERIOD_TYPES.has(tk.type));
   const periodGroup = game.tasks.filter((tk) =>  PERIOD_TYPES.has(tk.type));
   const hasDailyTasks = dailyGroup.length > 0;
 
-  // Collapsed: hide only checked tasks; unchecked tasks always visible regardless of type
-  const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
-  const visibleDaily  = collapsed ? dailyGroup.filter((tk) => !isChecked(tk))  : dailyGroup;
+  const isChecked    = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
+  const visibleDaily  = collapsed ? dailyGroup.filter((tk)  => !isChecked(tk)) : dailyGroup;
   const visiblePeriod = collapsed ? periodGroup.filter((tk) => !isChecked(tk)) : periodGroup;
-  const hasVisible = visibleDaily.length > 0 || visiblePeriod.length > 0;
+  const hasVisible    = visibleDaily.length > 0 || visiblePeriod.length > 0;
 
-  // Master state — daily tasks only
-  const allTodayDone = dailyTasks.length > 0 &&
-    dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
-  const prevCount   = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
-  const prevAll     = dailyTasks.length > 0 && prevCount === dailyTasks.length;
-  const prevPartial = prevCount > 0 && prevCount < dailyTasks.length;
+  const allTodayDone = dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+  const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
+  const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
+  const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
 
-  // Countdown
   const ms       = msUntilReset(now, game.resetTime);
   const h        = ms / 3600000;
   const cdColor  = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
   const visColor = ensureContrast(game.color);
   const localReset = utcToLocalHHMM(game.resetTime);
 
-  // ── Accordion indicator (visual only — the whole header row is the click target) ─
   const accordionIcon = hasDailyTasks
-    ? jsx('span', {
-        className: 'dt-accordion-btn',
-        style: { pointerEvents: 'none' },   // row's onClick handles it; don't double-fire
-        children: collapsed ? '▶' : '▼',
-      })
+    ? jsx('span', { className: s.accordionBtn, style: { pointerEvents: 'none' }, children: collapsed ? '▶' : '▼' })
     : null;
 
   return jsxs('div', {
-    className: `game-card${allDone ? ' game-card-done' : ''}`,
+    className: cx(s.card, allDone && s.cardDone),
     style: { border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` },
     children: [
-      // ── Header ────────────────────────────────────────────────────
       jsx(Row, {
         bg: `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`,
         borderBottom: hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none',
@@ -61,43 +73,29 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
         barSlot: jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial }),
         checkbox: jsx('button', {
           onClick: (e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); },
-          className: `dt-cb dt-cb-game${allTodayDone ? ' dt-cb-checked' : ''}${masterPop ? ' dt-cb-pop' : ''}`,
+          className: cx(ss.cb, ss.cbGame, allTodayDone && ss.cbChecked, masterPop && ss.cbPop),
           children: allTodayDone ? '✓' : '',
         }),
         content: jsx('span', {
-          style: {
-            fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            color: allDone ? 'var(--dim)' : visColor,
-            textDecoration: allDone ? 'line-through' : 'none',
-            textShadow: '0 1px 3px rgba(0,0,0,0.85)',
-            transition: 'all 0.3s',
-          },
+          style: { fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: allDone ? 'var(--dim)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textShadow: '0 1px 3px rgba(0,0,0,0.85)', transition: 'all 0.3s' },
           children: game.name,
         }),
-        meta: jsxs(Fragment, {
-          children: [
-            !allTodayDone && jsxs('span', {
-              className: 'dt-card-countdown',
-              style: { color: cdColor },
-              children: ['⏱', formatCountdown(ms, cd)],
-            }),
-            jsx('span', { className: 'dt-card-reset', children: localReset }),
-          ],
-        }),
+        meta: jsxs(Fragment, { children: [
+          !allTodayDone && jsxs('span', { className: s.countdown, style: { color: cdColor }, children: ['⏱', formatCountdown(ms, cd)] }),
+          jsx('span', { className: s.resetTime, children: localReset }),
+        ]}),
         rightSlot: null,
       }),
 
-      // ── Tasks — always rendered for accordion animation ────────────
       jsx('div', {
-        className: `dt-card-body-wrap${hasVisible ? ' open' : ''}`,
+        className: cx(s.bodyWrap, hasVisible && s.bodyWrapOpen),
         children: jsxs('div', {
-          className: 'game-card-body',
+          className: s.body,
           children: [
-            visibleDaily.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
+            visibleDaily.map((tk)  => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
             visibleDaily.length > 0 && visiblePeriod.length > 0 && jsx('div', {
-              className: 'dt-card-divider',
-              children: jsxs('span', { className: 'sep-label', children: ['— ', t('periodic'), ' —'] }),
+              className: s.divider,
+              children: jsx('span', { className: s.sepLabel, children: `— ${t('periodic')} —` }),
             }),
             visiblePeriod.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
           ],
