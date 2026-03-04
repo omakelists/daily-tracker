@@ -1,5 +1,6 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { t } from './util/i18n.js';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
@@ -133,46 +134,50 @@ export function App() {
   });
 
   const toggle = useCallback((taskId, game, isMaster = false) => {
-    // shouldCollapse is set synchronously inside the setChecks updater,
-    // then read immediately after — safe because React calls updaters synchronously.
     let shouldCollapse = false;
 
-    setChecks((prev) => {
-      const next       = { ...prev };
-      const dailyTasks = getDailyTasks(game);
-      const allTasks   = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
-      if (isMaster) {
-        const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
-        dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
-        if (!allDone) { playAllDoneSound(); shouldCollapse = true; }
-        else playCheckSound();
-      } else {
-        const task = allTasks.find((tk) => tk.id === taskId);
-        if (!task) return prev;
-        const k   = checkKey(task.id, getPeriodKey(task, game, now));
-        const was = !!prev[k];
-        next[k]   = !was;
-        if (!was) {
-          const fanfare = DAILY_TYPES.has(task.type) &&
-            dailyTasks.every((tk) => { const k2 = checkKey(tk.id, getPeriodKey(tk, game, now)); return k2 === k ? true : !!prev[k2]; });
-          if (fanfare) { playAllDoneSound(); shouldCollapse = true; }
-          else playCheckSound();
-        }
-      }
-      saveChecks(next);
-      return next;
-    });
+    const applyUpdates = () => {
+      // flushSync forces React to update the DOM synchronously inside
+      // startViewTransition so the browser can capture before/after states.
+      flushSync(() => {
+        setChecks((prev) => {
+          const next       = { ...prev };
+          const dailyTasks = getDailyTasks(game);
+          const allTasks   = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
+          if (isMaster) {
+            const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+            dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
+            if (!allDone) { playAllDoneSound(); shouldCollapse = true; }
+            else playCheckSound();
+          } else {
+            const task = allTasks.find((tk) => tk.id === taskId);
+            if (!task) return prev;
+            const k   = checkKey(task.id, getPeriodKey(task, game, now));
+            const was = !!prev[k];
+            next[k]   = !was;
+            if (!was) {
+              const fanfare = DAILY_TYPES.has(task.type) &&
+                dailyTasks.every((tk) => { const k2 = checkKey(tk.id, getPeriodKey(tk, game, now)); return k2 === k ? true : !!prev[k2]; });
+              if (fanfare) { playAllDoneSound(); shouldCollapse = true; }
+              else playCheckSound();
+            }
+          }
+          saveChecks(next);
+          return next;
+        });
+      });
 
-    // Auto-collapse only at the moment a game transitions to all-done.
-    // Wrap in View Transition so the card slides to the bottom smoothly.
-    if (shouldCollapse) {
-      const doCollapse = () =>
-        setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; });
-      if (document.startViewTransition) {
-        document.startViewTransition(doCollapse);
-      } else {
-        doCollapse();
+      if (shouldCollapse) {
+        flushSync(() => {
+          setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; });
+        });
       }
+    };
+
+    if (document.startViewTransition) {
+      document.startViewTransition(applyUpdates);
+    } else {
+      applyUpdates();
     }
   }, [now, getDailyTasks]);
 

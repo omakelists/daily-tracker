@@ -529,7 +529,14 @@ button, select, input { font-family: inherit; }
   65%  { transform: scale(0.92); }
   100% { transform: scale(1.08); }
 }
+/* dt-cb-checked: visual state only — NO animation here so accordion-revealed
+   checkboxes do not animate. Animation fires only via dt-cb-pop (added on click). */
 .dt-cb-checked {
+  background: var(--checked-bg) !important;
+  border-color: var(--checked-br) !important;
+  transform: scale(1.08);
+}
+.dt-cb-pop {
   animation: cb-pop 0.22s ease forwards;
 }
 
@@ -611,8 +618,17 @@ button, select, input { font-family: inherit; }
 
 /* ── View Transitions for card reorder ───────────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
+  /* Disable the full-page cross-fade so only named elements animate */
   ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation-duration: 0s; /* disable the full-page cross-fade */
+    animation: none;
+  }
+  /* Each game card with view-transition-name gets a smooth positional move.
+     The browser automatically animates from old to new position (FLIP).
+     We only override the cross-fade to use opacity for a cleaner look. */
+  ::view-transition-old(game-card-move),
+  ::view-transition-new(game-card-move) {
+    animation-duration: 0.35s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

@@ -1,4 +1,5 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
+import { useState } from 'react';
 import { t } from '../util/i18n.js';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants.js';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers.js';
@@ -6,6 +7,12 @@ import { Row, PrevBar } from './UI.js';
 import { TaskRow } from './TaskRow.js';
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse }) {
+  const [masterPop, setMasterPop] = useState(false);
+
+  const fireMasterPop = () => {
+    setMasterPop(true);
+    setTimeout(() => setMasterPop(false), 260);
+  };
   const hasTasks    = game.tasks.length > 0;
   const dailyGroup  = game.tasks.filter((tk) => !PERIOD_TYPES.has(tk.type));
   const periodGroup = game.tasks.filter((tk) =>  PERIOD_TYPES.has(tk.type));
@@ -53,8 +60,8 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
         preSlot: accordionIcon,
         barSlot: jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial }),
         checkbox: jsx('button', {
-          onClick: (e) => { e.stopPropagation(); onToggle(null, game, true); },
-          className: `dt-cb dt-cb-game${allTodayDone ? ' dt-cb-checked' : ''}`,
+          onClick: (e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); },
+          className: `dt-cb dt-cb-game${allTodayDone ? ' dt-cb-checked' : ''}${masterPop ? ' dt-cb-pop' : ''}`,
           children: allTodayDone ? '✓' : '',
         }),
         content: jsx('span', {

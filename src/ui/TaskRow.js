@@ -1,10 +1,14 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
+import { useState } from 'react';
 import { t } from '../util/i18n.js';
 import { DAILY_TYPES, utcToLocalHHMM } from '../constants.js';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../util/helpers.js';
 import { Row, PrevBar } from './UI.js';
 
 export function TaskRow({ task, game, checks, now, onToggle, cd }) {
+  const [pop, setPop] = useState(false);
+  const firePop = () => { setPop(true); setTimeout(() => setPop(false), 260); };
+
   const isChecked   = !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
   const prevChecked = !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
   const showPrev    = DAILY_TYPES.has(task.type);
@@ -22,8 +26,8 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
     className: 'task-row',
     barSlot: jsx(PrevBar, { show: showPrev, checked: prevChecked }),
     checkbox: jsx('button', {
-      onClick: () => onToggle(task.id, game),
-      className: `dt-cb${isChecked ? ' dt-cb-checked' : ''}`,
+      onClick: () => { firePop(); onToggle(task.id, game); },
+      className: `dt-cb${isChecked ? ' dt-cb-checked' : ''}${pop ? ' dt-cb-pop' : ''}`,
       children: isChecked ? '✓' : '',
     }),
     content: jsxs(Fragment, {
