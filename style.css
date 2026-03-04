@@ -517,3 +517,102 @@ button, select, input { font-family: inherit; }
 .dt-game-name-input { font-weight: 700; }
 .dt-game-body       { padding: 8px 13px 10px; }
 .dt-add-task-btn    { margin-top: 4px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Checkbox pop ────────────────────────────────────────────────── */
+@keyframes cb-pop {
+  0%   { transform: scale(1);    }
+  35%  { transform: scale(1.3);  }
+  65%  { transform: scale(0.92); }
+  100% { transform: scale(1.08); }
+}
+.dt-cb-checked {
+  animation: cb-pop 0.22s ease forwards;
+}
+
+/* ── Accordion body (grid trick) ─────────────────────────────────── */
+.dt-card-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+.dt-card-body-wrap.open {
+  grid-template-rows: 1fr;
+}
+.dt-card-body-wrap > .game-card-body {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Modal enter ─────────────────────────────────────────────────── */
+@keyframes modal-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modal-box-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+.dt-modal-overlay {
+  animation: modal-overlay-in 0.2s ease forwards;
+}
+.dt-modal-box {
+  animation: modal-box-in 0.22s ease forwards;
+}
+
+/* ── Modal exit ──────────────────────────────────────────────────── */
+@keyframes modal-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes modal-box-out {
+  from { opacity: 1; transform: translateY(0)   scale(1);    }
+  to   { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+.dt-modal-overlay.closing {
+  animation: modal-overlay-out 0.18s ease forwards;
+}
+.dt-modal-overlay.closing .dt-modal-box {
+  animation: modal-box-out 0.18s ease forwards;
+}
+
+/* ── Confirm dialog enter ────────────────────────────────────────── */
+@keyframes confirm-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+@keyframes confirm-out {
+  from { opacity: 1; transform: scale(1);    }
+  to   { opacity: 0; transform: scale(0.92); }
+}
+.dt-confirm-overlay { animation: modal-overlay-in 0.15s ease forwards; }
+.dt-confirm-box     { animation: confirm-in       0.18s ease forwards; }
+.dt-confirm-overlay.closing { animation: modal-overlay-out 0.15s ease forwards; }
+.dt-confirm-overlay.closing .dt-confirm-box { animation: confirm-out 0.15s ease forwards; }
+
+/* ── Settings item enter / exit ──────────────────────────────────── */
+@keyframes item-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes item-exit {
+  from { opacity: 1; transform: translateY(0);   max-height: 200px; margin-bottom: 10px; }
+  to   { opacity: 0; transform: translateY(-4px); max-height: 0;    margin-bottom: 0;    }
+}
+.dt-settings-item-enter { animation: item-enter 0.2s ease forwards; }
+.dt-settings-item-exit  {
+  animation: item-exit 0.2s ease forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── View Transitions for card reorder ───────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0s; /* disable the full-page cross-fade */
+  }
+}

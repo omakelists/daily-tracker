@@ -164,9 +164,15 @@ export function App() {
     });
 
     // Auto-collapse only at the moment a game transitions to all-done.
-    // Never collapses again after the user manually expands it.
+    // Wrap in View Transition so the card slides to the bottom smoothly.
     if (shouldCollapse) {
-      setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; });
+      const doCollapse = () =>
+        setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; });
+      if (document.startViewTransition) {
+        document.startViewTransition(doCollapse);
+      } else {
+        doCollapse();
+      }
     }
   }, [now, getDailyTasks]);
 

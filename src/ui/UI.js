@@ -1,4 +1,5 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
+import { useState } from 'react';
 import { t } from '../util/i18n.js';
 
 // ── Static form-control style helpers (kept as JS for Settings inline use) ──
@@ -50,9 +51,14 @@ export function PrevBar({ show, checked, partial }) {
 
 // ── Modal ────────────────────────────────────────────────────────────
 export function Modal({ title, titleExtra, onClose, children }) {
+  const [closing, setClosing] = useState(false);
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(onClose, 170);
+  };
   return jsx('div', {
-    className: 'dt-modal-overlay',
-    onClick: (e) => { if (e.target === e.currentTarget) onClose(); },
+    className: `dt-modal-overlay${closing ? ' closing' : ''}`,
+    onClick: (e) => { if (e.target === e.currentTarget) handleClose(); },
     children: jsxs('div', {
       className: 'dt-modal-box',
       children: [
@@ -66,7 +72,7 @@ export function Modal({ title, titleExtra, onClose, children }) {
                 titleExtra,
               ],
             }),
-            jsx('button', { onClick: onClose, className: 'dt-modal-close', children: '✕' }),
+            jsx('button', { onClick: handleClose, className: 'dt-modal-close', children: '✕' }),
           ],
         }),
         children,
@@ -77,8 +83,10 @@ export function Modal({ title, titleExtra, onClose, children }) {
 
 // ── ConfirmDialog ────────────────────────────────────────────────────
 export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
+  const [closing, setClosing] = useState(false);
+  const dismiss = (fn) => () => { setClosing(true); setTimeout(fn, 140); };
   return jsx('div', {
-    className: 'dt-confirm-overlay',
+    className: `dt-confirm-overlay${closing ? ' closing' : ''}`,
     children: jsxs('div', {
       className: 'dt-confirm-box',
       children: [
@@ -87,8 +95,8 @@ export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
         jsxs('div', {
           className: 'dt-confirm-actions',
           children: [
-            jsx('button', { onClick: onCancel,  className: 'dt-btn',              children: t('cancel') }),
-            jsx('button', { onClick: onConfirm, className: 'dt-btn dt-btn-danger', children: confirmLabel ?? t('deleteBtn') }),
+            jsx('button', { onClick: dismiss(onCancel),  className: 'dt-btn',               children: t('cancel') }),
+            jsx('button', { onClick: dismiss(onConfirm), className: 'dt-btn dt-btn-danger',  children: confirmLabel ?? t('deleteBtn') }),
           ],
         }),
       ],

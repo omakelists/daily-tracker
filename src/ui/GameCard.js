@@ -42,20 +42,17 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
 
   return jsxs('div', {
     className: `game-card${allDone ? ' game-card-done' : ''}`,
-    style: { border: `var(--card-border) solid ${game.color}60` },
+    style: { border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` },
     children: [
       // ── Header ────────────────────────────────────────────────────
       jsx(Row, {
         bg: `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`,
         borderBottom: hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none',
-        // Clicking anywhere on the header row toggles collapse (except stopPropagation elements)
         onClick: hasDailyTasks ? () => onToggleCollapse(game.id) : undefined,
         style: hasDailyTasks ? { cursor: 'pointer' } : undefined,
-        // accordion icon in preSlot; prev-bar in barSlot — aligns with sub-task prev-bars
         preSlot: accordionIcon,
         barSlot: jsx(PrevBar, { show: dailyTasks.length > 0, checked: prevAll, partial: prevPartial }),
         checkbox: jsx('button', {
-          // stopPropagation so toggling the checkbox doesn't also collapse the card
           onClick: (e) => { e.stopPropagation(); onToggle(null, game, true); },
           className: `dt-cb dt-cb-game${allTodayDone ? ' dt-cb-checked' : ''}`,
           children: allTodayDone ? '✓' : '',
@@ -71,7 +68,6 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           },
           children: game.name,
         }),
-        // meta: countdown (hidden when all done) then reset time
         meta: jsxs(Fragment, {
           children: [
             !allTodayDone && jsxs('span', {
@@ -85,17 +81,20 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
         rightSlot: null,
       }),
 
-      // ── Tasks ──────────────────────────────────────────────────────
-      hasVisible && jsxs('div', {
-        className: 'game-card-body',
-        children: [
-          visibleDaily.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
-          visibleDaily.length > 0 && visiblePeriod.length > 0 && jsx('div', {
-            className: 'dt-card-divider',
-            children: jsxs('span', { className: 'sep-label', children: ['— ', t('periodic'), ' —'] }),
-          }),
-          visiblePeriod.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
-        ],
+      // ── Tasks — always rendered for accordion animation ────────────
+      jsx('div', {
+        className: `dt-card-body-wrap${hasVisible ? ' open' : ''}`,
+        children: jsxs('div', {
+          className: 'game-card-body',
+          children: [
+            visibleDaily.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
+            visibleDaily.length > 0 && visiblePeriod.length > 0 && jsx('div', {
+              className: 'dt-card-divider',
+              children: jsxs('span', { className: 'sep-label', children: ['— ', t('periodic'), ' —'] }),
+            }),
+            visiblePeriod.map((tk) => jsx(TaskRow, { task: tk, game, checks, now, onToggle, cd }, tk.id)),
+          ],
+        }),
       }),
     ],
   });

@@ -52,7 +52,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
   const [showNG,  setShowNG]  = useState(false);
   const [newTask, setNewTask] = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
   const [addTo,   setAddTo]   = useState(null);
+  const [deletingIds, setDeletingIds] = useState(new Set());
   const importRef = useRef(null);
+
+  // Animate out an item then remove it from state
+  const animateDelete = (id, doDelete) => {
+    setDeletingIds((prev) => { const s = new Set(prev); s.add(id); return s; });
+    setTimeout(() => {
+      doDelete();
+      setDeletingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+    }, 190);
+  };
 
   // ── Export ────────────────────────────────────────────────────────────
   const handleExport = () => {
@@ -98,7 +108,8 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
 
   // ── Game CRUD ────────────────────────────────────────────────────────
   const upGame  = (id, f, v) => setGames((g) => g.map((gm) => gm.id === id ? { ...gm, [f]: v } : gm));
-  const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), () => setGames((g) => g.filter((gm) => gm.id !== id)));
+  const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), () =>
+    animateDelete(id, () => setGames((g) => g.filter((gm) => gm.id !== id))));
   const addGame = () => {
     if (!newGame.name.trim()) return;
     setGames((g) => [...g, { id: uid(), ...newGame, resetTime: localToUtcHHMM(newGame.resetTime), tasks: [] }]);
@@ -108,7 +119,8 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
 
   // ── Task CRUD ────────────────────────────────────────────────────────
   const upTask  = (gid, tid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.map((tk) => tk.id === tid ? { ...tk, [f]: v } : tk) } : gm));
-  const delTask = (gid, tid)        => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm));
+  const delTask = (gid, tid) =>
+    animateDelete(tid, () => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm)));
   const addTask = (gid) => {
     setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...newTask }] } : gm));
     setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
@@ -186,7 +198,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
           draggable: true,
           onDragStart: onGameDS(gi), onDragOver: onGameDO(gi),
           onDrop: onGameDrp(gi),    onDragEnd: onGameDE,
-          className: 'game-card',
+          className: `game-card dt-settings-item-enter${deletingIds.has(game.id) ? ' dt-settings-item-exit' : ''}`,
           style: {
             ...gameDrop(gi),
             border: `1px solid ${game.color}44`,
@@ -212,6 +224,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
                   draggable: true,
                   onDragStart: onTaskDS(game.id, ti), onDragOver: onTaskDO(game.id, ti),
                   onDrop: onTaskDrp(game.id, ti),     onDragEnd: onTaskDE,
+                  className: `dt-settings-item-enter${deletingIds.has(task.id) ? ' dt-settings-item-exit' : ''}`,
                   style: { ...taskDrop(game.id, ti), ...rowStyle, opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' },
                   children: [
                     DragHandle,
