@@ -14,63 +14,79 @@ const s = {
   }),
   heading: css({ color: 'white', fontSize: 14, fontWeight: 700, marginBottom: 10, textAlign: 'center' }),
   hint:    css({ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginBottom: 10, textAlign: 'center' }),
+  // inline-block shrinks the wrapper to exactly the image's rendered size
   wrap: css({
     position: 'relative',
+    display: 'inline-block',
     lineHeight: 0,
     touchAction: 'none',
-    userSelect: 'none',
     cursor: 'crosshair',
     maxWidth: '100%',
   }),
-  img: css({ display: 'block', maxWidth: 'min(88vw, 700px)', maxHeight: '60vh', objectFit: 'contain' }),
-  canvas: css({ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }),
+  img: css({
+    display: 'block',
+    maxWidth: 'min(88vw, 700px)',
+    maxHeight: '60vh',
+    objectFit: 'contain',
+  }),
+  // Canvas pinned to top-left; width/height set via inline style after image loads
+  canvas: css({
+    position: 'absolute',
+    top: 0, left: 0,
+    pointerEvents: 'none',
+  }),
   actions: css({ display: 'flex', gap: 12, marginTop: 14 }),
 };
 
-/**
- * CropModal
- * @param {File}     file       – image file to crop
- * @param {function} onConfirm  – called with dataUrl of cropped image
- * @param {function} onCancel
- */
 export function CropModal({ file, onConfirm, onCancel }) {
   const [imageSrc, setImageSrc] = useState(null);
-  const [disp,     setDisp]     = useState({ w: 0, h: 0 });  // displayed px
-  const [nat,      setNat]      = useState({ w: 0, h: 0 });  // natural px
-  const [crop,     setCrop]     = useState(null);             // {x,y,w,h} in display px
-  const dragRef  = useRef(null);  // { mode:'draw'|'move', ox, oy, cx, cy }
-  const imgRef   = useRef(null);
-  const canvasRef = useRef(null);
-  const wrapRef  = useRef(null);
+  const [disp, setDisp] = useState({ w: 0, h: 0 }); // rendered px of <img>
+  const [nat,  setNat]  = useState({ w: 0, h: 0 }); // natural px
+  const [crop, setCrop] = useState(null);            // {x,y,w,h} in disp-space
 
-  // Load file as object-URL
+  const dragRef   = useRef(null);
+  const imgRef    = useRef(null);
+  const canvasRef = useRef(null);
+
+  // ── Load file ─────────────────────────────────────────────────
   useEffect(() => {
     const url = URL.createObjectURL(file);
     setImageSrc(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  // ── Measure image once rendered ───────────────────────────────
   const onImgLoad = () => {
     const img = imgRef.current;
-    const dw = img.offsetWidth, dh = img.offsetHeight;
+    const dw = img.offsetWidth;
+    const dh = img.offsetHeight;
     setNat({ w: img.naturalWidth, h: img.naturalHeight });
     setDisp({ w: dw, h: dh });
     setCrop({ x: 0, y: 0, w: dw, h: dh });
   };
 
-  // Draw crop overlay on canvas
+  // ── Draw overlay whenever crop or disp changes ────────────────
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !disp.w) return;
+    if (!canvas || !disp.w || !disp.h) return;
+
+    // Internal resolution = exactly the image's rendered pixel size (1:1 mapping)
     canvas.width  = disp.w;
     canvas.height = disp.h;
+    // Explicit CSS size prevents browser from scaling the canvas
+    canvas.style.width  = `${disp.w}px`;
+    canvas.style.height = `${disp.h}px`;
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, disp.w, disp.h);
+
+    // Dim everything
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, 0, disp.w, disp.h);
 
     if (crop && crop.w > 2 && crop.h > 2) {
       const { x, y, w, h } = crop;
+      // Reveal selected area
       ctx.clearRect(x, y, w, h);
 
       // Border
@@ -89,95 +105,114 @@ export function CropModal({ file, onConfirm, onCancel }) {
       // Corner handles
       const hs = 8;
       ctx.fillStyle = 'white';
-      [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(([cx2, cy2]) => {
-        ctx.fillRect(cx2 - hs / 2, cy2 - hs / 2, hs, hs);
+      [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(([hx, hy]) => {
+        ctx.fillRect(hx - hs / 2, hy - hs / 2, hs, hs);
       });
     }
   }, [crop, disp]);
 
-  // ── Pointer helpers ───────────────────────────────────────────
+  // ── Coordinate helper ─────────────────────────────────────────
+  // Use imgRef (not wrapRef) so coords are always relative to the
+  // actual image pixels, even if the wrapper is slightly larger.
   const getRelXY = useCallback((e) => {
-    const rect = wrapRef.current.getBoundingClientRect();
+    const rect = imgRef.current.getBoundingClientRect();
     return {
       x: Math.max(0, Math.min(disp.w, e.clientX - rect.left)),
       y: Math.max(0, Math.min(disp.h, e.clientY - rect.top)),
     };
   }, [disp]);
 
-  const inCrop = (px, py) => {
+  const inCrop = useCallback((px, py) => {
     if (!crop) return false;
-    return px >= crop.x && px <= crop.x + crop.w && py >= crop.y && py <= crop.y + crop.h;
-  };
+    return px >= crop.x && px <= crop.x + crop.w &&
+           py >= crop.y && py <= crop.y + crop.h;
+  }, [crop]);
 
+  // ── Pointer handlers ──────────────────────────────────────────
   const onPointerDown = useCallback((e) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     const { x, y } = getRelXY(e);
-    if (crop && inCrop(x, y)) {
+    if (inCrop(x, y)) {
       dragRef.current = { mode: 'move', ox: x, oy: y, cx: crop.x, cy: crop.y };
     } else {
       dragRef.current = { mode: 'draw', ox: x, oy: y };
       setCrop({ x, y, w: 0, h: 0 });
     }
-  }, [crop, getRelXY]);
+  }, [getRelXY, inCrop, crop]);
 
   const onPointerMove = useCallback((e) => {
     if (!dragRef.current) return;
-    const { x, y } = getRelXY(e);
     const d = dragRef.current;
+    const { x, y } = getRelXY(e);
 
     if (d.mode === 'draw') {
-      const nx = Math.min(d.ox, x), ny = Math.min(d.oy, y);
-      const nw = Math.abs(x - d.ox),  nh = Math.abs(y - d.oy);
-      setCrop({ x: nx, y: ny, w: Math.min(nw, disp.w - nx), h: Math.min(nh, disp.h - ny) });
+      const nx = Math.min(d.ox, x);
+      const ny = Math.min(d.oy, y);
+      const nw = Math.min(Math.abs(x - d.ox), disp.w - nx);
+      const nh = Math.min(Math.abs(y - d.oy), disp.h - ny);
+      setCrop({ x: nx, y: ny, w: nw, h: nh });
     } else {
-      const nx = Math.max(0, Math.min(disp.w - crop.w, d.cx + (x - d.ox)));
-      const ny = Math.max(0, Math.min(disp.h - crop.h, d.cy + (y - d.oy)));
-      setCrop((prev) => ({ ...prev, x: nx, y: ny }));
+      setCrop((prev) => {
+        if (!prev) return prev;
+        const nx = Math.max(0, Math.min(disp.w - prev.w, d.cx + (x - d.ox)));
+        const ny = Math.max(0, Math.min(disp.h - prev.h, d.cy + (y - d.oy)));
+        return { ...prev, x: nx, y: ny };
+      });
     }
-  }, [crop, disp, getRelXY]);
+  }, [getRelXY, disp]);
 
   const onPointerUp = useCallback(() => {
     dragRef.current = null;
   }, []);
 
-  // ── Export crop ───────────────────────────────────────────────
+  // ── Export cropped image ──────────────────────────────────────
   const handleConfirm = () => {
     if (!crop || crop.w < 5 || crop.h < 5) { onCancel(); return; }
-    const scaleX = nat.w / disp.w, scaleY = nat.h / disp.h;
-    const sw = Math.round(crop.w * scaleX), sh = Math.round(crop.h * scaleY);
-    const sx = Math.round(crop.x * scaleX), sy = Math.round(crop.y * scaleY);
+    const scaleX = nat.w / disp.w;
+    const scaleY = nat.h / disp.h;
+    const sx = Math.round(crop.x * scaleX);
+    const sy = Math.round(crop.y * scaleY);
+    const sw = Math.round(crop.w * scaleX);
+    const sh = Math.round(crop.h * scaleY);
 
-    // Limit output to 1920px max dimension to keep storage reasonable
     const MAX_PX = 1920;
     const ratio  = Math.min(1, MAX_PX / Math.max(sw, sh));
-    const canvas = document.createElement('canvas');
-    canvas.width  = Math.round(sw * ratio);
-    canvas.height = Math.round(sh * ratio);
-    canvas.getContext('2d').drawImage(imgRef.current, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-    onConfirm(canvas.toDataURL('image/jpeg', 0.85));
+    const out    = document.createElement('canvas');
+    out.width  = Math.round(sw * ratio);
+    out.height = Math.round(sh * ratio);
+    out.getContext('2d').drawImage(imgRef.current, sx, sy, sw, sh, 0, 0, out.width, out.height);
+    onConfirm(out.toDataURL('image/jpeg', 0.85));
   };
 
   if (!imageSrc) return null;
 
   return jsx('div', {
     className: s.overlay,
-    children: jsxs('div', { children: [
-      jsx('div', { className: s.heading, children: '📐 トリミング範囲を選択' }),
-      jsx('div', { className: s.hint, children: 'ドラッグして範囲を描く ／ 内側をドラッグして移動' }),
-      jsxs('div', {
-        ref: wrapRef,
-        className: s.wrap,
-        onPointerDown, onPointerMove, onPointerUp,
-        children: [
-          jsx('img', { ref: imgRef, src: imageSrc, className: s.img, onLoad: onImgLoad, draggable: false }),
-          jsx('canvas', { ref: canvasRef, className: s.canvas }),
-        ],
-      }),
-      jsxs('div', { className: s.actions, children: [
-        jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: '✓ 確定' }),
-        jsx('button', { onClick: onCancel,      className: ss.btn,                   children: 'キャンセル' }),
-      ]}),
-    ]}),
+    children: jsxs('div', {
+      style: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
+      children: [
+        jsx('div', { className: s.heading, children: '📐 トリミング範囲を選択' }),
+        jsx('div', { className: s.hint,   children: 'ドラッグして範囲を描く ／ 内側をドラッグして移動' }),
+        jsxs('div', {
+          className: s.wrap,
+          onPointerDown, onPointerMove, onPointerUp,
+          children: [
+            jsx('img', {
+              ref: imgRef, src: imageSrc,
+              className: s.img,
+              onLoad: onImgLoad,
+              draggable: false,
+            }),
+            // Render canvas only after disp is known to avoid 0×0 flash
+            disp.w > 0 && jsx('canvas', { ref: canvasRef, className: s.canvas }),
+          ],
+        }),
+        jsxs('div', { className: s.actions, children: [
+          jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: '✓ 確定' }),
+          jsx('button', { onClick: onCancel,      className: ss.btn,                    children: 'キャンセル' }),
+        ]}),
+      ],
+    }),
   });
 }
