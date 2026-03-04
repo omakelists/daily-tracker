@@ -54,7 +54,7 @@ export function Modal({ title, titleExtra, onClose, children }) {
     style: { position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '18px 14px', overflowY: 'auto' },
     onClick: (e) => { if (e.target === e.currentTarget) onClose(); },
     children: jsxs('div', {
-      style: { background: 'var(--bg-app)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, width: '100%', maxWidth: 580, padding: '22px', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' },
+      style: { background: 'var(--bg-app)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, width: '100%', padding: '22px', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' },
       children: [
         jsxs('div', {
           style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },

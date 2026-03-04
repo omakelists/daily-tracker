@@ -152,7 +152,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
   const gameDrop  = (i)      => ({ borderTop: dgFrom != null && dgOver === i && dgFrom !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
   const taskDrop  = (gid, i) => ({ borderTop: dtDrag?.gid === gid && dtDrag.over === i && dtDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
 
-  const rowStyle = { display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6, flexWrap: 'wrap' };
+  const rowStyle = { display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 };
 
   return jsx(Modal, {
     title: `⚙️ ${t('settings')}`,
@@ -195,14 +195,14 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
           },
           children: [
             jsxs('div', {
-              style: { padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' },
+              style: { padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' },
               children: [
                 DragHandle,
                 jsx('input', { type: 'color', value: game.color, onChange: (e) => upGame(game.id, 'color', e.target.value), style: { width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 } }),
-                jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), style: { ...IS, flex: 1, minWidth: 80, fontWeight: 700 }, placeholder: t('gameName') }),
-                jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetLbl') }),
-                jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), style: { ...IS, width: 86, fontFamily: 'monospace' } }),
-                jsx('button', { onClick: () => delGame(game.id, game.name), className: 'dt-btn dt-btn-danger', children: t('delete') }),
+                jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), style: { ...IS, flex: 1, minWidth: 0, fontWeight: 700 }, placeholder: t('gameName') }),
+                jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }, children: t('resetLbl') }),
+                jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), style: { ...IS, width: 86, fontFamily: 'monospace', flexShrink: 0 } }),
+                jsx('button', { onClick: () => delGame(game.id, game.name), className: 'dt-btn dt-btn-danger', children: '✕' }),
               ],
             }),
             jsxs('div', {
@@ -216,7 +216,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
                   children: [
                     DragHandle,
                     jsx(TypeSelect, { value: task.type, onChange: (e) => upTask(game.id, task.id, 'type', e.target.value), style: { width: 104 } }),
-                    jsx('input', { value: task.name, onChange: (e) => upTask(game.id, task.id, 'name', e.target.value), style: { ...IS, flex: 1, minWidth: 70 }, placeholder: t(`types.${task.type}`) }),
+                    jsx('input', { value: task.name, onChange: (e) => upTask(game.id, task.id, 'name', e.target.value), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t(`types.${task.type}`) }),
                     jsx(TaskExtraFields, { task, onChange: (f, v) => upTask(game.id, task.id, f, v) }),
                     jsx('button', { onClick: () => delTask(game.id, task.id), className: 'dt-btn dt-btn-danger', children: '✕' }),
                   ],
@@ -226,7 +226,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
                       style: rowStyle,
                       children: [
                         jsx(TypeSelect, { value: newTask.type, onChange: (e) => setNewTask((p) => ({ ...p, type: e.target.value })), style: { width: 104 } }),
-                        jsx('input', { value: newTask.name, onChange: (e) => setNewTask((p) => ({ ...p, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addTask(game.id), style: { ...IS, flex: 1, minWidth: 70 }, placeholder: t(`types.${newTask.type}`), autoFocus: true }),
+                        jsx('input', { value: newTask.name, onChange: (e) => setNewTask((p) => ({ ...p, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addTask(game.id), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t(`types.${newTask.type}`), autoFocus: true }),
                         jsx(TaskExtraFields, { task: newTask, onChange: (f, v) => setNewTask((p) => ({ ...p, [f]: v })) }),
                         jsx('button', { onClick: () => addTask(game.id),  className: 'dt-btn dt-btn-confirm', children: t('add') }),
                         jsx('button', { onClick: () => setAddTo(null),    className: 'dt-btn',               children: '✕' }),
@@ -243,10 +243,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
               style: { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 10 },
               children: [
                 jsxs('div', {
-                  style: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' },
+                  style: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 },
                   children: [
                     jsx('input', { type: 'color', value: newGame.color, onChange: (e) => setNewGame((g) => ({ ...g, color: e.target.value })), style: { width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer' } }),
-                    jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), style: { ...IS, flex: 1, minWidth: 80 }, placeholder: t('gameName'), autoFocus: true }),
+                    jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t('gameName'), autoFocus: true }),
                     jsx('span', { style: { fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap' }, children: t('resetLbl') }),
                     jsx('input', { type: 'time', value: newGame.resetTime, onChange: (e) => setNewGame((g) => ({ ...g, resetTime: e.target.value })), style: { ...IS, width: 86, fontFamily: 'monospace' } }),
                   ],
