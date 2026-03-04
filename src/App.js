@@ -207,7 +207,9 @@ export function App() {
     children: [
       jsxs('header', {
         className: 'dt-header',
-        children: [
+        children: [jsxs('div', {
+          className: 'dt-header-inner',
+          children: [
           jsxs('div', {
             className: 'dt-header-left',
             children: [
@@ -236,6 +238,7 @@ export function App() {
             ],
           }),
         ],
+        })],  // close dt-header-inner, then header children array
       }),
       jsxs('main', {
         className: 'dt-main',
