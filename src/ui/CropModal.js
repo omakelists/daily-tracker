@@ -27,7 +27,9 @@ const s = {
     display: 'block',
     cursor: 'crosshair',
     touchAction: 'none',
-    // Prevent the canvas from exceeding viewport
+    // No explicit width/height — canvas intrinsic dimensions (set via
+    // canvas.width/height attrs) act like a replaced element; the browser
+    // scales both axes proportionally to fit within these two constraints.
     maxWidth: 'min(88vw, 700px)',
     maxHeight: '55vh',
   }),
@@ -284,7 +286,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
         : jsx('canvas', {
             ref: cropCanvasRef,
             className: s.cropCanvas,
-            style: { width: dispSize.w, height: dispSize.h },
+            
             onPointerDown, onPointerMove: onPointerMoveForCursor, onPointerUp,
           }),
 
