@@ -40,11 +40,10 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 // When the app sends SKIP_WAITING (after user confirms update), take over immediately.
@@ -58,6 +57,15 @@ self.addEventListener('fetch', (e) => {
   // version.json?check=1  →  always fetch from network (bypass cache) for update checks
   if (url.pathname.endsWith('/version.json') && url.searchParams.has('check')) {
     e.respondWith(fetch(url.pathname).catch(() => new Response('{}', { status: 503 })));
+    return;
+  }
+
+  // Hard reload: browser sends cache:'no-cache' or 'reload' for sub-resources.
+  // Bypass the SW cache so all assets are refreshed consistently with the new HTML.
+  if (e.request.cache === 'no-cache' || e.request.cache === 'reload') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
     return;
   }
 
