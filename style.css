@@ -9,6 +9,10 @@ body {
 }
 button, select, input { font-family: inherit; }
 
+/* Prevent accidental text selection during interaction */
+* { user-select: none; -webkit-user-select: none; }
+input, textarea, select { user-select: text; -webkit-user-select: text; }
+
 /* ── Design tokens ──────────────────────────────────────────────── */
 :root {
   /* Layout */
