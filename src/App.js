@@ -1,10 +1,10 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { t } from './i18n.js';
+import { t } from './util/i18n.js';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
-import { loadGames, saveGames, loadChecks, saveChecks } from './storage.js';
+import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset } from './helpers.js';
+         msUntilTaskReset } from './util/helpers.js';
 import { ConfirmDialog } from './ui/UI.js';
 import { GameCard } from './ui/GameCard.js';
 import { SettingsModal } from './ui/Settings.js';

@@ -1,6 +1,6 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useRef } from 'react';
-import { t } from '../i18n.js';
+import { t } from '../util/i18n.js';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants.js';
 import { IS, Modal } from './UI.js';
 

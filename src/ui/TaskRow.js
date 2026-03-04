@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
-import { t } from '../i18n.js';
+import { t } from '../util/i18n.js';
 import { DAILY_TYPES, utcToLocalHHMM } from '../constants.js';
-import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../helpers.js';
+import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../util/helpers.js';
 import { Row, PrevBar } from './UI.js';
 
 export function TaskRow({ task, game, checks, now, onToggle, cd }) {

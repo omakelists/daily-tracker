@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { jsx } from 'react/jsx-runtime';
 import { StrictMode } from 'react';
-import { initI18n } from './i18n.js';
+import { initI18n } from './util/i18n.js';
 import { App } from './App.js';
 
 async function main() {
