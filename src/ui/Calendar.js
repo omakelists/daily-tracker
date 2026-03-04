@@ -25,7 +25,10 @@ export function CalendarModal({ games, checks, now, onClose }) {
   const [selTask, setSelTask] = useState(null);
 
   const game       = games.find((g) => g.id === selGame);
-  const dailyTasks = (game?.tasks ?? []).filter((tk) => DAILY_TYPES.has(tk.type));
+  const rawTasks   = game?.tasks ?? [];
+  const dailyTasks = rawTasks.length
+    ? rawTasks.filter((tk) => DAILY_TYPES.has(tk.type))
+    : [{ id: `${game?.id}_solo`, type: 'daily', name: '' }];
 
   useEffect(() => { setSelTask(null); }, [selGame]);
 
