@@ -72,11 +72,11 @@ export function App() {
     (async () => {
       const ab = await imgGet('app-bg');
       if (cancelled) return;
-      setAppBg(ab);
+      setAppBg(ab ? ab.dataUrl : null);
       const bgs = {};
       await Promise.all(games.map(async (g) => {
-        const url = await imgGet(`game-${g.id}`);
-        if (url) bgs[g.id] = url;
+        const entry = await imgGet(`game-${g.id}`);
+        if (entry) bgs[g.id] = entry;  // {dataUrl, opacity}
       }));
       if (!cancelled) setGameBgs(bgs);
     })();
@@ -261,7 +261,8 @@ export function App() {
             game, checks, now, onToggle: toggle,
             allDone: isAllDone(game), dailyTasks: getDailyTasks(game), cd,
             collapsed: collapsed.has(game.id), onToggleCollapse: toggleCollapse,
-            bgDataUrl: gameBgs[game.id] || null,
+            bgDataUrl: gameBgs[game.id]?.dataUrl || null,
+            bgOpacity: gameBgs[game.id]?.opacity ?? 0.5,
           }, game.id)),
           games.length === 0 && jsx('div', { className: s.noGames, children: t('noGames') }),
         ],

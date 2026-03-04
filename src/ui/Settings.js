@@ -172,9 +172,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
   // Load thumbnails on mount
   useState(() => {
-    imgGet('app-bg').then((v) => setAppBgThumb(v));
+    imgGet('app-bg').then((v) => setAppBgThumb(v?.dataUrl ?? null));
     games.forEach((g) => imgGet(`game-${g.id}`).then((v) => {
-      if (v) setGameBgThumbs((prev) => ({ ...prev, [g.id]: v }));
+      if (v) setGameBgThumbs((prev) => ({ ...prev, [g.id]: v.dataUrl }));
     }));
   });
 
@@ -184,9 +184,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     setCropFile(file);
   };
 
-  const handleCropConfirm = async (dataUrl) => {
+  const handleCropConfirm = async (dataUrl, opacity) => {
     if (!cropTarget) return;
-    await imgSet(cropTarget, dataUrl);
+    await imgSet(cropTarget, dataUrl, opacity);
     if (cropTarget === 'app-bg') {
       setAppBgThumb(dataUrl);
     } else {

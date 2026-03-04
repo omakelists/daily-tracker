@@ -45,7 +45,7 @@ const s = {
   resetTime: css({ fontSize: 11, color: 'var(--dim)', textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
 };
 
-export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl }) {
+export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5 }) {
   const [masterPop, setMasterPop] = useState(false);
   const fireMasterPop = () => { setMasterPop(true); setTimeout(() => setMasterPop(false), 260); };
 
@@ -85,7 +85,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
       // ── Background image layer ────────────────────────────────
       bgDataUrl && jsx('div', {
         className: s.bgLayer,
-        style: { backgroundImage: `url(${bgDataUrl})` },
+        style: { backgroundImage: `url(${bgDataUrl})`, opacity: bgOpacity },
       }),
 
       // ── All content above bg layer ────────────────────────────

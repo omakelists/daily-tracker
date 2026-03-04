@@ -34,6 +34,10 @@ const s = {
     maxHeight: '55vh',
   }),
   actions: css({ display: 'flex', gap: 12 }),
+  sliderWrap: css({ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 'min(88vw, 700px)' }),
+  sliderLabel: css({ color: 'rgba(255,255,255,0.6)', fontSize: 11, whiteSpace: 'nowrap' }),
+  sliderValue: css({ color: 'white', fontSize: 11, fontFamily: 'monospace', width: 30, textAlign: 'right', flexShrink: 0 }),
+  slider: css({ flex: 1, cursor: 'pointer', accentColor: 'var(--link)' }),
 };
 
 const MAX_DISPLAY = 700; // px — max display dimension
@@ -48,7 +52,8 @@ export function CropModal({ file, onConfirm, onCancel }) {
 
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
-  const [rot,   setRot]   = useState(0); // 0 | 90 | 180 | 270
+  const [rot,     setRot]     = useState(0);   // 0 | 90 | 180 | 270
+  const [opacity, setOpacity] = useState(0.5);
 
   // Raw HTMLImageElement loaded once from the file
   const rawImgRef   = useRef(null);
@@ -261,7 +266,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
     out.width  = Math.round(sw * ratio);
     out.height = Math.round(sh * ratio);
     out.getContext('2d').drawImage(transformedBitmap, sx, sy, sw, sh, 0, 0, out.width, out.height);
-    onConfirm(out.toDataURL('image/jpeg', 0.85));
+    onConfirm(out.toDataURL('image/jpeg', 0.85), opacity);
   };
 
   const loading = !transformedBitmap || !dispSize.w;
@@ -289,6 +294,18 @@ export function CropModal({ file, onConfirm, onCancel }) {
             
             onPointerDown, onPointerMove: onPointerMoveForCursor, onPointerUp,
           }),
+
+      // Opacity slider
+      dispSize.w > 0 && jsxs('div', { className: s.sliderWrap, children: [
+        jsx('span', { className: s.sliderLabel, children: '透過度' }),
+        jsx('input', {
+          type: 'range', min: 0, max: 1, step: 0.05,
+          value: opacity,
+          onChange: (e) => setOpacity(parseFloat(e.target.value)),
+          className: s.slider,
+        }),
+        jsx('span', { className: s.sliderValue, children: opacity.toFixed(2) }),
+      ]}),
 
       // Action buttons
       jsxs('div', { className: s.actions, children: [

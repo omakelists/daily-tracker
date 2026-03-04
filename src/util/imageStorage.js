@@ -11,23 +11,27 @@ function openDB() {
   });
 }
 
-/** Get a stored image by key. Returns the data-URL string, or null if not found. */
+/** Get stored image by key. Returns {dataUrl, opacity} or null. */
 export async function imgGet(key) {
   try {
     const db = await openDB();
-    return await new Promise((resolve, reject) => {
+    const raw = await new Promise((resolve, reject) => {
       const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(key);
       req.onsuccess = () => resolve(req.result ?? null);
       req.onerror   = () => reject(req.error);
     });
+    if (!raw) return null;
+    try { return JSON.parse(raw); }
+    catch { return { dataUrl: raw, opacity: 1 }; }  // legacy plain-string
   } catch { return null; }
 }
 
-/** Store a data-URL under key. Overwrites existing value. */
-export async function imgSet(key, dataUrl) {
+/** Store a data-URL + opacity under key as JSON. */
+export async function imgSet(key, dataUrl, opacity = 1) {
   const db = await openDB();
+  const value = JSON.stringify({ dataUrl, opacity });
   return new Promise((resolve, reject) => {
-    const req = db.transaction(STORE, 'readwrite').objectStore(STORE).put(dataUrl, key);
+    const req = db.transaction(STORE, 'readwrite').objectStore(STORE).put(value, key);
     req.onsuccess = () => resolve();
     req.onerror   = () => reject(req.error);
   });
