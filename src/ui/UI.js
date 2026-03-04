@@ -48,8 +48,9 @@ export const sharedStyles = {
     width: 'var(--cb-w)', height: 'var(--cb-w)', flexShrink: 0,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     cursor: 'pointer', fontSize: 14, color: 'var(--text)',
-    background: 'transparent', border: '2px solid var(--border)',
+    background: 'rgba(0,0,0,0.42)', border: '2px solid var(--border)',
     borderRadius: 6, transition: 'all 0.15s',
+    boxShadow: '0 0 0 1px rgba(0,0,0,0.6)',
   }),
   cbGame:    css({ borderRadius: 7, fontSize: 13, borderColor: 'rgba(255,255,255,0.3)' }),
   cbChecked: css({ background: 'var(--checked-bg) !important', borderColor: 'var(--checked-br) !important', transform: 'scale(1.08)' }),
@@ -140,7 +141,7 @@ export function PrevBar({ show, checked, partial }) {
     title: t('prevTip'),
     className: s.prevbarWrap,
     children: jsx('div', {
-      style: { width: 'var(--bar-w)', height: 18, borderRadius: 2, background: color, boxShadow: checked ? `0 0 4px ${color}88` : 'none' },
+      style: { width: 'var(--bar-w)', height: 18, borderRadius: 2, background: color, boxShadow: checked ? `0 0 0 1.5px rgba(0,0,0,0.85), 0 0 5px ${color}88` : '0 0 0 1.5px rgba(0,0,0,0.85)' },
     }),
   });
 }

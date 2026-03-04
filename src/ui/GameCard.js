@@ -41,8 +41,8 @@ const s = {
   divider:  css({ margin: '5px 0', borderTop: '1px solid rgba(255,255,255,0.07)', position: 'relative' }),
   sepLabel: css({ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', background: 'transparent', padding: '0 8px', fontSize: 10, color: '#8b949e', letterSpacing: 1, whiteSpace: 'nowrap' }),
 
-  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0 }),
-  resetTime: css({ fontSize: 11, color: 'var(--dim)' }),
+  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0, textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
+  resetTime: css({ fontSize: 11, color: 'var(--dim)', textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
 };
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl }) {
@@ -105,7 +105,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
               children: allTodayDone ? '✓' : '',
             }),
             content: jsx('span', {
-              style: { fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: allDone ? 'var(--dim)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textShadow: bgDataUrl ? '0 1px 4px rgba(0,0,0,0.95)' : '0 1px 3px rgba(0,0,0,0.85)', transition: 'all 0.3s' },
+              style: { fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: allDone ? 'var(--dim)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)', transition: 'all 0.3s' },
               children: game.name,
             }),
             meta: jsxs(Fragment, { children: [
