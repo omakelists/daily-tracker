@@ -4,7 +4,7 @@ import { css, cx } from '@emotion/css';
 import { t, ta } from '../util/i18n.js';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants.js';
 import { checkKey } from '../util/helpers.js';
-import { IS, Modal, sharedStyles as ss } from './UI.js';
+import { inputCls, Modal, sharedStyles as ss } from './UI.js';
 
 // ── Styles ────────────────────────────────────────────────────────
 const s = {
@@ -57,12 +57,12 @@ export function CalendarModal({ games, checks, now, onClose }) {
       jsxs('div', { className: s.filters, children: [
         jsx('select', {
           value: selGame ?? '', onChange: (e) => setSelGame(e.target.value),
-          style: { ...IS, flex: 1, minWidth: 120 },
+          className: inputCls, style: { flex: 1, minWidth: 120 },
           children: games.map((g) => jsx('option', { value: g.id, children: g.name }, g.id)),
         }),
         dailyTasks.length > 0 && jsx('select', {
           value: selTask ?? '', onChange: (e) => setSelTask(e.target.value || null),
-          style: { ...IS, flex: 1, minWidth: 100 },
+          className: inputCls, style: { flex: 1, minWidth: 100 },
           children: [
             jsx('option', { value: '', children: t('taskAll') }),
             ...dailyTasks.map((tk) => jsx('option', { value: tk.id, children: tk.name.trim() || t(`types.${tk.type}`) }, tk.id)),

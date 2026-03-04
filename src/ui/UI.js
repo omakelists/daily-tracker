@@ -3,12 +3,15 @@ import { useState } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
 import { t } from '../util/i18n.js';
 
-// ── IS: inline-style base for <input> / <select> in Settings ─────
-// Kept as a JS object because Settings merges it with dynamic values.
-export const IS = {
+// ── inputCls: base className for <input> / <select> elements ────
+// Extra per-element overrides (width, flex, etc.) go into style={} alongside className.
+export const inputCls = css({
   background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 6,
   color: 'var(--text)', padding: '6px 9px', fontSize: 13, outline: 'none',
-};
+  fontFamily: 'inherit',
+});
+/** @deprecated kept for backward-compat; prefer inputCls */
+export const IS = inputCls;
 
 // ── Shared keyframes ──────────────────────────────────────────────
 const cbPopAnim = keyframes({

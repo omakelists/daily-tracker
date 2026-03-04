@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
 import { t } from '../util/i18n.js';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants.js';
-import { IS, Modal, sharedStyles as ss } from './UI.js';
+import { inputCls, Modal, sharedStyles as ss } from './UI.js';
 
 // ── Keyframes ─────────────────────────────────────────────────────
 const itemEnter = keyframes({ from: { opacity: 0, transform: 'translateY(-6px)' }, to: { opacity: 1, transform: 'translateY(0)' } });
@@ -40,18 +40,18 @@ const TYPE_OPTS = ['daily', 'weekly', 'webdaily', 'monthly', 'halfmonthly'];
 const DragHandle = jsx('span', { className: s.dragHandle, children: '⠿' });
 
 function TypeSelect({ value, onChange, style }) {
-  return jsx('select', { value, onChange, style: { ...IS, ...style }, children: TYPE_OPTS.map((ty) => jsx('option', { value: ty, children: t(`types.${ty}`) }, ty)) });
+  return jsx('select', { value, onChange, className: inputCls, style, children: TYPE_OPTS.map((ty) => jsx('option', { value: ty, children: t(`types.${ty}`) }, ty)) });
 }
 
 function TaskExtraFields({ task, onChange }) {
   return jsxs(Fragment, { children: [
     task.type === 'webdaily' && jsxs(Fragment, { children: [
       jsx('span', { className: s.extraLbl, children: t('resetLbl') }),
-      jsx('input', { type: 'time', value: utcToLocalHHMM(task.webResetTime ?? '00:00'), onChange: (e) => onChange('webResetTime', localToUtcHHMM(e.target.value)), style: { ...IS, width: 84, fontFamily: 'monospace' } }),
+      jsx('input', { type: 'time', value: utcToLocalHHMM(task.webResetTime ?? '00:00'), onChange: (e) => onChange('webResetTime', localToUtcHHMM(e.target.value)), className: inputCls, style: { width: 84, fontFamily: 'monospace' } }),
     ]}),
     task.type === 'monthly' && jsxs(Fragment, { children: [
       jsx('span', { className: s.extraLbl, children: t('resetDay') }),
-      jsx('input', { type: 'number', min: '1', max: '28', value: task.monthlyResetDay ?? 1, onChange: (e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1))), style: { ...IS, width: 52, fontFamily: 'monospace', textAlign: 'center' } }),
+      jsx('input', { type: 'number', min: '1', max: '28', value: task.monthlyResetDay ?? 1, onChange: (e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1))), className: inputCls, style: { width: 52, fontFamily: 'monospace', textAlign: 'center' } }),
       jsx('span', { className: s.extraLbl, children: t('dayUnit') }),
     ]}),
   ]});
@@ -153,9 +153,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
           jsxs('div', { className: s.gameHeader, children: [
             DragHandle,
             jsx('input', { type: 'color', value: game.color, onChange: (e) => upGame(game.id, 'color', e.target.value), className: s.colorInput }),
-            jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), className: s.nameInput, style: IS, placeholder: t('gameName') }),
+            jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), className: cx(s.nameInput, inputCls), placeholder: t('gameName') }),
             jsx('span', { className: s.resetLbl, children: t('resetLbl') }),
-            jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), style: { ...IS, width: 86, fontFamily: 'monospace', flexShrink: 0 } }),
+            jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), className: inputCls, style: { width: 86, fontFamily: 'monospace', flexShrink: 0 } }),
             jsx('button', { onClick: () => delGame(game.id, game.name), className: cx(ss.btn, ss.btnDanger), children: '✕' }),
           ]}),
           jsxs('div', { className: s.gameBody, children: [
@@ -167,7 +167,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
               children: [
                 DragHandle,
                 jsx(TypeSelect, { value: task.type, onChange: (e) => upTask(game.id, task.id, 'type', e.target.value), style: { width: 104 } }),
-                jsx('input', { value: task.name, onChange: (e) => upTask(game.id, task.id, 'name', e.target.value), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t(`types.${task.type}`) }),
+                jsx('input', { value: task.name, onChange: (e) => upTask(game.id, task.id, 'name', e.target.value), className: inputCls, style: { flex: 1, minWidth: 0 }, placeholder: t(`types.${task.type}`) }),
                 jsx(TaskExtraFields, { task, onChange: (f, v) => upTask(game.id, task.id, f, v) }),
                 jsx('button', { onClick: () => delTask(game.id, task.id), className: cx(ss.btn, ss.btnDanger), children: '✕' }),
               ],
@@ -175,7 +175,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
             addTo === game.id
               ? jsxs('div', { style: rowStyle, children: [
                   jsx(TypeSelect, { value: newTask.type, onChange: (e) => setNewTask((p) => ({ ...p, type: e.target.value })), style: { width: 104 } }),
-                  jsx('input', { value: newTask.name, onChange: (e) => setNewTask((p) => ({ ...p, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addTask(game.id), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t(`types.${newTask.type}`), autoFocus: true }),
+                  jsx('input', { value: newTask.name, onChange: (e) => setNewTask((p) => ({ ...p, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addTask(game.id), className: inputCls, style: { flex: 1, minWidth: 0 }, placeholder: t(`types.${newTask.type}`), autoFocus: true }),
                   jsx(TaskExtraFields, { task: newTask, onChange: (f, v) => setNewTask((p) => ({ ...p, [f]: v })) }),
                   jsx('button', { onClick: () => addTask(game.id),  className: cx(ss.btn, ss.btnConfirm), children: t('add') }),
                   jsx('button', { onClick: () => setAddTo(null),    className: ss.btn,                    children: '✕' }),
@@ -189,9 +189,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm }) {
         ? jsxs('div', { className: s.newGameBox, children: [
             jsxs('div', { className: s.newGameHeader, children: [
               jsx('input', { type: 'color', value: newGame.color, onChange: (e) => setNewGame((g) => ({ ...g, color: e.target.value })), className: s.colorInput }),
-              jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), style: { ...IS, flex: 1, minWidth: 0 }, placeholder: t('gameName'), autoFocus: true }),
+              jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), className: inputCls, style: { flex: 1, minWidth: 0 }, placeholder: t('gameName'), autoFocus: true }),
               jsx('span', { className: s.resetLbl, children: t('resetLbl') }),
-              jsx('input', { type: 'time', value: newGame.resetTime, onChange: (e) => setNewGame((g) => ({ ...g, resetTime: e.target.value })), style: { ...IS, width: 86, fontFamily: 'monospace' } }),
+              jsx('input', { type: 'time', value: newGame.resetTime, onChange: (e) => setNewGame((g) => ({ ...g, resetTime: e.target.value })), className: inputCls, style: { width: 86, fontFamily: 'monospace' } }),
             ]}),
             jsxs('div', { className: s.newGameActions, children: [
               jsx('button', { onClick: addGame,               className: cx(ss.btn, ss.btnConfirm), children: t('add') }),
