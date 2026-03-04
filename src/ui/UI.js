@@ -125,7 +125,7 @@ export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, 
     children: [
       preSlot != null && jsx('div', { className: sharedStyles.preSlot, children: preSlot }),
       jsx('div', { className: sharedStyles.barSlot, children: barSlot }),
-      checkbox,
+      checkbox != null && jsx('div', { style: { flexShrink: 0, display: 'flex' }, onClick: (e) => e.stopPropagation(), children: checkbox }),
       jsx('div', { className: sharedStyles.content, children: content }),
       meta      && jsx('div', { className: sharedStyles.meta,  children: meta }),
       rightSlot && jsx('div', { className: sharedStyles.right, children: rightSlot }),
