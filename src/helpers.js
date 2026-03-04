@@ -2,24 +2,43 @@ import { fmtDate } from './constants.js';
 
 export const parseHHMM = (s) => { const [h, m] = (s || '00:00').split(':').map(Number); return h * 60 + m; };
 
-// ── UTC-based date key calculation ─────────────────────────────────
+/** Format a Date as YYYY-MM-DD using LOCAL date (not UTC). */
+const localFmtDate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// ── Local-date-based game day key ────────────────────────────────────
 /**
- * The "game date key" for a UTC reset time.
- * If the current UTC time is before the reset, we're still in yesterday's game day.
+ * The reset time acts as the date-change boundary for each game.
+ * Comparison is done in LOCAL time so the boundary works correctly
+ * regardless of the viewer's UTC offset.
+ *
+ * Steps:
+ *  1. Convert the stored UTC reset HH:MM to local HH:MM by constructing
+ *     a Date with those UTC hours and reading back local hours.
+ *  2. Compare local-minutes-since-midnight of now vs reset.
+ *  3. If now < reset -> still in previous game day -> subtract 1 local day.
+ *  4. Return a YYYY-MM-DD key in LOCAL date.
  */
 export function getGameDateKey(now, resetTimeUTC) {
-  const utcMin  = now.getUTCHours() * 60 + now.getUTCMinutes();
-  const resetMin = parseHHMM(resetTimeUTC);
-  const base    = new Date(now);
-  if (utcMin < resetMin) base.setUTCDate(base.getUTCDate() - 1);
-  return fmtDate(base);
+  // Derive local reset time from stored UTC HH:MM
+  const [rh, rm] = (resetTimeUTC || '00:00').split(':').map(Number);
+  const tmp = new Date(now);
+  tmp.setUTCHours(rh, rm, 0, 0);
+  const localResetMin = tmp.getHours() * 60 + tmp.getMinutes();
+
+  const localNowMin = now.getHours() * 60 + now.getMinutes();
+
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (localNowMin < localResetMin) base.setDate(base.getDate() - 1);
+
+  return localFmtDate(base);
 }
 
-/** Shift a YYYY-MM-DD UTC date key by `days` days. */
+/** Shift a YYYY-MM-DD date key by `days` days. */
 export function shiftDate(dateKey, days) {
   const d = new Date(dateKey + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() + days);
-  return fmtDate(d);
+  return fmtDate(d);   // pure date arithmetic — UTC vs local doesn't matter
 }
 
 export const getPrevGameDateKey = (now, rt) => shiftDate(getGameDateKey(now, rt), -1);
