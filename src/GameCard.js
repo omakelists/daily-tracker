@@ -11,11 +11,10 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   const periodGroup = game.tasks.filter((tk) =>  PERIOD_TYPES.has(tk.type));
   const hasDailyTasks = dailyGroup.length > 0;
 
-  // Collapsed: hide daily tasks; always show unchecked periodic tasks
-  const visibleDaily  = collapsed ? [] : dailyGroup;
-  const visiblePeriod = collapsed
-    ? periodGroup.filter((tk) => !checks[checkKey(tk.id, getPeriodKey(tk, game, now))])
-    : periodGroup;
+  // Collapsed: hide only checked tasks; unchecked tasks always visible regardless of type
+  const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
+  const visibleDaily  = collapsed ? dailyGroup.filter((tk) => !isChecked(tk))  : dailyGroup;
+  const visiblePeriod = collapsed ? periodGroup.filter((tk) => !isChecked(tk)) : periodGroup;
   const hasVisible = visibleDaily.length > 0 || visiblePeriod.length > 0;
 
   // Master state — daily tasks only
