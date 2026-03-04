@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
-import { t } from './i18n.js';
-import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from './constants.js';
-import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from './helpers.js';
+import { t } from '../i18n.js';
+import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants.js';
+import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../helpers.js';
 import { Row, PrevBar } from './UI.js';
 import { TaskRow } from './TaskRow.js';
 

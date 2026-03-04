@@ -1,5 +1,5 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
-import { t } from './i18n.js';
+import { t } from '../i18n.js';
 
 // ── Static form-control style helpers (kept as JS for Settings inline use) ──
 export const IS = {

@@ -1,8 +1,8 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
-import { t, ta } from './i18n.js';
-import { getDaysInMonth, fmtDate, DAILY_TYPES } from './constants.js';
-import { checkKey } from './helpers.js';
+import { t, ta } from '../i18n.js';
+import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants.js';
+import { checkKey } from '../helpers.js';
 import { IS, Modal } from './UI.js';
 
 export function CalendarModal({ games, checks, now, onClose }) {

@@ -5,10 +5,10 @@ import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './storage.js';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset } from './helpers.js';
-import { ConfirmDialog } from './UI.js';
-import { GameCard } from './GameCard.js';
-import { SettingsModal } from './Settings.js';
-import { CalendarModal } from './Calendar.js';
+import { ConfirmDialog } from './ui/UI.js';
+import { GameCard } from './ui/GameCard.js';
+import { SettingsModal } from './ui/Settings.js';
+import { CalendarModal } from './ui/Calendar.js';
 
 export function App() {
   const [games,        setGames]        = useState(null);
