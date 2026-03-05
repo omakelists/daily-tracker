@@ -351,7 +351,7 @@ export function App() {
         ],
       }),
 
-      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm, refreshImages, isPwa, wcoEnabled, setWcoEnabled }),
+      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm, refreshImages }),
       showCalendar && jsx(CalendarModal, { games, checks, now, onClose: () => setShowCalendar(false) }),
       confirm && jsx(ConfirmDialog, {
         message: confirm.message, confirmLabel: confirm.confirmLabel,

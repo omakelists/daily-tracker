@@ -28,33 +28,6 @@ const s = {
   newGameBox:    css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 10 }),
   newGameHeader: css({ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }),
   newGameActions:css({ display: 'flex', gap: 8 }),
-  separator: css({
-    borderTop: '1px solid rgba(255,255,255,0.08)',
-    marginTop: 4, marginBottom: 0,
-  }),
-  wcoRow: css({
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '10px 2px',
-    gap: 12,
-  }),
-  wcoLabel: css({ fontSize: 13, color: 'var(--text)' }),
-  wcoDesc:  css({ fontSize: 11, color: 'var(--muted)', marginTop: 2 }),
-  wcoToggle: css({
-    flexShrink: 0,
-    width: 42, height: 24, borderRadius: 12,
-    border: 'none', cursor: 'pointer', padding: 2,
-    display: 'flex', alignItems: 'center',
-    transition: 'background 0.2s',
-    background: 'var(--border)',
-  }),
-  wcoToggleOn:  css({ background: 'var(--link) !important' }),
-  wcoKnob: css({
-    width: 20, height: 20, borderRadius: '50%',
-    background: 'white',
-    transition: 'transform 0.2s',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-  }),
-  wcoKnobOn: css({ transform: 'translateX(18px)' }),
   addGameBtn:    css({
     background: 'transparent', border: '2px dashed var(--border)', borderRadius: 10,
     color: 'var(--muted)', padding: 12, cursor: 'pointer', fontSize: 14, width: '100%',
@@ -181,7 +154,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, isPwa, wcoEnabled, setWcoEnabled }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages }) {
   const [newGame,     setNewGame]     = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,      setShowNG]      = useState(false);
   const [newTask,     setNewTask]     = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
@@ -408,19 +381,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
             ]})
           : jsx('button', { className: s.addGameBtn, onClick: () => setShowNG(true), children: t('addGame') }),
 
-        // ── WCO toggle (PWA only) ─────────────────────────────
-        isPwa && jsx('hr', { className: s.separator }),
-        isPwa && jsxs('div', { className: s.wcoRow, children: [
-          jsxs('div', { children: [
-            jsx('div', { className: s.wcoLabel, children: 'カスタムタイトルバー' }),
-            jsx('div', { className: s.wcoDesc,  children: 'PWAウィンドウのタイトルバーをアプリのヘッダーとして使用' }),
-          ]}),
-          jsx('button', {
-            className: cx(s.wcoToggle, wcoEnabled && s.wcoToggleOn),
-            onClick: () => setWcoEnabled(!wcoEnabled),
-            children: jsx('div', { className: cx(s.wcoKnob, wcoEnabled && s.wcoKnobOn) }),
-          }),
-        ]}),
       ]}),
     }),
   ]});
