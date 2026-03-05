@@ -8,6 +8,11 @@ export default defineConfig({
   base: './',
 
   build: {
+    // Disable all minification for readable output
+    minify: false,
+    // Preserve original symbol names (no identifier mangling)
+    terserOptions: { mangle: false },
+
     rollupOptions: {
       // These packages are provided by the importmap in index.html.
       // They must not be bundled into the output — import statements are kept as-is.
@@ -17,6 +22,7 @@ export default defineConfig({
         'react-dom/client',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
+        '@emotion/css',
       ],
       // preserveModules requires preserveEntrySignatures to be non-false.
       // Vite sets it to false by default, so we override it here.
