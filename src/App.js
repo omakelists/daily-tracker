@@ -101,7 +101,12 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [confirm,      setConfirm]      = useState(null);
-  const [collapsed,    setCollapsed]    = useState(new Set());
+  const [collapsed,    setCollapsed]    = useState(() => {
+    try {
+      const v = localStorage.getItem('dt:collapsed');
+      return v ? new Set(JSON.parse(v)) : new Set();
+    } catch { return new Set(); }
+  });
   const [updateInfo,   setUpdateInfo]   = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
@@ -179,6 +184,10 @@ export function App() {
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
+
+  useEffect(() => {
+    try { localStorage.setItem('dt:collapsed', JSON.stringify([...collapsed])); } catch {}
+  }, [collapsed]);
 
   // Purge orphaned images whenever the games list changes
   useEffect(() => {
