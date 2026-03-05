@@ -18,6 +18,9 @@ export default defineConfig({
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
       ],
+      // preserveModules requires preserveEntrySignatures to be non-false.
+      // Vite sets it to false by default, so we override it here.
+      preserveEntrySignatures: 'allow-extension',
       output: {
         // Preserve the src/ module structure in the build output.
         // Each source file becomes a corresponding .js file under dist/src/.
