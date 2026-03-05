@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { t, ta } from '../util/i18n.js';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants.js';
-import { checkKey } from '../util/helpers.js';
+import { checkKey, getTasksOrSolo } from '../util/helpers.js';
 import { inputCls, Modal, sharedStyles as ss } from './UI.js';
 
 // ── Styles ────────────────────────────────────────────────────────
@@ -25,10 +25,9 @@ export function CalendarModal({ games, checks, now, onClose }) {
   const [selTask, setSelTask] = useState(null);
 
   const game       = games.find((g) => g.id === selGame);
-  const rawTasks   = game?.tasks ?? [];
-  const dailyTasks = rawTasks.length
-    ? rawTasks.filter((tk) => DAILY_TYPES.has(tk.type))
-    : [{ id: `${game?.id}_solo`, type: 'daily', name: '' }];
+  const dailyTasks = game
+    ? getTasksOrSolo(game).filter((tk) => DAILY_TYPES.has(tk.type))
+    : [];
 
   useEffect(() => { setSelTask(null); }, [selGame]);
 

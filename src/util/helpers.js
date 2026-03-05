@@ -181,3 +181,10 @@ export function playAllDoneSound() {
     });
   } catch {}
 }
+
+/** Virtual solo task for games that have no subtasks. */
+export const soloTask = (game) => ({ id: `${game.id}_solo`, type: 'daily' });
+
+/** Returns the task list for a game, substituting a solo task when empty. */
+export const getTasksOrSolo = (game) =>
+  game.tasks.length ? game.tasks : [soloTask(game)];

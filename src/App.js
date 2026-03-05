@@ -6,7 +6,7 @@ import { t } from './util/i18n.js';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset } from './util/helpers.js';
+         msUntilTaskReset, getTasksOrSolo } from './util/helpers.js';
 import { imgGet, imgPurgeOrphans } from './util/imageStorage.js';
 import { useWindowControlsOverlay } from './util/useWindowControlsOverlay.js';
 import { ConfirmDialog } from './ui/UI.js';
@@ -150,7 +150,7 @@ export function App() {
     if (!games) return;
     let minMs = Infinity;
     games.forEach((game) => {
-      const tasks = game.tasks.length ? game.tasks : [{ id: game.id + '_solo', type: 'daily' }];
+      const tasks = getTasksOrSolo(game);
       tasks.forEach((task) => {
         const ms = msUntilTaskReset(task, game, now);
         if (ms > 0 && ms < minMs) minMs = ms;
@@ -200,10 +200,9 @@ export function App() {
   }, []);
 
   const cd     = { d: t('cd.d'), h: t('cd.h'), m: t('cd.m') };
-  const soloId = (game) => `${game.id}_solo`;
 
   const getDailyTasks = useCallback((game) => {
-    const tasks = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
+    const tasks = getTasksOrSolo(game);
     return tasks.filter((tk) => DAILY_TYPES.has(tk.type));
   }, []);
 
@@ -238,7 +237,7 @@ export function App() {
         setChecks((prev) => {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
-          const allTasks   = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
+          const allTasks   = getTasksOrSolo(game);
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
