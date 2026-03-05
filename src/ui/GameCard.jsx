@@ -1,11 +1,11 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useCallback } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
-import { t } from '../util/i18n.js';
-import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants.js';
-import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers.js';
-import { Row, PrevBar, sharedStyles as ss } from './UI.js';
-import { TaskRow } from './TaskRow.js';
+import { t } from '../util/i18n';
+import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants';
+import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
+import { Row, PrevBar, sharedStyles as ss } from './UI';
+import { TaskRow } from './TaskRow';
 
 // ── Animation constants ───────────────────────────────────────────
 const EXIT_MS  = 220;  // task exit duration

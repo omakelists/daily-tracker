@@ -7,21 +7,17 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Daily Tracker" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <title></title>
 
   <!--
-    Import map: resolves bare specifiers in source files and in the
-    auto-generated 'react/jsx-runtime' import that TypeScript emits.
-    No Babel. No build step.
-
-    The Service Worker (sw.js) intercepts every request for src/*.js,
-    runs TypeScript's transpileModule({ jsx: ReactJSX }) on it, and
-    returns plain JS — so source files may contain real JSX syntax.
+    Import map: resolves bare specifiers for packages that are served
+    externally (not bundled). In production these imports are left as-is
+    in the output ESM files and resolved here at runtime.
+    In development Vite resolves these from node_modules instead.
   -->
   <script type="importmap">
   {
@@ -36,39 +32,10 @@
   }
   </script>
 
-  <script type="module">
-    /*
-     * Boot sequence
-     * ─────────────
-     * The Service Worker must be controlling this page BEFORE we import
-     * any JSX source file, otherwise the browser fetches raw JSX which
-     * it cannot parse.
-     *
-     * 1. Register sw.js.
-     * 2. If the SW is not yet the controller (first visit), wait for
-     *    the 'controllerchange' event — emitted after the SW calls
-     *    skipWaiting() + clients.claim() at the end of its install/activate.
-     * 3. Dynamically import main.js — this fetch now goes through the SW,
-     *    which returns transpiled JS.
-     *
-     * On every subsequent visit navigator.serviceWorker.controller is
-     * already set, so the wait is skipped and the app boots instantly.
-     */
-    async function boot() {
-      if ('serviceWorker' in navigator) {
-        await navigator.serviceWorker.register('./sw.js');
-        if (!navigator.serviceWorker.controller) {
-          await new Promise((resolve) => {
-            navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
-          });
-        }
-      }
-      await import('./src/main.js');
-    }
-    boot();
-  </script>
 </head>
 <body>
   <div id="root"></div>
+  <!-- Vite injects the module script tag here during build -->
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

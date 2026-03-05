@@ -2,16 +2,16 @@ import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { css, cx, keyframes } from '@emotion/css';
-import { t } from './util/i18n.js';
-import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
-import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
+import { t } from './util/i18n';
+import { DEFAULT_GAMES, DAILY_TYPES } from './constants';
+import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset } from './util/helpers.js';
-import { imgGet, imgPurgeOrphans } from './util/imageStorage.js';
-import { ConfirmDialog } from './ui/UI.js';
-import { GameCard } from './ui/GameCard.js';
-import { SettingsModal } from './ui/Settings.js';
-import { CalendarModal } from './ui/Calendar.js';
+         msUntilTaskReset } from './util/helpers';
+import { imgGet, imgPurgeOrphans } from './util/imageStorage';
+import { ConfirmDialog } from './ui/UI';
+import { GameCard } from './ui/GameCard';
+import { SettingsModal } from './ui/Settings';
+import { CalendarModal } from './ui/Calendar';
 
 // ── Styles ────────────────────────────────────────────────────────
 const pulseUpdate = keyframes({

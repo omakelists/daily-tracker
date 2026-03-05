@@ -1,11 +1,11 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useRef } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
-import { t } from '../util/i18n.js';
-import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants.js';
-import { imgGet, imgSet, imgDelete } from '../util/imageStorage.js';
-import { inputCls, Modal, sharedStyles as ss } from './UI.js';
-import { CropModal } from './CropModal.js';
+import { t } from '../util/i18n';
+import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
+import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
+import { inputCls, Modal, sharedStyles as ss } from './UI';
+import { CropModal } from './CropModal';
 
 // ── Keyframes ─────────────────────────────────────────────────────
 const itemEnter = keyframes({ from: { opacity: 0, transform: 'translateY(-6px)' }, to: { opacity: 1, transform: 'translateY(0)' } });

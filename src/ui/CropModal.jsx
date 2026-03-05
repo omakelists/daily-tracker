@@ -1,8 +1,8 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
-import { sharedStyles as ss } from './UI.js';
-import { t } from '../util/i18n.js';
+import { sharedStyles as ss } from './UI';
+import { t } from '../util/i18n';
 
 const s = {
   overlay: css({

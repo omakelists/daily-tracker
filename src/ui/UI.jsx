@@ -1,7 +1,7 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
-import { t } from '../util/i18n.js';
+import { t } from '../util/i18n';
 
 // ── inputCls: base className for <input> / <select> elements ────
 // Extra per-element overrides (width, flex, etc.) go into style={} alongside className.

@@ -1,10 +1,10 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { t } from '../util/i18n.js';
-import { DAILY_TYPES, utcToLocalHHMM } from '../constants.js';
-import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../util/helpers.js';
-import { Row, PrevBar, sharedStyles as ss } from './UI.js';
+import { t } from '../util/i18n';
+import { DAILY_TYPES, utcToLocalHHMM } from '../constants';
+import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../util/helpers';
+import { Row, PrevBar, sharedStyles as ss } from './UI';
 
 // ── Styles ────────────────────────────────────────────────────────
 const BADGE_MAP = {

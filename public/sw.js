@@ -3,7 +3,6 @@ const CACHE = 'daily-tracker-v10';
 const LOCAL_ASSETS = [
   './',
   './index.html',
-  './style.css',
   './manifest.json',
   './version.json',
   './favicon.ico',
@@ -16,6 +15,7 @@ const LOCAL_ASSETS = [
   './locales/zh-Hant.json',
   './locales/ko.json',
   './locales/es.json',
+  // JS assets — paths match vite build output (preserveModules)
   './src/main.js',
   './src/App.js',
   './src/ui/GameCard.js',
@@ -23,9 +23,11 @@ const LOCAL_ASSETS = [
   './src/ui/Settings.js',
   './src/ui/Calendar.js',
   './src/ui/UI.js',
+  './src/ui/CropModal.js',
   './src/util/i18n.js',
   './src/util/storage.js',
   './src/util/helpers.js',
+  './src/util/imageStorage.js',
   './src/constants.js',
 ];
 

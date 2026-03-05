@@ -1,4 +1,4 @@
-import { fmtDate } from '../constants.js';
+import { fmtDate } from '../constants';
 
 export const parseHHMM = (s) => { const [h, m] = (s || '00:00').split(':').map(Number); return h * 60 + m; };
 

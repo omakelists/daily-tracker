@@ -1,10 +1,10 @@
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
 import { css, cx } from '@emotion/css';
-import { t, ta } from '../util/i18n.js';
-import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants.js';
-import { checkKey } from '../util/helpers.js';
-import { inputCls, Modal, sharedStyles as ss } from './UI.js';
+import { t, ta } from '../util/i18n';
+import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants';
+import { checkKey } from '../util/helpers';
+import { inputCls, Modal, sharedStyles as ss } from './UI';
 
 // ── Styles ────────────────────────────────────────────────────────
 const s = {
