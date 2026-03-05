@@ -8,6 +8,7 @@ import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js'
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset } from './util/helpers.js';
 import { imgGet, imgPurgeOrphans } from './util/imageStorage.js';
+import { useWindowControlsOverlay } from './util/useWindowControlsOverlay.js';
 import { ConfirmDialog } from './ui/UI.js';
 import { GameCard } from './ui/GameCard.js';
 import { SettingsModal } from './ui/Settings.js';
@@ -105,27 +106,7 @@ export function App() {
   const [updateInfo,   setUpdateInfo]   = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  // isPwa: true when the WCO API is present (= launched as installed PWA)
-  const isPwa = !!(navigator.windowControlsOverlay);
-  // wcoEnabled: user preference, persisted in localStorage (default: true)
-  const [wcoEnabled, setWcoEnabledState] = useState(() => {
-    try { const v = localStorage.getItem('dt:wcoEnabled'); return v === null ? true : v === '1'; }
-    catch { return true; }
-  });
-  const setWcoEnabled = (val) => {
-    setWcoEnabledState(val);
-    try { localStorage.setItem('dt:wcoEnabled', val ? '1' : '0'); } catch {}
-  };
-  // wcoActive: WCO API is present AND user has it enabled
-  const [wcoOsVisible, setWcoOsVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
-  useEffect(() => {
-    const wco = navigator.windowControlsOverlay;
-    if (!wco) return;
-    const handler = () => setWcoOsVisible(wco.visible);
-    wco.addEventListener('geometrychange', handler);
-    return () => wco.removeEventListener('geometrychange', handler);
-  }, []);
-  const wcoVisible = wcoEnabled && wcoOsVisible;
+  const { wcoVisible } = useWindowControlsOverlay();
 
   // ── Image states ──────────────────────────────────────────────
   const [appBg,   setAppBg]   = useState(null);       // dataUrl | null
