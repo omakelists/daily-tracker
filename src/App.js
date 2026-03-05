@@ -35,10 +35,53 @@ const s = {
     background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-app) 35%, rgba(13,17,23,0.82) 58%, rgba(13,17,23,0.28) 82%, rgba(13,17,23,0.05) 100%)',
   }),
 
+  // ── Non-WCO header (sticky, normal layout) ────────────────────
   header:  css({ background: 'var(--bg-header)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '13px 18px', position: 'sticky', top: 0, zIndex: 100 }),
   headerInner: css({ maxWidth: 740, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }),
   headerLeft:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
   title: css({ fontSize: 17, fontWeight: 800, background: 'linear-gradient(90deg, var(--link), var(--purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }),
+
+  // ── WCO titlebar (fixed, fills titlebar-area env vars) ────────
+  wcoBar: css({
+    position: 'fixed',
+    // Positioned exactly inside the titlebar area defined by the OS
+    top:    'env(titlebar-area-y,    0px)',
+    left:   'env(titlebar-area-x,    0px)',
+    width:  'env(titlebar-area-width,  100%)',
+    height: 'env(titlebar-area-height, 40px)',
+    zIndex: 200,
+    display: 'flex', alignItems: 'center',
+    background: 'var(--bg-header)',
+    backdropFilter: 'blur(12px)',
+    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    // Whole bar is draggable by default; buttons override with no-drag
+    WebkitAppRegion: 'drag',
+    gap: 8, padding: '0 10px',
+    userSelect: 'none',
+    overflow: 'hidden',
+  }),
+  wcoIcon: css({ width: 18, height: 18, borderRadius: 4, flexShrink: 0, WebkitAppRegion: 'no-drag' }),
+  wcoTitle: css({
+    fontSize: 13, fontWeight: 700,
+    background: 'linear-gradient(90deg, var(--link), var(--purple))',
+    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+    flexShrink: 0,
+  }),
+  wcoClock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0 }),
+  wcoSpacer: css({ flex: 1, minWidth: 0 }),
+  wcoBtn: css({
+    background: 'none', border: 'none', cursor: 'pointer',
+    fontSize: 16, padding: '4px 6px', borderRadius: 6, lineHeight: 1,
+    color: 'var(--text)', fontFamily: 'inherit',
+    WebkitAppRegion: 'no-drag',
+    transition: 'background 0.12s',
+    '&:hover': { background: 'rgba(255,255,255,0.1)' },
+  }),
+  // Spacer that pushes main content below the WCO bar
+  wcoOffset: css({
+    height: 'env(titlebar-area-height, 40px)',
+    paddingTop: 'env(titlebar-area-y, 0px)',
+  }),
   clock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }),
   actions: css({ display: 'flex', gap: 8 }),
   main:    css({ padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto', position: 'relative' }),
@@ -58,6 +101,18 @@ export function App() {
   const [confirm,      setConfirm]      = useState(null);
   const [collapsed,    setCollapsed]    = useState(new Set());
   const [updateInfo,   setUpdateInfo]   = useState(null);
+
+  // ── WCO (Window Controls Overlay) ────────────────────────────
+  const [wcoVisible, setWcoVisible] = useState(
+    () => !!(navigator.windowControlsOverlay?.visible)
+  );
+  useEffect(() => {
+    const wco = navigator.windowControlsOverlay;
+    if (!wco) return;
+    const handler = () => setWcoVisible(wco.visible);
+    wco.addEventListener('geometrychange', handler);
+    return () => wco.removeEventListener('geometrychange', handler);
+  }, []);
 
   // ── Image states ──────────────────────────────────────────────
   const [appBg,   setAppBg]   = useState(null);       // dataUrl | null
@@ -232,26 +287,43 @@ export function App() {
       appBg && jsx('div', { className: s.appBgOverlay }),
 
       // ── Header ───────────────────────────────────────────────
-      jsxs('header', {
-        className: s.header,
-        children: [jsxs('div', {
-          className: s.headerInner,
-          children: [
-            jsxs('div', { className: s.headerLeft, children: [
-              jsx('span', { className: s.title, children: t('appTitle') }),
-              jsx('span', { className: s.clock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
-            ]}),
-            jsxs('div', { className: s.actions, children: [
-              updateInfo && jsx('button', {
-                onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
-                className: s.btnUpdate, title: t('updateAvail'), children: '⬆️',
-              }),
-              jsx('button', { onClick: () => setShowCalendar(true), className: s.btnRecord,   title: t('record'),   children: '📅' }),
-              jsx('button', { onClick: () => setShowSettings(true), className: s.btnSettings, title: t('settings'), children: '⚙️' }),
-            ]}),
-          ],
-        })],
-      }),
+      wcoVisible
+        // WCO titlebar: fixed, fills OS titlebar-area
+        ? jsxs('div', { className: s.wcoBar, children: [
+            jsx('img', { src: './icon-192.png', className: s.wcoIcon, alt: '' }),
+            jsx('span', { className: s.wcoTitle, children: t('appTitle') }),
+            jsx('span', { className: s.wcoClock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
+            jsx('div', { className: s.wcoSpacer }),
+            updateInfo && jsx('button', {
+              onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
+              className: s.wcoBtn, title: t('updateAvail'), children: '⬆️',
+            }),
+            jsx('button', { onClick: () => setShowCalendar(true), className: s.wcoBtn, title: t('record'),   children: '📅' }),
+            jsx('button', { onClick: () => setShowSettings(true), className: s.wcoBtn, title: t('settings'), children: '⚙️' }),
+          ]})
+        // Normal sticky header (non-PWA or WCO not supported)
+        : jsxs('header', {
+            className: s.header,
+            children: [jsxs('div', {
+              className: s.headerInner,
+              children: [
+                jsxs('div', { className: s.headerLeft, children: [
+                  jsx('span', { className: s.title, children: t('appTitle') }),
+                  jsx('span', { className: s.clock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
+                ]}),
+                jsxs('div', { className: s.actions, children: [
+                  updateInfo && jsx('button', {
+                    onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
+                    className: s.btnUpdate, title: t('updateAvail'), children: '⬆️',
+                  }),
+                  jsx('button', { onClick: () => setShowCalendar(true), className: s.btnRecord,   title: t('record'),   children: '📅' }),
+                  jsx('button', { onClick: () => setShowSettings(true), className: s.btnSettings, title: t('settings'), children: '⚙️' }),
+                ]}),
+              ],
+            })],
+          }),
+      // WCO offset: push content below the titlebar area
+      wcoVisible && jsx('div', { className: s.wcoOffset }),
 
       // ── Main content ─────────────────────────────────────────
       jsxs('main', {
