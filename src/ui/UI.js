@@ -10,9 +10,6 @@ export const inputCls = css({
   color: 'var(--text)', padding: '6px 9px', fontSize: 13, outline: 'none',
   fontFamily: 'inherit',
 });
-/** @deprecated kept for backward-compat; prefer inputCls */
-export const IS = inputCls;
-
 // ── Shared keyframes ──────────────────────────────────────────────
 const cbPopAnim = keyframes({
   '0%':   { transform: 'scale(1)'    },
