@@ -1,0 +1,22 @@
+._row_1wisf_1 {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.12s;
+}
+._row_1wisf_1:hover { background: rgba(255, 255, 255, 0.025); }
+
+._countdown_1wisf_9 {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: monospace;
+  flex-shrink: 0;
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}
+._resetLbl_1wisf_17 {
+  font-size: 10px;
+  color: var(--dim);
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}

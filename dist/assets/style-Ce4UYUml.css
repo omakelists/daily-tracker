@@ -1,0 +1,74 @@
+/* ── Reset ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: #0d1117;
+  font-family: -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Noto Sans KR',
+               'Noto Sans SC', system-ui, sans-serif;
+  color: #e6edf3;
+}
+button, select, input { font-family: inherit; }
+
+/* Prevent accidental text selection during interaction */
+* { user-select: none; -webkit-user-select: none; }
+input, textarea, select { user-select: text; -webkit-user-select: text; }
+
+/* ── Design tokens ──────────────────────────────────────────────── */
+:root {
+  --row-pl:      14px;
+  --row-pr:      14px;
+  --bar-slot:    18px;
+  --bar-w:        3px;
+  --cb-w:        26px;
+  --cb-gap:       8px;
+  --page-m:      12px;
+  --card-border:  2px;
+
+  --type-daily:        #58a6ff;
+  --type-weekly:       #bc8cff;
+  --type-webdaily:     #3fb950;
+  --type-monthly:      #ff7b72;
+  --type-halfmonthly:  #ffa657;
+
+  --bg-app:      #0d1117;
+  --bg-card:     rgba(22, 27, 34, 0.85);
+  --bg-surface:  #161b22;
+  --bg-header:   rgba(22, 27, 34, 0.95);
+  --bg-input:    #21262d;
+  --border:      #30363d;
+  --text:        #e6edf3;
+  --muted:       #8b949e;
+  --dim:         #ccd0d5;
+  --link:        #58a6ff;
+  --purple:      #bc8cff;
+  --green:       #3fb950;
+  --danger:      #f85149;
+  --warn:        #e3b341;
+  --checked-bg:  #1a7f37;
+  --checked-br:  #2ea043;
+
+  --prev-done:    #2ea043;
+  --prev-partial: #e3b341;
+  --prev-miss:    #6e3535;
+
+  --cd-urgent: #ff7474;
+  --cd-warn:   #ffd600;
+  --cd-ok:     #ccd0d5;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* ── View Transitions (must be global for ::view-transition-*) ───── */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+  ::view-transition-old(game-card-move),
+  ::view-transition-new(game-card-move) {
+    animation-duration: 0.35s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}

@@ -1,0 +1,110 @@
+/* ── Keyframes ───────────────────────────────────────────────────── */
+@keyframes _cbPopAnim_4rf0b_1 {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.3); }
+  65%  { transform: scale(0.92); }
+  100% { transform: scale(1.08); }
+}
+
+/* ── Input / Select ──────────────────────────────────────────────── */
+._inputCls_4rf0b_10 {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 9px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+/* ── Row layout ──────────────────────────────────────────────────── */
+._row_4rf0b_22 {
+  display: flex;
+  align-items: center;
+  padding: 10px var(--row-pr) 10px var(--row-pl);
+}
+._preSlot_4rf0b_27 {
+  width: var(--bar-slot);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+._barSlot_4rf0b_34 {
+  width: var(--bar-slot);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+._content_4rf0b_41 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: var(--cb-gap);
+  min-width: 0;
+}
+._meta_4rf0b_49 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+._right_4rf0b_56 {
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+/* ── Checkbox ────────────────────────────────────────────────────── */
+._cb_4rf0b_62 {
+  width: var(--cb-w);
+  height: var(--cb-w);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.42);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.15s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+._cbGame_4rf0b_78    { border-radius: 7px; font-size: 13px; border-color: rgba(255, 255, 255, 0.3); }
+._cbChecked_4rf0b_79 { background: var(--checked-bg) !important; border-color: var(--checked-br) !important; transform: scale(1.08); }
+._cbPop_4rf0b_80     { animation: _cbPopAnim_4rf0b_1 0.22s ease forwards; }
+
+/* ── Type badges ─────────────────────────────────────────────────── */
+._badge_4rf0b_83 {
+  font-size: 10px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+._badgeDaily_4rf0b_90       { color: var(--type-daily);        background: rgba(0, 0, 0, 0.4); border-color: #3a6ea8; }
+._badgeWeekly_4rf0b_91      { color: var(--type-weekly);       background: rgba(0, 0, 0, 0.4); border-color: #7a5aaa; }
+._badgeWebdaily_4rf0b_92    { color: var(--type-webdaily);     background: rgba(0, 0, 0, 0.4); border-color: #2a7a35; }
+._badgeMonthly_4rf0b_93     { color: var(--type-monthly);      background: rgba(0, 0, 0, 0.4); border-color: #a8453f; }
+._badgeHalfmonthly_4rf0b_94 { color: var(--type-halfmonthly);  background: rgba(0, 0, 0, 0.4); border-color: #a86030; }
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+._btn_4rf0b_97 {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+._btnDanger_4rf0b_108  { color: var(--danger); border-color: rgba(248, 81, 73, 0.27); }
+._btnAdd_4rf0b_109     { color: var(--link);   border-color: rgba(88, 166, 255, 0.27); }
+._btnConfirm_4rf0b_110 { color: var(--green);  border-color: rgba(63, 185, 80, 0.27); }

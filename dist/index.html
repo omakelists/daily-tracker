@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Daily Tracker" />
+  <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <title></title>
+
+  <!--
+    Import map: resolves bare specifiers for packages that are served
+    externally (not bundled). In production these imports are left as-is
+    in the output ESM files and resolved here at runtime.
+    In development Vite resolves these from node_modules instead.
+  -->
+
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react":                 "https://cdn.jsdelivr.net/npm/react@18.2.0/+esm",
+      "react-dom":             "https://cdn.jsdelivr.net/npm/react-dom@18.2.0/+esm",
+      "react-dom/client":      "https://cdn.jsdelivr.net/npm/react-dom@18.2.0/client/+esm"
+    }
+  }
+  </script>
+  <script type="module" crossorigin src="./_virtual/modulepreload-polyfill.js"></script>
+  <script type="module" crossorigin src="./_virtual/jsx-runtime2.js"></script>
+  <script type="module" crossorigin src="./_virtual/react-jsx-runtime.production.min.js"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="./node_modules/react/cjs/react-jsx-runtime.production.min.js"></script>
+  <script type="module" crossorigin src="./node_modules/react/jsx-runtime.js"></script>
+  <script type="module" crossorigin src="./_virtual/jsx-runtime.js"></script>
+  <script type="module" crossorigin src="react-dom/client"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="./util/i18n.js"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="react-dom"></script>
+  <script type="module" crossorigin src="./util/cx.js"></script>
+  <script type="module" crossorigin src="./constants.js"></script>
+  <script type="module" crossorigin src="./util/storage.js"></script>
+  <script type="module" crossorigin src="./util/helpers.js"></script>
+  <script type="module" crossorigin src="./util/imageStorage.js"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="./ui/UI.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/shared.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/UI.js"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="./ui/TaskRow.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/TaskRow.js"></script>
+  <script type="module" crossorigin src="./ui/GameCard.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/GameCard.js"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="./ui/CropModal.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/CropModal.js"></script>
+  <script type="module" crossorigin src="./ui/Settings.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/Settings.js"></script>
+  <script type="module" crossorigin src="react"></script>
+  <script type="module" crossorigin src="./ui/Calendar.module.css.js"></script>
+  <script type="module" crossorigin src="./ui/Calendar.js"></script>
+  <script type="module" crossorigin src="./App.module.css.js"></script>
+  <script type="module" crossorigin src="./App.js"></script>
+  <script type="module" crossorigin src="./main.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/ui/UI.module-CHBfl9iQ.css">
+  <link rel="stylesheet" crossorigin href="./assets/ui/shared.module-C-PpsaUJ.css">
+  <link rel="stylesheet" crossorigin href="./assets/ui/TaskRow.module-mFKcPuAM.css">
+  <link rel="stylesheet" crossorigin href="./assets/ui/GameCard.module-B_oMEfQI.css">
+  <link rel="stylesheet" crossorigin href="./assets/ui/CropModal.module-WNSlvr8i.css">
+  <link rel="stylesheet" crossorigin href="./assets/ui/Settings.module-iwkgneVJ.css">
+  <link rel="stylesheet" crossorigin href="./assets/ui/Calendar.module-Ddidh9x1.css">
+  <link rel="stylesheet" crossorigin href="./assets/App.module-O9QnChSK.css">
+  <link rel="stylesheet" crossorigin href="./assets/style-Ce4UYUml.css">
+</head>
+<body>
+  <div id="root"></div>
+  <!-- Vite injects the module script tag here during build -->
+</body>
+</html>

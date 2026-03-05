@@ -1,0 +1,45 @@
+._overlay_o5kil_1 {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+._heading_o5kil_15 { color: white; font-size: 14px; font-weight: 700; text-align: center; }
+._hint_o5kil_16    { color: rgba(255, 255, 255, 0.45); font-size: 11px; text-align: center; }
+._toolbar_o5kil_17 { display: flex; gap: 6px; }
+
+._toolBtn_o5kil_19 {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  padding: 5px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  transition: background 0.12s;
+}
+._toolBtn_o5kil_19:hover { background: rgba(255, 255, 255, 0.22); }
+
+._cropCanvas_o5kil_33 {
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+  max-width: min(88vw, 700px);
+  max-height: 55vh;
+}
+
+._actions_o5kil_41     { display: flex; gap: 12px; }
+._sliderWrap_o5kil_42  { display: flex; align-items: center; gap: 10px; width: 100%; max-width: min(88vw, 700px); }
+._sliderLabel_o5kil_43 { color: rgba(255, 255, 255, 0.6); font-size: 11px; white-space: nowrap; }
+._sliderValue_o5kil_44 { color: white; font-size: 11px; font-family: monospace; width: 30px; text-align: right; flex-shrink: 0; }
+._slider_o5kil_42      { flex: 1; cursor: pointer; accent-color: var(--link); }

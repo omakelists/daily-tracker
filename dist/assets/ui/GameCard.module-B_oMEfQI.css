@@ -1,0 +1,107 @@
+/* Animation durations — keep in sync with GameCard.jsx constants */
+@keyframes _taskExit_lfgmx_1 {
+  from { opacity: 1; transform: translateY(0)     scaleY(1);   max-height: 80px; }
+  to   { opacity: 0; transform: translateY(-14px) scaleY(0.7); max-height: 0; margin-bottom: 0; }
+}
+@keyframes _taskEnter_lfgmx_1 {
+  from { opacity: 0; transform: translateY(-10px) scaleY(0.85); }
+  to   { opacity: 1; transform: translateY(0)     scaleY(1); }
+}
+@keyframes _chevronDown_lfgmx_1  { from { transform: rotate(-90deg); } to { transform: rotate(0deg);   } }
+@keyframes _chevronRight_lfgmx_1 { from { transform: rotate(0deg);   } to { transform: rotate(-90deg); } }
+
+._card_lfgmx_13 {
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: var(--card-border) solid var(--border);
+  transition: opacity 0.5s;
+  position: relative;
+}
+._cardDone_lfgmx_21 { opacity: 0.62; }
+
+._bgLayer_lfgmx_23   { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+._bgOverlay_lfgmx_24 { position: absolute; inset: 0; background: black; z-index: 1; }
+._content_lfgmx_25   { position: relative; z-index: 2; }
+
+._accordionBtn_lfgmx_27 {
+  width: var(--bar-slot);
+  height: var(--bar-slot);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 9px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+._accordionBtn_lfgmx_27:hover { color: var(--text); }
+
+/* 240ms = CLOSE_MS */
+._chevronOpen_lfgmx_45  { animation: _chevronDown_lfgmx_1  240ms ease forwards; }
+._chevronClose_lfgmx_46 { animation: _chevronRight_lfgmx_1 240ms ease forwards; }
+
+._bodyWrap_lfgmx_48 {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 240ms ease; /* CLOSE_MS */
+}
+._bodyWrapOpen_lfgmx_53 {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 280ms ease; /* OPEN_MS */
+}
+._body_lfgmx_48 {
+  overflow: hidden;
+  min-height: 0;
+  background: rgba(13, 17, 23, 0.50);
+  padding-top: 2px;
+  padding-bottom: 4px;
+}
+._bodyWithBg_lfgmx_64 { background: rgba(13, 17, 23, 0.30); }
+
+/* Task row wrappers */
+._taskRow_lfgmx_67 {}
+._taskRowEnter_lfgmx_68 { animation: _taskEnter_lfgmx_1 220ms ease forwards; } /* EXIT_MS */
+._taskRowExit_lfgmx_69  {
+  animation: _taskExit_lfgmx_1 220ms ease forwards;
+  pointer-events: none;
+  overflow: hidden;
+  transform-origin: top center;
+}
+
+._divider_lfgmx_76 {
+  margin: 5px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+}
+._sepLabel_lfgmx_81 {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: transparent;
+  padding: 0 8px;
+  font-size: 10px;
+  color: #8b949e;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+._countdown_lfgmx_94 {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: monospace;
+  flex-shrink: 0;
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}
+._resetTime_lfgmx_102 {
+  font-size: 11px;
+  color: var(--dim);
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}
