@@ -17,7 +17,6 @@ export default defineConfig({
         'react-dom/client',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
-        '@emotion/css',
       ],
       output: {
         // Preserve the src/ module structure in the build output.
