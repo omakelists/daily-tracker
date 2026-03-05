@@ -22,8 +22,8 @@ const s = {
     transition: 'background 0.12s',
     '&:hover': { background: 'rgba(255,255,255,0.025)' },
   }),
-  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0, textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
-  resetLbl:  css({ fontSize: 10, color: 'var(--dim)', textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
+  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0, WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill' }),
+  resetLbl:  css({ fontSize: 10, color: 'var(--dim)', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill' }),
 };
 
 export function TaskRow({ task, game, checks, now, onToggle, cd }) {
@@ -53,7 +53,7 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
     content: jsxs(Fragment, { children: [
       jsx('span', { className: cx(ss.badge, BADGE_MAP[task.type]), children: t(`types.${task.type}`) }),
       jsx('span', {
-        style: { fontSize: 13, color: isChecked ? 'var(--dim)' : 'var(--text)', textDecoration: isChecked ? 'line-through' : 'none', textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)', transition: 'color 0.2s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+        style: { fontSize: 13, color: isChecked ? 'var(--dim)' : 'var(--text)', textDecoration: isChecked ? 'line-through' : 'none', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill', transition: 'color 0.2s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
         children: task.name.trim() || t(`types.${task.type}`),
       }),
     ]}),

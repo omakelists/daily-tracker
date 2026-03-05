@@ -91,8 +91,8 @@ const s = {
     color: '#8b949e', letterSpacing: 1, whiteSpace: 'nowrap',
   }),
 
-  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0, textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
-  resetTime: css({ fontSize: 11, color: 'var(--dim)', textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)' }),
+  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0, WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill' }),
+  resetTime: css({ fontSize: 11, color: 'var(--dim)', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill' }),
 };
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5 }) {
@@ -224,7 +224,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 color: allDone ? 'var(--dim)' : visColor,
                 textDecoration: allDone ? 'line-through' : 'none',
-                textShadow: '-1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.9)',
+                WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill',
                 transition: 'all 0.3s',
               },
               children: game.name,
