@@ -20,8 +20,6 @@ export default defineConfig({
         'react',
         'react-dom',
         'react-dom/client',
-        'react/jsx-runtime',
-        'react/jsx-dev-runtime',
       ],
       // preserveModules requires preserveEntrySignatures to be non-false.
       // Vite sets it to false by default, so we override it here.
