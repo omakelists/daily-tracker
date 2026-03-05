@@ -51,5 +51,21 @@
   "exportSettings": "설정 내보내기",
   "importSettings": "설정 가져오기",
   "importConfirm": "현재 설정을 가져온 {n}개 게임으로 교체하시겠습니까?",
-  "importError": "설정 파일이 올바르지 않습니다."
+  "importError": "설정 파일이 올바르지 않습니다.",
+  "appBgImage": "앱 배경 이미지",
+  "appBgSet": "앱 배경이 설정되어 있습니다",
+  "imgChange": "변경",
+  "imgDrop": "🖼️ 이미지를 드롭하거나 클릭하여 선택",
+  "imgSetBg": "배경 이미지 설정",
+  "crop": {
+    "title": "📐 자르기 영역 선택",
+    "hint": "드래그로 범위 지정 / ✥ 드래그로 이동",
+    "loading": "로드 중…",
+    "opacity": "투명도",
+    "confirm": "✓ 확인",
+    "flipH": "좌우 반전",
+    "flipV": "상하 반전",
+    "rotateCCW": "반시계 방향 회전",
+    "rotateCW": "시계 방향 회전"
+  }
 }

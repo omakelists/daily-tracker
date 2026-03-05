@@ -51,5 +51,21 @@
   "exportSettings": "导出设置",
   "importSettings": "导入设置",
   "importConfirm": "将当前设置替换为导入的 {n} 个游戏？",
-  "importError": "设置文件无效。"
+  "importError": "设置文件无效。",
+  "appBgImage": "应用背景图片",
+  "appBgSet": "已设置应用背景",
+  "imgChange": "更改",
+  "imgDrop": "🖼️ 拖放图片或点击选择",
+  "imgSetBg": "设置背景图片",
+  "crop": {
+    "title": "📐 选择裁剪区域",
+    "hint": "拖拽绘制范围 / 拖拽 ✥ 移动",
+    "loading": "加载中…",
+    "opacity": "透明度",
+    "confirm": "✓ 确认",
+    "flipH": "水平翻转",
+    "flipV": "垂直翻转",
+    "rotateCCW": "逆时针旋转",
+    "rotateCW": "顺时针旋转"
+  }
 }

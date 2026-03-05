@@ -2,6 +2,7 @@ import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { sharedStyles as ss } from './UI.js';
+import { t } from '../util/i18n.js';
 
 const s = {
   overlay: css({
@@ -274,20 +275,20 @@ export function CropModal({ file, onConfirm, onCancel }) {
   return jsx('div', {
     className: s.overlay,
     children: [
-      jsx('div', { className: s.heading, children: '📐 トリミング範囲を選択' }),
-      jsx('div', { className: s.hint, children: 'ドラッグで範囲を描く ／ 中央の ✥ をドラッグして移動' }),
+      jsx('div', { className: s.heading, children: t('crop.title') }),
+      jsx('div', { className: s.hint, children: t('crop.hint') }),
 
       // Transform toolbar
       jsxs('div', { className: s.toolbar, children: [
-        jsx('button', { className: s.toolBtn, onClick: () => setFlipH(v => !v), title: '左右反転',        children: '↔' }),
-        jsx('button', { className: s.toolBtn, onClick: () => setFlipV(v => !v), title: '上下反転',        children: '↕' }),
-        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+270)%360), title: '反時計回り', children: '↺' }),
-        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+90)%360),  title: '時計回り',   children: '↻' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setFlipH(v => !v), title: t('crop.flipH'),        children: '↔' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setFlipV(v => !v), title: t('crop.flipV'),        children: '↕' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+270)%360), title: t('crop.rotateCCW'), children: '↺' }),
+        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+90)%360),  title: t('crop.rotateCW'),   children: '↻' }),
       ]}),
 
       // Crop canvas (image + overlay combined)
       loading
-        ? jsx('div', { style: { color: 'rgba(255,255,255,0.5)', fontSize: 13 }, children: '読み込み中…' })
+        ? jsx('div', { style: { color: 'rgba(255,255,255,0.5)', fontSize: 13 }, children: t('crop.loading') })
         : jsx('canvas', {
             ref: cropCanvasRef,
             className: s.cropCanvas,
@@ -297,7 +298,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
 
       // Opacity slider
       dispSize.w > 0 && jsxs('div', { className: s.sliderWrap, children: [
-        jsx('span', { className: s.sliderLabel, children: '透過度' }),
+        jsx('span', { className: s.sliderLabel, children: t('crop.opacity') }),
         jsx('input', {
           type: 'range', min: 0, max: 1, step: 0.05,
           value: opacity,
@@ -309,8 +310,8 @@ export function CropModal({ file, onConfirm, onCancel }) {
 
       // Action buttons
       jsxs('div', { className: s.actions, children: [
-        jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: '✓ 確定' }),
-        jsx('button', { onClick: onCancel,      className: ss.btn,                    children: 'キャンセル' }),
+        jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: t('crop.confirm') }),
+        jsx('button', { onClick: onCancel,      className: ss.btn,                    children: t('cancel') }),
       ]}),
     ],
   });

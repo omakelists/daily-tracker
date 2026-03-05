@@ -51,5 +51,21 @@
   "exportSettings": "匯出設定",
   "importSettings": "匯入設定",
   "importConfirm": "將目前設定替換為匯入的 {n} 個遊戲？",
-  "importError": "設定檔案無效。"
+  "importError": "設定檔案無效。",
+  "appBgImage": "應用背景圖片",
+  "appBgSet": "已設定應用背景",
+  "imgChange": "變更",
+  "imgDrop": "🖼️ 拖放圖片或點擊選擇",
+  "imgSetBg": "設定背景圖片",
+  "crop": {
+    "title": "📐 選擇裁切區域",
+    "hint": "拖曳繪製範圍 / 拖曳 ✥ 移動",
+    "loading": "載入中…",
+    "opacity": "透明度",
+    "confirm": "✓ 確認",
+    "flipH": "水平翻轉",
+    "flipV": "垂直翻轉",
+    "rotateCCW": "逆時針旋轉",
+    "rotateCW": "順時針旋轉"
+  }
 }

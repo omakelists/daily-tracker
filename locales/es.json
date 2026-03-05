@@ -51,5 +51,21 @@
   "exportSettings": "Exportar ajustes",
   "importSettings": "Importar ajustes",
   "importConfirm": "¿Reemplazar los ajustes actuales con {n} juego(s) importado(s)?",
-  "importError": "Archivo de ajustes no válido."
+  "importError": "Archivo de ajustes no válido.",
+  "appBgImage": "Imagen de fondo",
+  "appBgSet": "Fondo de la app configurado",
+  "imgChange": "Cambiar",
+  "imgDrop": "🖼️ Suelta la imagen o haz clic para seleccionar",
+  "imgSetBg": "Establecer imagen de fondo",
+  "crop": {
+    "title": "📐 Seleccionar área de recorte",
+    "hint": "Arrastra para trazar / Arrastra ✥ para mover",
+    "loading": "Cargando…",
+    "opacity": "Opacidad",
+    "confirm": "✓ Confirmar",
+    "flipH": "Voltear horizontal",
+    "flipV": "Voltear vertical",
+    "rotateCCW": "Rotar antihorario",
+    "rotateCW": "Rotar horario"
+  }
 }

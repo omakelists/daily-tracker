@@ -51,5 +51,21 @@
   "exportSettings": "Export settings",
   "importSettings": "Import settings",
   "importConfirm": "Replace all settings with {n} imported game(s)?",
-  "importError": "Invalid settings file."
+  "importError": "Invalid settings file.",
+  "appBgImage": "App Background Image",
+  "appBgSet": "App background is set",
+  "imgChange": "Change",
+  "imgDrop": "🖼️ Drop image or click to select",
+  "imgSetBg": "Set background image",
+  "crop": {
+    "title": "📐 Select Crop Area",
+    "hint": "Drag to draw area / Drag ✥ to move",
+    "loading": "Loading…",
+    "opacity": "Opacity",
+    "confirm": "✓ Confirm",
+    "flipH": "Flip horizontal",
+    "flipV": "Flip vertical",
+    "rotateCCW": "Rotate counter-clockwise",
+    "rotateCW": "Rotate clockwise"
+  }
 }

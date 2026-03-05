@@ -107,7 +107,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
     return jsxs('div', { style: { position: 'relative', flexShrink: 0 }, children: [
       jsxs('button', {
         className: s.imgBtn,
-        title: '背景画像を設定',
+        title: t('imgSetBg'),
         onClick: () => fileRef.current?.click(),
         onDragOver: (e) => { e.preventDefault(); setOver(true); },
         onDragLeave: () => setOver(false),
@@ -133,13 +133,13 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
     currentDataUrl
       ? jsxs('div', { className: s.thumbRow, children: [
           jsx('img', { src: currentDataUrl, className: s.thumb, draggable: false }),
-          jsx('span', { className: s.thumbInfo, children: 'アプリ背景が設定されています' }),
+          jsx('span', { className: s.thumbInfo, children: t('appBgSet') }),
           jsx('button', {
             onClick: () => fileRef.current?.click(),
             className: cx(ss.btn, ss.btnAdd),
-            children: '変更',
+            children: t('imgChange'),
           }),
-          jsx('button', { onClick: onRemove, className: cx(ss.btn, ss.btnDanger), children: '削除' }),
+          jsx('button', { onClick: onRemove, className: cx(ss.btn, ss.btnDanger), children: t('delete') }),
         ]})
       : jsx('button', {
           className: cx(s.dropZone, s.dropZoneLarge, over && s.dropZoneOver),
@@ -147,7 +147,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
           onDragOver: (e) => { e.preventDefault(); setOver(true); },
           onDragLeave: () => setOver(false),
           onDrop: handleDrop,
-          children: '🖼️ 画像をドロップ、またはクリックして選択',
+          children: t('imgDrop'),
         }),
     jsx('input', { ref: fileRef, type: 'file', accept: 'image/*', style: { display: 'none' }, onChange: (e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; } }),
   ]});
@@ -307,7 +307,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
         // ── App background image section ───────────────────────
         jsxs('div', { className: s.imgSection, children: [
-          jsx('div', { className: s.imgSectionTitle, children: 'アプリ背景画像' }),
+          jsx('div', { className: s.imgSectionTitle, children: t('appBgImage') }),
           jsx(ImageDropZone, {
             currentDataUrl: appBgThumb,
             onFile: (file) => openCrop('app-bg', file),
