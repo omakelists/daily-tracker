@@ -103,16 +103,27 @@ export function App() {
   const [updateInfo,   setUpdateInfo]   = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  const [wcoVisible, setWcoVisible] = useState(
-    () => !!(navigator.windowControlsOverlay?.visible)
-  );
+  // isPwa: true when the WCO API is present (= launched as installed PWA)
+  const isPwa = !!(navigator.windowControlsOverlay);
+  // wcoEnabled: user preference, persisted in localStorage (default: true)
+  const [wcoEnabled, setWcoEnabledState] = useState(() => {
+    try { const v = localStorage.getItem('dt:wcoEnabled'); return v === null ? true : v === '1'; }
+    catch { return true; }
+  });
+  const setWcoEnabled = (val) => {
+    setWcoEnabledState(val);
+    try { localStorage.setItem('dt:wcoEnabled', val ? '1' : '0'); } catch {}
+  };
+  // wcoActive: WCO API is present AND user has it enabled
+  const [wcoOsVisible, setWcoOsVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
   useEffect(() => {
     const wco = navigator.windowControlsOverlay;
     if (!wco) return;
-    const handler = () => setWcoVisible(wco.visible);
+    const handler = () => setWcoOsVisible(wco.visible);
     wco.addEventListener('geometrychange', handler);
     return () => wco.removeEventListener('geometrychange', handler);
   }, []);
+  const wcoVisible = wcoEnabled && wcoOsVisible;
 
   // ── Image states ──────────────────────────────────────────────
   const [appBg,   setAppBg]   = useState(null);       // dataUrl | null
@@ -340,7 +351,7 @@ export function App() {
         ],
       }),
 
-      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm, refreshImages }),
+      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm, refreshImages, isPwa, wcoEnabled, setWcoEnabled }),
       showCalendar && jsx(CalendarModal, { games, checks, now, onClose: () => setShowCalendar(false) }),
       confirm && jsx(ConfirmDialog, {
         message: confirm.message, confirmLabel: confirm.confirmLabel,
