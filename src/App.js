@@ -116,6 +116,7 @@ export function App() {
   const refreshImages = useCallback(() => setImgVer((v) => v + 1), []);
 
   useEffect(() => {
+    const games = gamesRef.current;
     if (!games) return;
     let cancelled = false;
     (async () => {
@@ -130,7 +131,13 @@ export function App() {
       if (!cancelled) setGameBgs(bgs);
     })();
     return () => { cancelled = true; };
-  }, [imgVer, games]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imgVer]); // games accessed via gamesRef — only imgVer triggers reload
+
+  // Ref that always holds the latest games list, used inside the image-load
+  // effect so we can remove `games` from its dependency array.
+  const gamesRef = useRef(games);
+  useEffect(() => { gamesRef.current = games; }, [games]);
 
   const prevAllDoneRef = useRef({});
 
@@ -157,6 +164,8 @@ export function App() {
   useEffect(() => {
     setGames(loadGames() ?? DEFAULT_GAMES);
     setChecks(loadChecks());
+    // Bump imgVer so the image-load effect fires once games is populated
+    setImgVer((v) => v + 1);
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
