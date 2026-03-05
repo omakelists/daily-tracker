@@ -1,4 +1,3 @@
-import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { t } from '../util/i18n';
@@ -42,28 +41,31 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
 
   const localWebReset = task.webResetTime ? utcToLocalHHMM(task.webResetTime) : null;
 
-  return jsx(Row, {
-    className: s.row,
-    barSlot: jsx(PrevBar, { show: showPrev, checked: prevChecked }),
-    checkbox: jsx('button', {
-      onClick: () => { firePop(); onToggle(task.id, game); },
-      className: cx(ss.cb, isChecked && ss.cbChecked, pop && ss.cbPop),
-      children: isChecked ? '✓' : '',
-    }),
-    content: jsxs(Fragment, { children: [
-      jsx('span', { className: cx(ss.badge, BADGE_MAP[task.type]), children: t(`types.${task.type}`) }),
-      jsx('span', {
-        style: { fontSize: 13, color: isChecked ? 'var(--dim)' : 'var(--text)', textDecoration: isChecked ? 'line-through' : 'none', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill', transition: 'color 0.2s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-        children: task.name.trim() || t(`types.${task.type}`),
-      }),
-    ]}),
-    meta: jsxs(Fragment, { children: [
-      showCD && !isChecked && jsxs('span', { className: s.countdown, style: { color: cdColor }, children: ['⏱', formatCountdown(ms, cd)] }),
-      task.type === 'webdaily' && localWebReset && localWebReset !== utcToLocalHHMM(game.resetTime) &&
-        jsx('span', { className: s.resetLbl, children: localWebReset }),
-      task.type === 'monthly' &&
-        jsx('span', { className: s.resetLbl, children: t('everyDay', { day: task.monthlyResetDay ?? 1 }) }),
-    ]}),
-    rightSlot: null,
-  });
+  return (
+    <Row
+      className={s.row}
+      barSlot={<PrevBar show={showPrev} checked={prevChecked} />}
+      checkbox={
+        <button onClick={() => { firePop(); onToggle(task.id, game); }} className={cx(ss.cb, isChecked && ss.cbChecked, pop && ss.cbPop)}>
+          {isChecked ? '✓' : ''}
+        </button>
+      }
+      content={
+        <>
+          <span className={cx(ss.badge, BADGE_MAP[task.type])}>{t(`types.${task.type}`)}</span>
+          <span style={{ fontSize: 13, color: isChecked ? 'var(--dim)' : 'var(--text)', textDecoration: isChecked ? 'line-through' : 'none', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill', transition: 'color 0.2s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {task.name.trim() || t(`types.${task.type}`)}
+          </span>
+        </>
+      }
+      meta={
+        <>
+          {showCD && !isChecked && <span className={s.countdown} style={{ color: cdColor }}>⏱{formatCountdown(ms, cd)}</span>}
+          {task.type === 'webdaily' && localWebReset && localWebReset !== utcToLocalHHMM(game.resetTime) && <span className={s.resetLbl}>{localWebReset}</span>}
+          {task.type === 'monthly' && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
+        </>
+      }
+      rightSlot={null}
+    />
+  );
 }

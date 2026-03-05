@@ -1,4 +1,3 @@
-import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { css, cx, keyframes } from '@emotion/css';
@@ -24,27 +23,22 @@ const s = {
   root:    css({ minHeight: '100vh', color: 'var(--text)', position: 'relative' }),
   rootNoBg: css({ background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%)' }),
 
-  // App background image layers (position: fixed, behind content via negative z-index)
   appBgImg: css({
     position: 'fixed', inset: 0, zIndex: -2,
     backgroundSize: 'cover', backgroundPosition: 'center',
   }),
   appBgOverlay: css({
     position: 'fixed', inset: 0, zIndex: -1,
-    // Dark top-left, image revealed only at bottom-right
     background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-app) 35%, rgba(13,17,23,0.82) 58%, rgba(13,17,23,0.28) 82%, rgba(13,17,23,0.05) 100%)',
   }),
 
-  // ── Non-WCO header (sticky, normal layout) ────────────────────
   header:  css({ background: 'var(--bg-header)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '13px 18px', position: 'sticky', top: 0, zIndex: 100 }),
   headerInner: css({ maxWidth: 740, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }),
   headerLeft:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
   title: css({ fontSize: 17, fontWeight: 800, background: 'linear-gradient(90deg, var(--link), var(--purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }),
 
-  // ── WCO titlebar (fixed, fills titlebar-area env vars) ────────
   wcoBar: css({
     position: 'fixed',
-    // Positioned exactly inside the titlebar area defined by the OS
     top:    'env(titlebar-area-y,    0px)',
     left:   'env(titlebar-area-x,    0px)',
     width:  'env(titlebar-area-width,  100%)',
@@ -54,18 +48,16 @@ const s = {
     background: 'var(--bg-header)',
     backdropFilter: 'blur(12px)',
     borderBottom: '1px solid rgba(255,255,255,0.07)',
-    // Whole bar is draggable by default; buttons override with no-drag
     WebkitAppRegion: 'drag',
     gap: 8, padding: '0 10px',
     userSelect: 'none',
     overflow: 'hidden',
   }),
-  wcoIcon: css({ width: 18, height: 18, borderRadius: 4, flexShrink: 0, WebkitAppRegion: 'no-drag' }),
+  wcoIcon:  css({ width: 18, height: 18, borderRadius: 4, flexShrink: 0, WebkitAppRegion: 'no-drag' }),
   wcoTitle: css({
     fontSize: 13, fontWeight: 700,
     background: 'linear-gradient(90deg, var(--link), var(--purple))',
     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-    // Title shrinks and truncates first; never wraps to a second line
     flex: '1 1 0', minWidth: 0,
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   }),
@@ -79,12 +71,11 @@ const s = {
     transition: 'background 0.12s',
     '&:hover': { background: 'rgba(255,255,255,0.1)' },
   }),
-  // Spacer that pushes main content below the WCO bar
   wcoOffset: css({
     height: 'env(titlebar-area-height, 40px)',
     paddingTop: 'env(titlebar-area-y, 0px)',
   }),
-  clock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }),
+  clock:   css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }),
   actions: css({ display: 'flex', gap: 8 }),
   main:    css({ padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto', position: 'relative' }),
   noGames: css({ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }),
@@ -110,9 +101,7 @@ export function App() {
   const [updateInfo,   setUpdateInfo]   = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  // isPwa: true when the WCO API is present (= launched as installed PWA)
   const isPwa = !!(navigator.windowControlsOverlay);
-  // wcoEnabled: user preference, persisted in localStorage (default: true)
   const [wcoEnabled, setWcoEnabledState] = useState(() => {
     try { const v = localStorage.getItem('dt:wcoEnabled'); return v === null ? true : v === '1'; }
     catch { return true; }
@@ -121,7 +110,6 @@ export function App() {
     setWcoEnabledState(val);
     try { localStorage.setItem('dt:wcoEnabled', val ? '1' : '0'); } catch {}
   };
-  // wcoActive: WCO API is present AND user has it enabled
   const [wcoOsVisible, setWcoOsVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
   useEffect(() => {
     const wco = navigator.windowControlsOverlay;
@@ -133,9 +121,9 @@ export function App() {
   const wcoVisible = wcoEnabled && wcoOsVisible;
 
   // ── Image states ──────────────────────────────────────────────
-  const [appBg,   setAppBg]   = useState(null);       // dataUrl | null
-  const [gameBgs, setGameBgs] = useState({});          // { [gameId]: dataUrl }
-  const [imgVer,  setImgVer]  = useState(0);           // increment to force re-load
+  const [appBg,   setAppBg]   = useState(null);
+  const [gameBgs, setGameBgs] = useState({});
+  const [imgVer,  setImgVer]  = useState(0);
 
   const refreshImages = useCallback(() => setImgVer((v) => v + 1), []);
 
@@ -149,7 +137,7 @@ export function App() {
       const bgs = {};
       await Promise.all(games.map(async (g) => {
         const entry = await imgGet(`game-${g.id}`);
-        if (entry) bgs[g.id] = entry;  // {dataUrl, opacity}
+        if (entry) bgs[g.id] = entry;
       }));
       if (!cancelled) setGameBgs(bgs);
     })();
@@ -189,7 +177,6 @@ export function App() {
     try { localStorage.setItem('dt:collapsed', JSON.stringify([...collapsed])); } catch {}
   }, [collapsed]);
 
-  // Purge orphaned images whenever the games list changes
   useEffect(() => {
     if (games) imgPurgeOrphans(games.map((g) => g.id));
   }, [games]);
@@ -299,75 +286,67 @@ export function App() {
 
   const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
-  if (!games) return jsx('div', { className: s.loading, children: t('loading') });
+  if (!games) return <div className={s.loading}>{t('loading')}</div>;
 
-  return jsxs('div', {
-    className: cx(s.root, !appBg && s.rootNoBg),
-    children: [
-      // ── App background image layers ──────────────────────────
-      appBg && jsx('div', { className: s.appBgImg, style: { backgroundImage: `url(${appBg})` } }),
-      appBg && jsx('div', { className: s.appBgOverlay }),
+  return (
+    <div className={cx(s.root, !appBg && s.rootNoBg)}>
+      {appBg && <div className={s.appBgImg} style={{ backgroundImage: `url(${appBg})` }} />}
+      {appBg && <div className={s.appBgOverlay} />}
 
-      // ── Header ───────────────────────────────────────────────
-      wcoVisible
-        // WCO titlebar: fixed, fills OS titlebar-area
-        ? jsxs('div', { className: s.wcoBar, children: [
-            jsx('img', { src: './icon-192.png', className: s.wcoIcon, alt: '' }),
-            jsx('span', { className: s.wcoTitle, children: t('appTitle') }),
-            jsx('span', { className: s.wcoClock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
-            updateInfo && jsx('button', {
-              onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
-              className: s.wcoBtn, title: t('updateAvail'), children: '⬆️',
-            }),
-            jsx('button', { onClick: () => setShowCalendar(true), className: s.wcoBtn, title: t('record'),   children: '📅' }),
-            jsx('button', { onClick: () => setShowSettings(true), className: s.wcoBtn, title: t('settings'), children: '⚙️' }),
-          ]})
-        // Normal sticky header (non-PWA or WCO not supported)
-        : jsxs('header', {
-            className: s.header,
-            children: [jsxs('div', {
-              className: s.headerInner,
-              children: [
-                jsxs('div', { className: s.headerLeft, children: [
-                  jsx('span', { className: s.title, children: t('appTitle') }),
-                  jsx('span', { className: s.clock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
-                ]}),
-                jsxs('div', { className: s.actions, children: [
-                  updateInfo && jsx('button', {
-                    onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
-                    className: s.btnUpdate, title: t('updateAvail'), children: '⬆️',
-                  }),
-                  jsx('button', { onClick: () => setShowCalendar(true), className: s.btnRecord,   title: t('record'),   children: '📅' }),
-                  jsx('button', { onClick: () => setShowSettings(true), className: s.btnSettings, title: t('settings'), children: '⚙️' }),
-                ]}),
-              ],
-            })],
-          }),
-      // WCO offset: push content below the titlebar area
-      wcoVisible && jsx('div', { className: s.wcoOffset }),
+      {wcoVisible ? (
+        <div className={s.wcoBar}>
+          <img src="./icon-192.png" className={s.wcoIcon} alt="" />
+          <span className={s.wcoTitle}>{t('appTitle')}</span>
+          <span className={s.wcoClock}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          {updateInfo && (
+            <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn'))} className={s.wcoBtn} title={t('updateAvail')}>⬆️</button>
+          )}
+          <button onClick={() => setShowCalendar(true)} className={s.wcoBtn} title={t('record')}>📅</button>
+          <button onClick={() => setShowSettings(true)} className={s.wcoBtn} title={t('settings')}>⚙️</button>
+        </div>
+      ) : (
+        <header className={s.header}>
+          <div className={s.headerInner}>
+            <div className={s.headerLeft}>
+              <span className={s.title}>{t('appTitle')}</span>
+              <span className={s.clock}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <div className={s.actions}>
+              {updateInfo && (
+                <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn'))} className={s.btnUpdate} title={t('updateAvail')}>⬆️</button>
+              )}
+              <button onClick={() => setShowCalendar(true)} className={s.btnRecord}   title={t('record')}>📅</button>
+              <button onClick={() => setShowSettings(true)} className={s.btnSettings} title={t('settings')}>⚙️</button>
+            </div>
+          </div>
+        </header>
+      )}
 
-      // ── Main content ─────────────────────────────────────────
-      jsxs('main', {
-        className: s.main,
-        children: [
-          sorted.map((game) => jsx(GameCard, {
-            game, checks, now, onToggle: toggle,
-            allDone: isAllDone(game), dailyTasks: getDailyTasks(game), cd,
-            collapsed: collapsed.has(game.id), onToggleCollapse: toggleCollapse,
-            bgDataUrl: gameBgs[game.id]?.dataUrl || null,
-            bgOpacity: gameBgs[game.id]?.opacity ?? 0.5,
-          }, game.id)),
-          games.length === 0 && jsx('div', { className: s.noGames, children: t('noGames') }),
-        ],
-      }),
+      {wcoVisible && <div className={s.wcoOffset} />}
 
-      showSettings && jsx(SettingsModal, { games, setGames, onClose: () => setShowSettings(false), showConfirm, refreshImages }),
-      showCalendar && jsx(CalendarModal, { games, checks, now, onClose: () => setShowCalendar(false) }),
-      confirm && jsx(ConfirmDialog, {
-        message: confirm.message, confirmLabel: confirm.confirmLabel,
-        onConfirm: () => { confirm.onConfirm(); setConfirm(null); },
-        onCancel:  () => setConfirm(null),
-      }),
-    ],
-  });
+      <main className={s.main}>
+        {sorted.map((game) => (
+          <GameCard
+            key={game.id}
+            game={game} checks={checks} now={now} onToggle={toggle}
+            allDone={isAllDone(game)} dailyTasks={getDailyTasks(game)} cd={cd}
+            collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
+            bgDataUrl={gameBgs[game.id]?.dataUrl || null}
+            bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}
+          />
+        ))}
+        {games.length === 0 && <div className={s.noGames}>{t('noGames')}</div>}
+      </main>
+
+      {showSettings && <SettingsModal games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} />}
+      {showCalendar && <CalendarModal games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}
+      {confirm && (
+        <ConfirmDialog
+          message={confirm.message} confirmLabel={confirm.confirmLabel}
+          onConfirm={() => { confirm.onConfirm(); setConfirm(null); }}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+    </div>
+  );
 }

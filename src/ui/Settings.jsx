@@ -1,4 +1,3 @@
-import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useRef } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
 import { t } from '../util/i18n';
@@ -13,22 +12,22 @@ const itemExit  = keyframes({ from: { opacity: 1, transform: 'translateY(0)', ma
 
 // ── Styles ────────────────────────────────────────────────────────
 const s = {
-  list:          css({ display: 'flex', flexDirection: 'column', gap: 0 }),
-  gameItem:      css({ borderRadius: 10, overflow: 'hidden', background: 'var(--bg-surface)', marginBottom: 10, animation: `${itemEnter} 0.2s ease forwards` }),
-  gameItemExit:  css({ animation: `${itemExit} 0.2s ease forwards`, overflow: 'hidden', pointerEvents: 'none' }),
-  gameHeader:    css({ padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' }),
-  colorInput:    css({ width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 }),
-  nameInput:     css({ flex: 1, minWidth: 0, fontWeight: 700 }),
-  resetLbl:      css({ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }),
-  gameBody:      css({ padding: '8px 13px 10px' }),
-  taskItem:      css({ animation: `${itemEnter} 0.2s ease forwards` }),
-  taskItemExit:  css({ animation: `${itemExit} 0.2s ease forwards`, overflow: 'hidden', pointerEvents: 'none' }),
-  extraLbl:      css({ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }),
-  addTaskBtn:    css({ marginTop: 4 }),
-  newGameBox:    css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 10 }),
-  newGameHeader: css({ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }),
-  newGameActions:css({ display: 'flex', gap: 8 }),
-  addGameBtn:    css({
+  list:           css({ display: 'flex', flexDirection: 'column', gap: 0 }),
+  gameItem:       css({ borderRadius: 10, overflow: 'hidden', background: 'var(--bg-surface)', marginBottom: 10, animation: `${itemEnter} 0.2s ease forwards` }),
+  gameItemExit:   css({ animation: `${itemExit} 0.2s ease forwards`, overflow: 'hidden', pointerEvents: 'none' }),
+  gameHeader:     css({ padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' }),
+  colorInput:     css({ width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 }),
+  nameInput:      css({ flex: 1, minWidth: 0, fontWeight: 700 }),
+  resetLbl:       css({ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }),
+  gameBody:       css({ padding: '8px 13px 10px' }),
+  taskItem:       css({ animation: `${itemEnter} 0.2s ease forwards` }),
+  taskItemExit:   css({ animation: `${itemExit} 0.2s ease forwards`, overflow: 'hidden', pointerEvents: 'none' }),
+  extraLbl:       css({ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }),
+  addTaskBtn:     css({ marginTop: 4 }),
+  newGameBox:     css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 10 }),
+  newGameHeader:  css({ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }),
+  newGameActions: css({ display: 'flex', gap: 8 }),
+  addGameBtn:     css({
     background: 'transparent', border: '2px dashed var(--border)', borderRadius: 10,
     color: 'var(--muted)', padding: 12, cursor: 'pointer', fontSize: 14, width: '100%',
     fontFamily: 'inherit', transition: 'border-color 0.15s, color 0.15s',
@@ -36,11 +35,9 @@ const s = {
   }),
   dragHandle: css({ fontSize: 14, color: '#484f58', cursor: 'grab', lineHeight: 1, paddingRight: 2, flexShrink: 0, '&:active': { cursor: 'grabbing' } }),
 
-  // ── Image section (global app-bg) ────────────────────────────
-  imgSection:    css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 14 }),
+  imgSection:      css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 14 }),
   imgSectionTitle: css({ fontSize: 12, fontWeight: 700, color: 'var(--muted)', marginBottom: 8, letterSpacing: 0.5 }),
 
-  // Drop zone shared style
   dropZone:      css({
     border: '2px dashed var(--border)', borderRadius: 8,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -51,12 +48,10 @@ const s = {
   dropZoneLarge: css({ padding: '14px 0', width: '100%' }),
   dropZoneOver:  css({ borderColor: 'var(--link)', background: 'rgba(88,166,255,0.08)', color: 'var(--link)' }),
 
-  // Thumbnail row (when image is set)
-  thumbRow:      css({ display: 'flex', alignItems: 'center', gap: 10 }),
-  thumb:         css({ width: 72, height: 48, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border)', flexShrink: 0 }),
-  thumbInfo:     css({ flex: 1, fontSize: 11, color: 'var(--muted)' }),
+  thumbRow:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
+  thumb:     css({ width: 72, height: 48, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border)', flexShrink: 0 }),
+  thumbInfo: css({ flex: 1, fontSize: 11, color: 'var(--muted)' }),
 
-  // Compact image button for game header
   imgBtn: css({
     width: 32, height: 26, borderRadius: 5, border: '1px dashed var(--border)',
     background: 'transparent', cursor: 'pointer', flexShrink: 0,
@@ -69,29 +64,36 @@ const s = {
 };
 
 const TYPE_OPTS = ['daily', 'weekly', 'webdaily', 'monthly', 'halfmonthly'];
-
-const DragHandle = jsx('span', { className: s.dragHandle, children: '⠿' });
+const DragHandle = <span className={s.dragHandle}>⠿</span>;
 
 function TypeSelect({ value, onChange, style }) {
-  return jsx('select', { value, onChange, className: inputCls, style, children: TYPE_OPTS.map((ty) => jsx('option', { value: ty, children: t(`types.${ty}`) }, ty)) });
+  return (
+    <select value={value} onChange={onChange} className={inputCls} style={style}>
+      {TYPE_OPTS.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
+    </select>
+  );
 }
 
 function TaskExtraFields({ task, onChange }) {
-  return jsxs(Fragment, { children: [
-    task.type === 'webdaily' && jsxs(Fragment, { children: [
-      jsx('span', { className: s.extraLbl, children: t('resetLbl') }),
-      jsx('input', { type: 'time', value: utcToLocalHHMM(task.webResetTime ?? '00:00'), onChange: (e) => onChange('webResetTime', localToUtcHHMM(e.target.value)), className: inputCls, style: { width: 84, fontFamily: 'monospace' } }),
-    ]}),
-    task.type === 'monthly' && jsxs(Fragment, { children: [
-      jsx('span', { className: s.extraLbl, children: t('resetDay') }),
-      jsx('input', { type: 'number', min: '1', max: '28', value: task.monthlyResetDay ?? 1, onChange: (e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1))), className: inputCls, style: { width: 52, fontFamily: 'monospace', textAlign: 'center' } }),
-      jsx('span', { className: s.extraLbl, children: t('dayUnit') }),
-    ]}),
-  ]});
+  return (
+    <>
+      {task.type === 'webdaily' && (
+        <>
+          <span className={s.extraLbl}>{t('resetLbl')}</span>
+          <input type="time" value={utcToLocalHHMM(task.webResetTime ?? '00:00')} onChange={(e) => onChange('webResetTime', localToUtcHHMM(e.target.value))} className={inputCls} style={{ width: 84, fontFamily: 'monospace' }} />
+        </>
+      )}
+      {task.type === 'monthly' && (
+        <>
+          <span className={s.extraLbl}>{t('resetDay')}</span>
+          <input type="number" min="1" max="28" value={task.monthlyResetDay ?? 1} onChange={(e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={inputCls} style={{ width: 52, fontFamily: 'monospace', textAlign: 'center' }} />
+          <span className={s.extraLbl}>{t('dayUnit')}</span>
+        </>
+      )}
+    </>
+  );
 }
 
-// ── ImageDropZone ─────────────────────────────────────────────────
-// mode: 'large' (app bg section) | 'compact' (game header btn)
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
@@ -103,54 +105,36 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   };
 
   if (mode === 'compact') {
-    // Small button in game header: shows thumbnail or camera icon
-    return jsxs('div', { style: { position: 'relative', flexShrink: 0 }, children: [
-      jsxs('button', {
-        className: s.imgBtn,
-        title: t('imgSetBg'),
-        onClick: () => fileRef.current?.click(),
-        onDragOver: (e) => { e.preventDefault(); setOver(true); },
-        onDragLeave: () => setOver(false),
-        onDrop: handleDrop,
-        style: over ? { borderColor: 'var(--link)' } : undefined,
-        children: [
-          currentDataUrl
-            ? jsx('img', { src: currentDataUrl, className: s.imgBtnThumb, draggable: false })
-            : jsx('span', { children: '🖼️' }),
-        ],
-      }),
-      currentDataUrl && jsx('button', {
-        onClick: (e) => { e.stopPropagation(); onRemove(); },
-        style: { position: 'absolute', top: -5, right: -5, width: 14, height: 14, borderRadius: '50%', background: 'var(--danger)', border: 'none', color: 'white', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 },
-        children: '✕',
-      }),
-      jsx('input', { ref: fileRef, type: 'file', accept: 'image/*', style: { display: 'none' }, onChange: (e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; } }),
-    ]});
+    return (
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <button className={s.imgBtn} title={t('imgSetBg')} onClick={() => fileRef.current?.click()} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={handleDrop} style={over ? { borderColor: 'var(--link)' } : undefined}>
+          {currentDataUrl ? <img src={currentDataUrl} className={s.imgBtnThumb} draggable={false} /> : <span>🖼️</span>}
+        </button>
+        {currentDataUrl && (
+          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} style={{ position: 'absolute', top: -5, right: -5, width: 14, height: 14, borderRadius: '50%', background: 'var(--danger)', border: 'none', color: 'white', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+        )}
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+      </div>
+    );
   }
 
-  // Large drop zone (app bg section)
-  return jsxs('div', { children: [
-    currentDataUrl
-      ? jsxs('div', { className: s.thumbRow, children: [
-          jsx('img', { src: currentDataUrl, className: s.thumb, draggable: false }),
-          jsx('span', { className: s.thumbInfo, children: t('appBgSet') }),
-          jsx('button', {
-            onClick: () => fileRef.current?.click(),
-            className: cx(ss.btn, ss.btnAdd),
-            children: t('imgChange'),
-          }),
-          jsx('button', { onClick: onRemove, className: cx(ss.btn, ss.btnDanger), children: t('delete') }),
-        ]})
-      : jsx('button', {
-          className: cx(s.dropZone, s.dropZoneLarge, over && s.dropZoneOver),
-          onClick: () => fileRef.current?.click(),
-          onDragOver: (e) => { e.preventDefault(); setOver(true); },
-          onDragLeave: () => setOver(false),
-          onDrop: handleDrop,
-          children: t('imgDrop'),
-        }),
-    jsx('input', { ref: fileRef, type: 'file', accept: 'image/*', style: { display: 'none' }, onChange: (e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; } }),
-  ]});
+  return (
+    <div>
+      {currentDataUrl ? (
+        <div className={s.thumbRow}>
+          <img src={currentDataUrl} className={s.thumb} draggable={false} />
+          <span className={s.thumbInfo}>{t('appBgSet')}</span>
+          <button onClick={() => fileRef.current?.click()} className={cx(ss.btn, ss.btnAdd)}>{t('imgChange')}</button>
+          <button onClick={onRemove} className={cx(ss.btn, ss.btnDanger)}>{t('delete')}</button>
+        </div>
+      ) : (
+        <button className={cx(s.dropZone, s.dropZoneLarge, over && s.dropZoneOver)} onClick={() => fileRef.current?.click()} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={handleDrop}>
+          {t('imgDrop')}
+        </button>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+    </div>
+  );
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
@@ -162,15 +146,12 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const [deletingIds, setDeletingIds] = useState(new Set());
   const importRef = useRef(null);
 
-  // Crop modal state
-  const [cropFile,   setCropFile]   = useState(null);   // File being cropped
-  const [cropTarget, setCropTarget] = useState(null);   // 'app-bg' | 'game-{id}'
+  const [cropFile,   setCropFile]   = useState(null);
+  const [cropTarget, setCropTarget] = useState(null);
 
-  // Thumbnail cache for display in Settings (not from IndexedDB directly)
-  const [appBgThumb,  setAppBgThumb]  = useState(null);
-  const [gameBgThumbs, setGameBgThumbs] = useState({});  // {[id]: dataUrl}
+  const [appBgThumb,   setAppBgThumb]   = useState(null);
+  const [gameBgThumbs, setGameBgThumbs] = useState({});
 
-  // Load thumbnails on mount
   useState(() => {
     imgGet('app-bg').then((v) => setAppBgThumb(v?.dataUrl ?? null));
     games.forEach((g) => imgGet(`game-${g.id}`).then((v) => {
@@ -178,11 +159,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     }));
   });
 
-  // ── Image handlers ────────────────────────────────────────────
-  const openCrop = (target, file) => {
-    setCropTarget(target);
-    setCropFile(file);
-  };
+  const openCrop = (target, file) => { setCropTarget(target); setCropFile(file); };
 
   const handleCropConfirm = async (dataUrl, opacity) => {
     if (!cropTarget) return;
@@ -211,7 +188,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     refreshImages();
   };
 
-  // ── Export / Import ───────────────────────────────────────────
   const animateDelete = (id, doDelete) => {
     setDeletingIds((prev) => { const s = new Set(prev); s.add(id); return s; });
     setTimeout(() => { doDelete(); setDeletingIds((prev) => { const s = new Set(prev); s.delete(id); return s; }); }, 190);
@@ -242,12 +218,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     e.target.value = '';
   };
 
-  // ── Drag state ────────────────────────────────────────────────
   const [dgFrom, setDgFrom] = useState(null);
   const [dgOver, setDgOver] = useState(null);
   const [dtDrag, setDtDrag] = useState(null);
 
-  // ── Game CRUD ─────────────────────────────────────────────────
   const upGame  = (id, f, v) => setGames((g) => g.map((gm) => gm.id === id ? { ...gm, [f]: v } : gm));
   const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), async () => {
     await imgDelete(`game-${id}`);
@@ -261,7 +235,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     setNewGame({ name: '', color: '#4a9eff', resetTime: '00:00' }); setShowNG(false);
   };
 
-  // ── Task CRUD ─────────────────────────────────────────────────
   const upTask  = (gid, tid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.map((tk) => tk.id === tid ? { ...tk, [f]: v } : tk) } : gm));
   const delTask = (gid, tid) => animateDelete(tid, () => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm)));
   const addTask = (gid) => {
@@ -270,11 +243,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   };
   const openAddTask = (gid) => { setAddTo(gid); setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); };
 
-  // ── Drag handlers ─────────────────────────────────────────────
-  const onGameDS  = (i)   => (e) => { setDgFrom(i); setDgOver(i); e.dataTransfer.effectAllowed = 'move'; };
-  const onGameDO  = (i)   => (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dgFrom != null) setDgOver(i); };
-  const onGameDrp = (i)   => (e) => { e.preventDefault(); if (dgFrom == null || dgFrom === i) { setDgFrom(null); setDgOver(null); return; } setGames((g) => { const a = [...g], [it] = a.splice(dgFrom, 1); a.splice(i, 0, it); return a; }); setDgFrom(null); setDgOver(null); };
-  const onGameDE  = ()    => { setDgFrom(null); setDgOver(null); };
+  const onGameDS  = (i)      => (e) => { setDgFrom(i); setDgOver(i); e.dataTransfer.effectAllowed = 'move'; };
+  const onGameDO  = (i)      => (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dgFrom != null) setDgOver(i); };
+  const onGameDrp = (i)      => (e) => { e.preventDefault(); if (dgFrom == null || dgFrom === i) { setDgFrom(null); setDgOver(null); return; } setGames((g) => { const a = [...g], [it] = a.splice(dgFrom, 1); a.splice(i, 0, it); return a; }); setDgFrom(null); setDgOver(null); };
+  const onGameDE  = ()       => { setDgFrom(null); setDgOver(null); };
 
   const onTaskDS  = (gid, i) => (e) => { setDtDrag({ gid, from: i, over: i }); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); };
   const onTaskDO  = (gid, i) => (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; if (dtDrag?.gid === gid) setDtDrag((p) => ({ ...p, over: i })); };
@@ -291,97 +263,97 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const taskDrop = (gid, i) => ({ borderTop: dtDrag?.gid === gid && dtDrag.over === i && dtDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
   const rowStyle = { display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 };
 
-  return jsxs(Fragment, { children: [
-    // ── Crop modal (rendered above everything) ─────────────────
-    cropFile && jsx(CropModal, { file: cropFile, onConfirm: handleCropConfirm, onCancel: handleCropCancel }),
+  return (
+    <>
+      {cropFile && <CropModal file={cropFile} onConfirm={handleCropConfirm} onCancel={handleCropCancel} />}
 
-    jsx(Modal, {
-      title: `⚙️ ${t('settings')}`,
-      titleExtra: jsxs(Fragment, { children: [
-        jsx('button', { onClick: handleExport,                     className: cx(ss.btn, ss.btnAdd), title: t('exportSettings'), children: '📤' }),
-        jsx('button', { onClick: () => importRef.current?.click(), className: cx(ss.btn, ss.btnAdd), title: t('importSettings'), children: '📥' }),
-        jsx('input', { ref: importRef, type: 'file', accept: '.json,application/json', style: { display: 'none' }, onChange: handleImportFile }),
-      ]}),
-      onClose,
-      children: jsx('div', { className: s.list, children: [
+      <Modal
+        title={`⚙️ ${t('settings')}`}
+        titleExtra={
+          <>
+            <button onClick={handleExport}                     className={cx(ss.btn, ss.btnAdd)} title={t('exportSettings')}>📤</button>
+            <button onClick={() => importRef.current?.click()} className={cx(ss.btn, ss.btnAdd)} title={t('importSettings')}>📥</button>
+            <input ref={importRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={handleImportFile} />
+          </>
+        }
+        onClose={onClose}
+      >
+        <div className={s.list}>
 
-        // ── App background image section ───────────────────────
-        jsxs('div', { className: s.imgSection, children: [
-          jsx('div', { className: s.imgSectionTitle, children: t('appBgImage') }),
-          jsx(ImageDropZone, {
-            currentDataUrl: appBgThumb,
-            onFile: (file) => openCrop('app-bg', file),
-            onRemove: removeAppBg,
-            mode: 'large',
-          }),
-        ]}),
+          <div className={s.imgSection}>
+            <div className={s.imgSectionTitle}>{t('appBgImage')}</div>
+            <ImageDropZone currentDataUrl={appBgThumb} onFile={(file) => openCrop('app-bg', file)} onRemove={removeAppBg} mode="large" />
+          </div>
 
-        // ── Game list ──────────────────────────────────────────
-        ...games.map((game, gi) => jsxs('div', {
-          draggable: true,
-          onDragStart: onGameDS(gi), onDragOver: onGameDO(gi), onDrop: onGameDrp(gi), onDragEnd: onGameDE,
-          className: cx(s.gameItem, deletingIds.has(game.id) && s.gameItemExit),
-          style: { ...gameDrop(gi), border: `1px solid ${game.color}44`, opacity: dgFrom === gi ? 0.4 : 1, transition: 'opacity 0.15s' },
-          children: [
-            jsxs('div', { className: s.gameHeader, children: [
-              DragHandle,
-              jsx('input', { type: 'color', value: game.color, onChange: (e) => upGame(game.id, 'color', e.target.value), className: s.colorInput }),
-              jsx('input', { value: game.name, onChange: (e) => upGame(game.id, 'name', e.target.value), onKeyDown: (e) => e.key === 'Enter' && e.currentTarget.blur(), className: cx(s.nameInput, inputCls), placeholder: t('gameName') }),
-              jsx('span', { className: s.resetLbl, children: t('resetLbl') }),
-              jsx('input', { type: 'time', value: utcToLocalHHMM(game.resetTime), onChange: (e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value)), className: inputCls, style: { width: 86, fontFamily: 'monospace', flexShrink: 0 } }),
-              // Game background image button
-              jsx(ImageDropZone, {
-                currentDataUrl: gameBgThumbs[game.id] || null,
-                onFile: (file) => openCrop(`game-${game.id}`, file),
-                onRemove: () => removeGameBg(game.id),
-                mode: 'compact',
-              }),
-              jsx('button', { onClick: () => delGame(game.id, game.name), className: cx(ss.btn, ss.btnDanger), children: '✕' }),
-            ]}),
-            jsxs('div', { className: s.gameBody, children: [
-              ...game.tasks.map((task, ti) => jsxs('div', {
-                draggable: true,
-                onDragStart: onTaskDS(game.id, ti), onDragOver: onTaskDO(game.id, ti), onDrop: onTaskDrp(game.id, ti), onDragEnd: onTaskDE,
-                className: cx(s.taskItem, deletingIds.has(task.id) && s.taskItemExit),
-                style: { ...taskDrop(game.id, ti), ...rowStyle, opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' },
-                children: [
-                  DragHandle,
-                  jsx(TypeSelect, { value: task.type, onChange: (e) => upTask(game.id, task.id, 'type', e.target.value), style: { width: 104 } }),
-                  jsx('input', { value: task.name, onChange: (e) => upTask(game.id, task.id, 'name', e.target.value), className: inputCls, style: { flex: 1, minWidth: 0 }, placeholder: t(`types.${task.type}`) }),
-                  jsx(TaskExtraFields, { task, onChange: (f, v) => upTask(game.id, task.id, f, v) }),
-                  jsx('button', { onClick: () => delTask(game.id, task.id), className: cx(ss.btn, ss.btnDanger), children: '✕' }),
-                ],
-              }, task.id)),
-              addTo === game.id
-                ? jsxs('div', { style: rowStyle, children: [
-                    jsx(TypeSelect, { value: newTask.type, onChange: (e) => setNewTask((p) => ({ ...p, type: e.target.value })), style: { width: 104 } }),
-                    jsx('input', { value: newTask.name, onChange: (e) => setNewTask((p) => ({ ...p, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addTask(game.id), className: inputCls, style: { flex: 1, minWidth: 0 }, placeholder: t(`types.${newTask.type}`), autoFocus: true }),
-                    jsx(TaskExtraFields, { task: newTask, onChange: (f, v) => setNewTask((p) => ({ ...p, [f]: v })) }),
-                    jsx('button', { onClick: () => addTask(game.id),  className: cx(ss.btn, ss.btnConfirm), children: t('add') }),
-                    jsx('button', { onClick: () => setAddTo(null),    className: ss.btn,                   children: '✕' }),
-                  ]})
-                : jsx('button', { onClick: () => openAddTask(game.id), className: cx(ss.btn, ss.btnAdd, s.addTaskBtn), children: t('addTask') }),
-            ]}),
-          ],
-        }, game.id)),
+          {games.map((game, gi) => (
+            <div
+              key={game.id}
+              draggable
+              onDragStart={onGameDS(gi)} onDragOver={onGameDO(gi)} onDrop={onGameDrp(gi)} onDragEnd={onGameDE}
+              className={cx(s.gameItem, deletingIds.has(game.id) && s.gameItemExit)}
+              style={{ ...gameDrop(gi), border: `1px solid ${game.color}44`, opacity: dgFrom === gi ? 0.4 : 1, transition: 'opacity 0.15s' }}
+            >
+              <div className={s.gameHeader}>
+                {DragHandle}
+                <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
+                <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={cx(s.nameInput, inputCls)} placeholder={t('gameName')} />
+                <span className={s.resetLbl}>{t('resetLbl')}</span>
+                <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={inputCls} style={{ width: 86, fontFamily: 'monospace', flexShrink: 0 }} />
+                <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
+                <button onClick={() => delGame(game.id, game.name)} className={cx(ss.btn, ss.btnDanger)}>✕</button>
+              </div>
 
-        // ── Add new game ───────────────────────────────────────
-        showNG
-          ? jsxs('div', { className: s.newGameBox, children: [
-              jsxs('div', { className: s.newGameHeader, children: [
-                jsx('input', { type: 'color', value: newGame.color, onChange: (e) => setNewGame((g) => ({ ...g, color: e.target.value })), className: s.colorInput }),
-                jsx('input', { value: newGame.name, onChange: (e) => setNewGame((g) => ({ ...g, name: e.target.value })), onKeyDown: (e) => e.key === 'Enter' && addGame(), className: inputCls, style: { flex: 1, minWidth: 0 }, placeholder: t('gameName'), autoFocus: true }),
-                jsx('span', { className: s.resetLbl, children: t('resetLbl') }),
-                jsx('input', { type: 'time', value: newGame.resetTime, onChange: (e) => setNewGame((g) => ({ ...g, resetTime: e.target.value })), className: inputCls, style: { width: 86, fontFamily: 'monospace' } }),
-              ]}),
-              jsxs('div', { className: s.newGameActions, children: [
-                jsx('button', { onClick: addGame,               className: cx(ss.btn, ss.btnConfirm), children: t('add') }),
-                jsx('button', { onClick: () => setShowNG(false), className: ss.btn,                   children: t('cancel') }),
-              ]}),
-            ]})
-          : jsx('button', { className: s.addGameBtn, onClick: () => setShowNG(true), children: t('addGame') }),
+              <div className={s.gameBody}>
+                {game.tasks.map((task, ti) => (
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE}
+                    className={cx(s.taskItem, deletingIds.has(task.id) && s.taskItemExit)}
+                    style={{ ...taskDrop(game.id, ti), ...rowStyle, opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                  >
+                    {DragHandle}
+                    <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} style={{ width: 104 }} />
+                    <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${task.type}`)} />
+                    <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
+                    <button onClick={() => delTask(game.id, task.id)} className={cx(ss.btn, ss.btnDanger)}>✕</button>
+                  </div>
+                ))}
 
-      ]}),
-    }),
-  ]});
+                {addTo === game.id ? (
+                  <div style={rowStyle}>
+                    <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} style={{ width: 104 }} />
+                    <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${newTask.type}`)} autoFocus />
+                    <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
+                    <button onClick={() => addTask(game.id)} className={cx(ss.btn, ss.btnConfirm)}>{t('add')}</button>
+                    <button onClick={() => setAddTo(null)}   className={ss.btn}>✕</button>
+                  </div>
+                ) : (
+                  <button onClick={() => openAddTask(game.id)} className={cx(ss.btn, ss.btnAdd, s.addTaskBtn)}>{t('addTask')}</button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {showNG ? (
+            <div className={s.newGameBox}>
+              <div className={s.newGameHeader}>
+                <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value }))} className={s.colorInput} />
+                <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addGame()} className={inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t('gameName')} autoFocus />
+                <span className={s.resetLbl}>{t('resetLbl')}</span>
+                <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={inputCls} style={{ width: 86, fontFamily: 'monospace' }} />
+              </div>
+              <div className={s.newGameActions}>
+                <button onClick={addGame}               className={cx(ss.btn, ss.btnConfirm)}>{t('add')}</button>
+                <button onClick={() => setShowNG(false)} className={ss.btn}>{t('cancel')}</button>
+              </div>
+            </div>
+          ) : (
+            <button className={s.addGameBtn} onClick={() => setShowNG(true)}>{t('addGame')}</button>
+          )}
+
+        </div>
+      </Modal>
+    </>
+  );
 }

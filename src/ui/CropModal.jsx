@@ -1,4 +1,3 @@
-import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { sharedStyles as ss } from './UI';
@@ -10,8 +9,7 @@ const s = {
     background: 'rgba(0,0,0,0.92)',
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
-    padding: 20, gap: 10,
-    overflowY: 'auto',
+    padding: 20, gap: 10, overflowY: 'auto',
   }),
   heading: css({ color: 'white', fontSize: 14, fontWeight: 700, textAlign: 'center' }),
   hint:    css({ color: 'rgba(255,255,255,0.45)', fontSize: 11, textAlign: 'center' }),
@@ -23,45 +21,33 @@ const s = {
     transition: 'background 0.12s',
     '&:hover': { background: 'rgba(255,255,255,0.22)' },
   }),
-  // The crop canvas: set to display size via inline style
   cropCanvas: css({
-    display: 'block',
-    cursor: 'crosshair',
-    touchAction: 'none',
-    // No explicit width/height — canvas intrinsic dimensions (set via
-    // canvas.width/height attrs) act like a replaced element; the browser
-    // scales both axes proportionally to fit within these two constraints.
-    maxWidth: 'min(88vw, 700px)',
-    maxHeight: '55vh',
+    display: 'block', cursor: 'crosshair', touchAction: 'none',
+    maxWidth: 'min(88vw, 700px)', maxHeight: '55vh',
   }),
-  actions: css({ display: 'flex', gap: 12 }),
-  sliderWrap: css({ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 'min(88vw, 700px)' }),
+  actions:     css({ display: 'flex', gap: 12 }),
+  sliderWrap:  css({ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 'min(88vw, 700px)' }),
   sliderLabel: css({ color: 'rgba(255,255,255,0.6)', fontSize: 11, whiteSpace: 'nowrap' }),
   sliderValue: css({ color: 'white', fontSize: 11, fontFamily: 'monospace', width: 30, textAlign: 'right', flexShrink: 0 }),
-  slider: css({ flex: 1, cursor: 'pointer', accentColor: 'var(--link)' }),
+  slider:      css({ flex: 1, cursor: 'pointer', accentColor: 'var(--link)' }),
 };
 
-const MAX_DISPLAY = 700; // px — max display dimension
+const MAX_DISPLAY = 700;
 
 export function CropModal({ file, onConfirm, onCancel }) {
-  // transformedBitmap: ImageBitmap of the full image with flips/rotation baked in
   const [transformedBitmap, setTransformedBitmap] = useState(null);
-  // dispSize: the actual CSS display size of the crop canvas (≤ MAX_DISPLAY)
   const [dispSize, setDispSize] = useState({ w: 0, h: 0 });
-  // crop: selection in dispSize-space
-  const [crop, setCrop] = useState(null);
-
-  const [flipH, setFlipH] = useState(false);
-  const [flipV, setFlipV] = useState(false);
-  const [rot,     setRot]     = useState(0);   // 0 | 90 | 180 | 270
+  const [crop,    setCrop]    = useState(null);
+  const [flipH,   setFlipH]   = useState(false);
+  const [flipV,   setFlipV]   = useState(false);
+  const [rot,     setRot]     = useState(0);
   const [opacity, setOpacity] = useState(0.5);
 
-  // Raw HTMLImageElement loaded once from the file
-  const rawImgRef   = useRef(null);
+  const rawImgRef     = useRef(null);
   const cropCanvasRef = useRef(null);
-  const dragRef     = useRef(null); // { mode:'draw'|'move', ox,oy,cx,cy }
+  const dragRef       = useRef(null);
 
-  // ── 1. Load the file into a hidden <img> ─────────────────────
+  // ── 1. Load file ──────────────────────────────────────────────
   useEffect(() => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -73,7 +59,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
     img.src = url;
   }, [file]);
 
-  // ── 2. Rebuild the transformed bitmap whenever transforms change ──
+  // ── 2. Rebuild transformed bitmap ────────────────────────────
   const rebuildBitmap = useCallback((imgEl, fH, fV, r) => {
     const nw = imgEl.naturalWidth, nh = imgEl.naturalHeight;
     const swapped = r === 90 || r === 270;
@@ -81,8 +67,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
     const bh = swapped ? nw : nh;
 
     const tmp = document.createElement('canvas');
-    tmp.width  = bw;
-    tmp.height = bh;
+    tmp.width = bw; tmp.height = bh;
     const ctx = tmp.getContext('2d');
     ctx.save();
     ctx.translate(bw / 2, bh / 2);
@@ -94,107 +79,81 @@ export function CropModal({ file, onConfirm, onCancel }) {
 
     createImageBitmap(tmp).then((bmp) => {
       setTransformedBitmap(bmp);
-      // Compute display size (fit within MAX_DISPLAY × 55 vh equivalent)
-      const maxW = Math.min(MAX_DISPLAY, window.innerWidth * 0.88);
-      const maxH = window.innerHeight * 0.55;
+      const maxW  = Math.min(MAX_DISPLAY, window.innerWidth * 0.88);
+      const maxH  = window.innerHeight * 0.55;
       const scale = Math.min(1, maxW / bw, maxH / bh);
-      const dw = Math.floor(bw * scale);
-      const dh = Math.floor(bh * scale);
+      const dw    = Math.floor(bw * scale);
+      const dh    = Math.floor(bh * scale);
       setDispSize({ w: dw, h: dh });
       setCrop({ x: 0, y: 0, w: dw, h: dh });
     });
   }, []);
 
-  // Rebuild when user changes a transform
   useEffect(() => {
     if (rawImgRef.current) rebuildBitmap(rawImgRef.current, flipH, flipV, rot);
   }, [flipH, flipV, rot, rebuildBitmap]);
 
-  // ── 3. Paint crop canvas whenever bitmap, dispSize or crop changes ──
+  // ── 3. Paint canvas ───────────────────────────────────────────
   useEffect(() => {
     const canvas = cropCanvasRef.current;
     if (!canvas || !transformedBitmap || !dispSize.w) return;
 
-    // Internal resolution = display size (1:1 pixel mapping, no DPR scaling)
     canvas.width  = dispSize.w;
     canvas.height = dispSize.h;
-
     const ctx = canvas.getContext('2d');
 
-    // Draw transformed image scaled to display size
     ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h);
-
-    // Dark overlay
     ctx.fillStyle = 'rgba(0,0,0,0.52)';
     ctx.fillRect(0, 0, dispSize.w, dispSize.h);
 
     if (crop && crop.w > 2 && crop.h > 2) {
       const { x, y, w, h } = crop;
-      // Clear selection area back to the image
       ctx.save();
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fillRect(x, y, w, h);
       ctx.restore();
-      // Re-draw image pixels in the selection only
       ctx.save();
-      ctx.beginPath();
-      ctx.rect(x, y, w, h);
-      ctx.clip();
+      ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
       ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h);
       ctx.restore();
 
-      // Border
-      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.5;
       ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5);
 
-      // Rule-of-thirds
-      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 0.5;
       for (let i = 1; i < 3; i++) {
         ctx.beginPath(); ctx.moveTo(x + w*i/3, y); ctx.lineTo(x + w*i/3, y+h); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x, y + h*i/3); ctx.lineTo(x+w, y + h*i/3); ctx.stroke();
       }
 
-      // Corner handles
       const hs = 8;
       ctx.fillStyle = 'white';
-      [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy]) =>
-        ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs));
+      [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy]) => ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs));
 
-      // Centre move handle
       const cx2 = x + w/2, cy2 = y + h/2;
       ctx.fillStyle = 'rgba(255,255,255,0.65)';
-      ctx.beginPath();
-      ctx.arc(cx2, cy2, 10, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(cx2, cy2, 10, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('✥', cx2, cy2);
     }
   }, [transformedBitmap, dispSize, crop]);
 
-  // ── 4. Pointer coordinate helper ─────────────────────────────
+  // ── 4. Pointer helpers ────────────────────────────────────────
   const getRelXY = useCallback((e) => {
     const canvas = cropCanvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    // getBoundingClientRect gives CSS px; canvas.width gives internal px.
-    // They're the same here (we set canvas.width = dispSize.w), but guard anyway.
+    const rect   = canvas.getBoundingClientRect();
     const scaleX = canvas.width  / rect.width;
     const scaleY = canvas.height / rect.height;
     return {
-      x: Math.max(0, Math.min(dispSize.w, (e.clientX - rect.left)  * scaleX)),
-      y: Math.max(0, Math.min(dispSize.h, (e.clientY - rect.top)   * scaleY)),
+      x: Math.max(0, Math.min(dispSize.w, (e.clientX - rect.left) * scaleX)),
+      y: Math.max(0, Math.min(dispSize.h, (e.clientY - rect.top)  * scaleY)),
     };
   }, [dispSize]);
 
-  // Is (px,py) within the centre move handle?
   const inMoveHandle = useCallback((px, py) => {
     if (!crop || crop.w < 10 || crop.h < 10) return false;
-    const cx2 = crop.x + crop.w / 2;
-    const cy2 = crop.y + crop.h / 2;
+    const cx2 = crop.x + crop.w / 2, cy2 = crop.y + crop.h / 2;
     return Math.hypot(px - cx2, py - cy2) <= 14;
   }, [crop]);
 
@@ -203,12 +162,9 @@ export function CropModal({ file, onConfirm, onCancel }) {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     const { x, y } = getRelXY(e);
-
     if (inMoveHandle(x, y)) {
-      // Move existing crop
       dragRef.current = { mode: 'move', ox: x, oy: y, cx: crop.x, cy: crop.y };
     } else {
-      // Always start drawing a new crop rectangle
       dragRef.current = { mode: 'draw', ox: x, oy: y };
       setCrop({ x, y, w: 0, h: 0 });
     }
@@ -218,30 +174,19 @@ export function CropModal({ file, onConfirm, onCancel }) {
     if (!dragRef.current) return;
     const d = dragRef.current;
     const { x, y } = getRelXY(e);
-
     if (d.mode === 'draw') {
-      const nx = Math.min(d.ox, x);
-      const ny = Math.min(d.oy, y);
-      setCrop({
-        x: nx, y: ny,
-        w: Math.min(Math.abs(x - d.ox), dispSize.w - nx),
-        h: Math.min(Math.abs(y - d.oy), dispSize.h - ny),
-      });
+      const nx = Math.min(d.ox, x), ny = Math.min(d.oy, y);
+      setCrop({ x: nx, y: ny, w: Math.min(Math.abs(x - d.ox), dispSize.w - nx), h: Math.min(Math.abs(y - d.oy), dispSize.h - ny) });
     } else {
       setCrop((prev) => {
         if (!prev) return prev;
-        return {
-          ...prev,
-          x: Math.max(0, Math.min(dispSize.w - prev.w, d.cx + (x - d.ox))),
-          y: Math.max(0, Math.min(dispSize.h - prev.h, d.cy + (y - d.oy))),
-        };
+        return { ...prev, x: Math.max(0, Math.min(dispSize.w - prev.w, d.cx + (x - d.ox))), y: Math.max(0, Math.min(dispSize.h - prev.h, d.cy + (y - d.oy))) };
       });
     }
   }, [getRelXY, dispSize]);
 
   const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
 
-  // ── 6. Cursor: pointer over move handle, crosshair elsewhere ─
   const onPointerMoveForCursor = useCallback((e) => {
     const canvas = cropCanvasRef.current;
     if (!canvas) return;
@@ -250,17 +195,13 @@ export function CropModal({ file, onConfirm, onCancel }) {
     onPointerMove(e);
   }, [getRelXY, inMoveHandle, onPointerMove]);
 
-  // ── 7. Export ─────────────────────────────────────────────────
+  // ── 6. Export ─────────────────────────────────────────────────
   const handleConfirm = () => {
     if (!crop || crop.w < 5 || crop.h < 5 || !transformedBitmap) { onCancel(); return; }
-    // Map from disp-space to bitmap-space
     const scaleX = transformedBitmap.width  / dispSize.w;
     const scaleY = transformedBitmap.height / dispSize.h;
-    const sx = Math.round(crop.x * scaleX);
-    const sy = Math.round(crop.y * scaleY);
-    const sw = Math.round(crop.w * scaleX);
-    const sh = Math.round(crop.h * scaleY);
-
+    const sx = Math.round(crop.x * scaleX), sy = Math.round(crop.y * scaleY);
+    const sw = Math.round(crop.w * scaleX), sh = Math.round(crop.h * scaleY);
     const MAX_PX = 1920;
     const ratio  = Math.min(1, MAX_PX / Math.max(sw, sh));
     const out    = document.createElement('canvas');
@@ -272,47 +213,35 @@ export function CropModal({ file, onConfirm, onCancel }) {
 
   const loading = !transformedBitmap || !dispSize.w;
 
-  return jsx('div', {
-    className: s.overlay,
-    children: [
-      jsx('div', { className: s.heading, children: t('crop.title') }),
-      jsx('div', { className: s.hint, children: t('crop.hint') }),
+  return (
+    <div className={s.overlay}>
+      <div className={s.heading}>{t('crop.title')}</div>
+      <div className={s.hint}>{t('crop.hint')}</div>
 
-      // Transform toolbar
-      jsxs('div', { className: s.toolbar, children: [
-        jsx('button', { className: s.toolBtn, onClick: () => setFlipH(v => !v), title: t('crop.flipH'),        children: '↔' }),
-        jsx('button', { className: s.toolBtn, onClick: () => setFlipV(v => !v), title: t('crop.flipV'),        children: '↕' }),
-        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+270)%360), title: t('crop.rotateCCW'), children: '↺' }),
-        jsx('button', { className: s.toolBtn, onClick: () => setRot(r => (r+90)%360),  title: t('crop.rotateCW'),   children: '↻' }),
-      ]}),
+      <div className={s.toolbar}>
+        <button className={s.toolBtn} onClick={() => setFlipH((v) => !v)} title={t('crop.flipH')}>↔</button>
+        <button className={s.toolBtn} onClick={() => setFlipV((v) => !v)} title={t('crop.flipV')}>↕</button>
+        <button className={s.toolBtn} onClick={() => setRot((r) => (r + 270) % 360)} title={t('crop.rotateCCW')}>↺</button>
+        <button className={s.toolBtn} onClick={() => setRot((r) => (r + 90)  % 360)} title={t('crop.rotateCW')}>↻</button>
+      </div>
 
-      // Crop canvas (image + overlay combined)
-      loading
-        ? jsx('div', { style: { color: 'rgba(255,255,255,0.5)', fontSize: 13 }, children: t('crop.loading') })
-        : jsx('canvas', {
-            ref: cropCanvasRef,
-            className: s.cropCanvas,
-            
-            onPointerDown, onPointerMove: onPointerMoveForCursor, onPointerUp,
-          }),
+      {loading
+        ? <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{t('crop.loading')}</div>
+        : <canvas ref={cropCanvasRef} className={s.cropCanvas} onPointerDown={onPointerDown} onPointerMove={onPointerMoveForCursor} onPointerUp={onPointerUp} />
+      }
 
-      // Opacity slider
-      dispSize.w > 0 && jsxs('div', { className: s.sliderWrap, children: [
-        jsx('span', { className: s.sliderLabel, children: t('crop.opacity') }),
-        jsx('input', {
-          type: 'range', min: 0, max: 1, step: 0.05,
-          value: opacity,
-          onChange: (e) => setOpacity(parseFloat(e.target.value)),
-          className: s.slider,
-        }),
-        jsx('span', { className: s.sliderValue, children: opacity.toFixed(2) }),
-      ]}),
+      {dispSize.w > 0 && (
+        <div className={s.sliderWrap}>
+          <span className={s.sliderLabel}>{t('crop.opacity')}</span>
+          <input type="range" min={0} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(parseFloat(e.target.value))} className={s.slider} />
+          <span className={s.sliderValue}>{opacity.toFixed(2)}</span>
+        </div>
+      )}
 
-      // Action buttons
-      jsxs('div', { className: s.actions, children: [
-        jsx('button', { onClick: handleConfirm, className: cx(ss.btn, ss.btnConfirm), children: t('crop.confirm') }),
-        jsx('button', { onClick: onCancel,      className: ss.btn,                    children: t('cancel') }),
-      ]}),
-    ],
-  });
+      <div className={s.actions}>
+        <button onClick={handleConfirm} className={cx(ss.btn, ss.btnConfirm)}>{t('crop.confirm')}</button>
+        <button onClick={onCancel}      className={ss.btn}>{t('cancel')}</button>
+      </div>
+    </div>
+  );
 }

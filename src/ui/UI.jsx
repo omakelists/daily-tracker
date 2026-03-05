@@ -1,10 +1,8 @@
-import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
 import { t } from '../util/i18n';
 
 // ── inputCls: base className for <input> / <select> elements ────
-// Extra per-element overrides (width, flex, etc.) go into style={} alongside className.
 export const inputCls = css({
   background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 6,
   color: 'var(--text)', padding: '6px 9px', fontSize: 13, outline: 'none',
@@ -33,9 +31,8 @@ const boxOut = keyframes({
 const confirmIn  = keyframes({ from: { opacity: 0, transform: 'scale(0.92)' }, to: { opacity: 1, transform: 'scale(1)' } });
 const confirmOut = keyframes({ from: { opacity: 1, transform: 'scale(1)' }, to: { opacity: 0, transform: 'scale(0.92)' } });
 
-// ── Shared styles (exported so GameCard / TaskRow / Settings etc. can use them) ──
+// ── Shared styles ─────────────────────────────────────────────────
 export const sharedStyles = {
-  // Row layout
   row:      css({ display: 'flex', alignItems: 'center', padding: '10px var(--row-pr) 10px var(--row-pl)' }),
   preSlot:  css({ width: 'var(--bar-slot)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }),
   barSlot:  css({ width: 'var(--bar-slot)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }),
@@ -43,7 +40,6 @@ export const sharedStyles = {
   meta:     css({ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 10 }),
   right:    css({ flexShrink: 0, marginLeft: 6 }),
 
-  // Checkbox
   cb: css({
     width: 'var(--cb-w)', height: 'var(--cb-w)', flexShrink: 0,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -56,22 +52,20 @@ export const sharedStyles = {
   cbChecked: css({ background: 'var(--checked-bg) !important', borderColor: 'var(--checked-br) !important', transform: 'scale(1.08)' }),
   cbPop:     css({ animation: `${cbPopAnim} 0.22s ease forwards` }),
 
-  // Type badges
-  badge:           css({ fontSize: 10, borderRadius: 4, padding: '1px 5px', flexShrink: 0, border: '1px solid transparent' }),
-  badgeDaily:       css({ color: 'var(--type-daily)',       background: 'rgba(0,0,0,0.4)',       borderColor: '#3a6ea8' }),
-  badgeWeekly:      css({ color: 'var(--type-weekly)',      background: 'rgba(0,0,0,0.4)',       borderColor: '#7a5aaa' }),
-  badgeWebdaily:    css({ color: 'var(--type-webdaily)',    background: 'rgba(0,0,0,0.4)',       borderColor: '#2a7a35' }),
-  badgeMonthly:     css({ color: 'var(--type-monthly)',     background: 'rgba(0,0,0,0.4)',       borderColor: '#a8453f' }),
-  badgeHalfmonthly: css({ color: 'var(--type-halfmonthly)', background: 'rgba(0,0,0,0.4)',       borderColor: '#a86030' }),
+  badge:            css({ fontSize: 10, borderRadius: 4, padding: '1px 5px', flexShrink: 0, border: '1px solid transparent' }),
+  badgeDaily:       css({ color: 'var(--type-daily)',        background: 'rgba(0,0,0,0.4)', borderColor: '#3a6ea8' }),
+  badgeWeekly:      css({ color: 'var(--type-weekly)',       background: 'rgba(0,0,0,0.4)', borderColor: '#7a5aaa' }),
+  badgeWebdaily:    css({ color: 'var(--type-webdaily)',     background: 'rgba(0,0,0,0.4)', borderColor: '#2a7a35' }),
+  badgeMonthly:     css({ color: 'var(--type-monthly)',      background: 'rgba(0,0,0,0.4)', borderColor: '#a8453f' }),
+  badgeHalfmonthly: css({ color: 'var(--type-halfmonthly)',  background: 'rgba(0,0,0,0.4)', borderColor: '#a86030' }),
 
-  // Buttons
   btn:        css({ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--muted)', padding: '5px 10px', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }),
   btnDanger:  css({ color: 'var(--danger)', borderColor: 'rgba(248,81,73,.27)' }),
   btnAdd:     css({ color: 'var(--link)',   borderColor: 'rgba(88,166,255,.27)' }),
   btnConfirm: css({ color: 'var(--green)',  borderColor: 'rgba(63,185,80,.27)' }),
 };
 
-// ── Private styles for this file ──────────────────────────────────
+// ── Private styles ────────────────────────────────────────────────
 const s = {
   prevbarWrap: css({ cursor: 'help', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }),
 
@@ -116,78 +110,65 @@ const s = {
   confirmActions: css({ display: 'flex', gap: 10, justifyContent: 'center' }),
 };
 
-// ── Row ──────────────────────────────────────────────────────────────
+// ── Row ───────────────────────────────────────────────────────────
 export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
-  return jsxs('div', {
-    className: cx(sharedStyles.row, className),
-    style: { background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style },
-    onClick,
-    children: [
-      preSlot != null && jsx('div', { className: sharedStyles.preSlot, children: preSlot }),
-      jsx('div', { className: sharedStyles.barSlot, children: barSlot }),
-      checkbox != null && jsx('div', { style: { flexShrink: 0, display: 'flex' }, onClick: (e) => e.stopPropagation(), children: checkbox }),
-      jsx('div', { className: sharedStyles.content, children: content }),
-      meta      && jsx('div', { className: sharedStyles.meta,  children: meta }),
-      rightSlot && jsx('div', { className: sharedStyles.right, children: rightSlot }),
-    ],
-  });
+  return (
+    <div className={cx(sharedStyles.row, className)} style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }} onClick={onClick}>
+      {preSlot != null && <div className={sharedStyles.preSlot}>{preSlot}</div>}
+      <div className={sharedStyles.barSlot}>{barSlot}</div>
+      {checkbox != null && <div style={{ flexShrink: 0, display: 'flex' }} onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
+      <div className={sharedStyles.content}>{content}</div>
+      {meta      && <div className={sharedStyles.meta}>{meta}</div>}
+      {rightSlot && <div className={sharedStyles.right}>{rightSlot}</div>}
+    </div>
+  );
 }
 
-// ── PrevBar ──────────────────────────────────────────────────────────
+// ── PrevBar ───────────────────────────────────────────────────────
 export function PrevBar({ show, checked, partial }) {
   if (!show) return null;
   const color = checked ? 'var(--prev-done)' : partial ? 'var(--prev-partial)' : 'var(--prev-miss)';
-  return jsx('div', {
-    title: t('prevTip'),
-    className: s.prevbarWrap,
-    children: jsx('div', {
-      style: { width: 'var(--bar-w)', height: 18, borderRadius: 2, background: color, boxShadow: checked ? `0 0 0 1.5px rgba(0,0,0,0.85), 0 0 5px ${color}88` : '0 0 0 1.5px rgba(0,0,0,0.85)' },
-    }),
-  });
+  return (
+    <div title={t('prevTip')} className={s.prevbarWrap}>
+      <div style={{ width: 'var(--bar-w)', height: 18, borderRadius: 2, background: color, boxShadow: checked ? `0 0 0 1.5px rgba(0,0,0,0.85), 0 0 5px ${color}88` : '0 0 0 1.5px rgba(0,0,0,0.85)' }} />
+    </div>
+  );
 }
 
-// ── Modal ────────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────
 export function Modal({ title, titleExtra, onClose, children }) {
   const [closing, setClosing] = useState(false);
   const handleClose = () => { setClosing(true); setTimeout(onClose, 170); };
-  return jsx('div', {
-    className: cx(s.overlay, closing && s.overlayClosing),
-    onClick: (e) => { if (e.target === e.currentTarget) handleClose(); },
-    children: jsxs('div', {
-      className: cx(s.box, closing && s.boxClosing),
-      children: [
-        jsxs('div', {
-          className: s.modalHeader,
-          children: [
-            jsxs('div', { className: s.modalTitleGroup, children: [
-              jsx('span', { className: s.modalTitle, children: title }),
-              titleExtra,
-            ]}),
-            jsx('button', { onClick: handleClose, className: s.modalClose, children: '✕' }),
-          ],
-        }),
-        children,
-      ],
-    }),
-  });
+  return (
+    <div className={cx(s.overlay, closing && s.overlayClosing)} onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
+      <div className={cx(s.box, closing && s.boxClosing)}>
+        <div className={s.modalHeader}>
+          <div className={s.modalTitleGroup}>
+            <span className={s.modalTitle}>{title}</span>
+            {titleExtra}
+          </div>
+          <button onClick={handleClose} className={s.modalClose}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
 }
 
-// ── ConfirmDialog ────────────────────────────────────────────────────
+// ── ConfirmDialog ─────────────────────────────────────────────────
 export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
   const [closing, setClosing] = useState(false);
   const dismiss = (fn) => () => { setClosing(true); setTimeout(fn, 140); };
-  return jsx('div', {
-    className: cx(s.confirmOverlay, closing && s.confirmOverlayClosing),
-    children: jsxs('div', {
-      className: cx(s.confirmBox, closing && s.confirmBoxClosing),
-      children: [
-        jsx('div', { className: s.confirmIcon, children: '🗑️' }),
-        jsx('div', { className: s.confirmMsg,  children: message }),
-        jsxs('div', { className: s.confirmActions, children: [
-          jsx('button', { onClick: dismiss(onCancel),  className: sharedStyles.btn,                              children: t('cancel') }),
-          jsx('button', { onClick: dismiss(onConfirm), className: cx(sharedStyles.btn, sharedStyles.btnDanger),  children: confirmLabel ?? t('deleteBtn') }),
-        ]}),
-      ],
-    }),
-  });
+  return (
+    <div className={cx(s.confirmOverlay, closing && s.confirmOverlayClosing)}>
+      <div className={cx(s.confirmBox, closing && s.confirmBoxClosing)}>
+        <div className={s.confirmIcon}>🗑️</div>
+        <div className={s.confirmMsg}>{message}</div>
+        <div className={s.confirmActions}>
+          <button onClick={dismiss(onCancel)}  className={sharedStyles.btn}>{t('cancel')}</button>
+          <button onClick={dismiss(onConfirm)} className={cx(sharedStyles.btn, sharedStyles.btnDanger)}>{confirmLabel ?? t('deleteBtn')}</button>
+        </div>
+      </div>
+    </div>
+  );
 }
