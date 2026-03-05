@@ -238,6 +238,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
 
           jsx('div', {
             className: cx(s.bodyWrap, hasVisible && s.bodyWrapOpen),
+            style: !hasDailyTasks ? { display: 'none' } : undefined,
             children: jsxs('div', {
               className: cx(s.body, bgDataUrl && s.bodyWithBg),
               children: [
