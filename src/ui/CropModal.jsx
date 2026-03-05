@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { cx } from '../util/cx';
-import { sharedStyles as ss } from './UI';
 import { t } from '../util/i18n';
 import s from './CropModal.module.css';
+import shared from './shared.module.css';
 
 const MAX_DISPLAY = 700;
 
@@ -173,8 +173,8 @@ export function CropModal({ file, onConfirm, onCancel }) {
       )}
 
       <div className={s.actions}>
-        <button onClick={handleConfirm} className={cx(ss.btn, ss.btnConfirm)}>{t('crop.confirm')}</button>
-        <button onClick={onCancel}      className={ss.btn}>{t('cancel')}</button>
+        <button onClick={handleConfirm} className={cx(shared.btn, shared.btnConfirm)}>{t('crop.confirm')}</button>
+        <button onClick={onCancel}      className={shared.btn}>{t('cancel')}</button>
       </div>
     </div>
   );

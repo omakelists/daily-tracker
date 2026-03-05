@@ -22,7 +22,6 @@ export default defineConfig({
         'react-dom/client',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
-        '@emotion/css',
       ],
       // preserveModules requires preserveEntrySignatures to be non-false.
       // Vite sets it to false by default, so we override it here.

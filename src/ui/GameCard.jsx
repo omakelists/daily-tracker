@@ -3,9 +3,10 @@ import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
-import { Row, PrevBar, sharedStyles as ss } from './UI';
+import { Row, PrevBar } from './UI';
 import { TaskRow } from './TaskRow';
 import s from './GameCard.module.css';
+import shared from './shared.module.css';
 
 // Animation duration constants — keep in sync with GameCard.module.css
 const EXIT_MS  = 220;
@@ -107,7 +108,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           checkbox={
             <button
               onClick={(e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); }}
-              className={cx(ss.cb, ss.cbGame, allTodayDone && ss.cbChecked, masterPop && ss.cbPop)}
+              className={cx(shared.cb, shared.cbGame, allTodayDone && shared.cbChecked, masterPop && shared.cbPop)}
             >
               {allTodayDone ? '✓' : ''}
             </button>

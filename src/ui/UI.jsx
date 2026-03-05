@@ -2,41 +2,22 @@ import { useState } from 'react';
 import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import s from './UI.module.css';
-
-// ── inputCls: base className for <input> / <select> elements ────
-export const inputCls = s.inputCls;
-/** @deprecated kept for backward-compat; prefer inputCls */
-export const IS = s.inputCls;
-
-// ── Shared styles (exported so GameCard / TaskRow / Settings etc. can use them) ──
-export const sharedStyles = {
-  // Row layout
-  row: s.row, preSlot: s.preSlot, barSlot: s.barSlot,
-  content: s.content, meta: s.meta, right: s.right,
-  // Checkbox
-  cb: s.cb, cbGame: s.cbGame, cbChecked: s.cbChecked, cbPop: s.cbPop,
-  // Badges
-  badge: s.badge,
-  badgeDaily: s.badgeDaily, badgeWeekly: s.badgeWeekly, badgeWebdaily: s.badgeWebdaily,
-  badgeMonthly: s.badgeMonthly, badgeHalfmonthly: s.badgeHalfmonthly,
-  // Buttons
-  btn: s.btn, btnDanger: s.btnDanger, btnAdd: s.btnAdd, btnConfirm: s.btnConfirm,
-};
+import shared from './shared.module.css';
 
 // ── Row ───────────────────────────────────────────────────────────
 export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
   return (
     <div
-      className={cx(s.row, className)}
+      className={cx(shared.row, className)}
       style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
       onClick={onClick}
     >
-      {preSlot != null && <div className={s.preSlot}>{preSlot}</div>}
-      <div className={s.barSlot}>{barSlot}</div>
+      {preSlot != null && <div className={shared.preSlot}>{preSlot}</div>}
+      <div className={shared.barSlot}>{barSlot}</div>
       {checkbox != null && <div style={{ flexShrink: 0, display: 'flex' }} onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
-      <div className={s.content}>{content}</div>
-      {meta      && <div className={s.meta}>{meta}</div>}
-      {rightSlot && <div className={s.right}>{rightSlot}</div>}
+      <div className={shared.content}>{content}</div>
+      {meta      && <div className={shared.meta}>{meta}</div>}
+      {rightSlot && <div className={shared.right}>{rightSlot}</div>}
     </div>
   );
 }
@@ -85,8 +66,8 @@ export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
         <div className={s.confirmIcon}>🗑️</div>
         <div className={s.confirmMsg}>{message}</div>
         <div className={s.confirmActions}>
-          <button onClick={dismiss(onCancel)}  className={s.btn}>{t('cancel')}</button>
-          <button onClick={dismiss(onConfirm)} className={cx(s.btn, s.btnDanger)}>{confirmLabel ?? t('deleteBtn')}</button>
+          <button onClick={dismiss(onCancel)}  className={shared.btn}>{t('cancel')}</button>
+          <button onClick={dismiss(onConfirm)} className={cx(shared.btn, shared.btnDanger)}>{confirmLabel ?? t('deleteBtn')}</button>
         </div>
       </div>
     </div>

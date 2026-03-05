@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { t, ta } from '../util/i18n';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants';
 import { checkKey } from '../util/helpers';
-import { inputCls, Modal, sharedStyles as ss } from './UI';
+import { Modal } from './UI';
 import s from './Calendar.module.css';
+import shared from './shared.module.css';
 
 export function CalendarModal({ games, checks, now, onClose }) {
   const [year,    setYear]    = useState(now.getUTCFullYear());
@@ -44,11 +45,11 @@ export function CalendarModal({ games, checks, now, onClose }) {
     <Modal title={`📅 ${t('record')}`} onClose={onClose}>
       <div>
         <div className={s.filters}>
-          <select value={selGame ?? ''} onChange={(e) => setSelGame(e.target.value)} className={inputCls} style={{ flex: 1, minWidth: 120 }}>
+          <select value={selGame ?? ''} onChange={(e) => setSelGame(e.target.value)} className={shared.inputCls} style={{ flex: 1, minWidth: 120 }}>
             {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
           {dailyTasks.length > 0 && (
-            <select value={selTask ?? ''} onChange={(e) => setSelTask(e.target.value || null)} className={inputCls} style={{ flex: 1, minWidth: 100 }}>
+            <select value={selTask ?? ''} onChange={(e) => setSelTask(e.target.value || null)} className={shared.inputCls} style={{ flex: 1, minWidth: 100 }}>
               <option value="">{t('taskAll')}</option>
               {dailyTasks.map((tk) => <option key={tk.id} value={tk.id}>{tk.name.trim() || t(`types.${tk.type}`)}</option>)}
             </select>
@@ -56,9 +57,9 @@ export function CalendarModal({ games, checks, now, onClose }) {
         </div>
 
         <div className={s.header}>
-          <button onClick={() => nav(-1)} className={ss.btn}>‹</button>
+          <button onClick={() => nav(-1)} className={shared.btn}>‹</button>
           <span className={s.month}>{new Date(Date.UTC(year, month, 1)).toLocaleDateString([], { year: 'numeric', month: 'long' })}</span>
-          <button onClick={() => nav(1)}  className={ss.btn}>›</button>
+          <button onClick={() => nav(1)}  className={shared.btn}>›</button>
         </div>
 
         <div className={s.grid}>

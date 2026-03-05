@@ -3,15 +3,16 @@ import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { DAILY_TYPES, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../util/helpers';
-import { Row, PrevBar, sharedStyles as ss } from './UI';
+import { Row, PrevBar } from './UI';
 import s from './TaskRow.module.css';
+import shared from './shared.module.css';
 
 const BADGE_MAP = {
-  daily:       ss.badgeDaily,
-  weekly:      ss.badgeWeekly,
-  webdaily:    ss.badgeWebdaily,
-  monthly:     ss.badgeMonthly,
-  halfmonthly: ss.badgeHalfmonthly,
+  daily:       shared.badgeDaily,
+  weekly:      shared.badgeWeekly,
+  webdaily:    shared.badgeWebdaily,
+  monthly:     shared.badgeMonthly,
+  halfmonthly: shared.badgeHalfmonthly,
 };
 
 export function TaskRow({ task, game, checks, now, onToggle, cd }) {
@@ -35,13 +36,13 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
       className={s.row}
       barSlot={<PrevBar show={showPrev} checked={prevChecked} />}
       checkbox={
-        <button onClick={() => { firePop(); onToggle(task.id, game); }} className={cx(ss.cb, isChecked && ss.cbChecked, pop && ss.cbPop)}>
+        <button onClick={() => { firePop(); onToggle(task.id, game); }} className={cx(shared.cb, isChecked && shared.cbChecked, pop && shared.cbPop)}>
           {isChecked ? '✓' : ''}
         </button>
       }
       content={
         <>
-          <span className={cx(ss.badge, BADGE_MAP[task.type])}>{t(`types.${task.type}`)}</span>
+          <span className={cx(shared.badge, BADGE_MAP[task.type])}>{t(`types.${task.type}`)}</span>
           <span style={{
             fontSize: 13, color: isChecked ? 'var(--dim)' : 'var(--text)',
             textDecoration: isChecked ? 'line-through' : 'none',
