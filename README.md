@@ -10,32 +10,30 @@ A simple TODO app for tracking game daily/weekly/monthly tasks.
 
 ## Motivation
 
-- **No build step** — ES Modules + import maps, runs straight in the browser
+- ~~**No build step** — ES Modules + import maps, runs straight in the browser~~
 - **Offline-first** — PWA with service worker for full offline support
 
 ## Supported Languages
 
 English, 日本語, 简体中文, 繁體中文, 한국어, Español
 
+## Development
+
+```bash
+npm install
+npm run dev      # dev server
+npm run build    # production build → dist/
+npm run preview  # preview the build locally
+```
+
 ## Deployment
 
 ### GitHub Pages
 
-1. Push the repository contents to a branch (e.g. `main`)
-2. Enable **Pages** in repository Settings → Source: `main` / `/ (root)`
-3. Access via `https://<user>.github.io/<repo>/`
-
-### Local development
-
-```bash
-# Node.js
-npx serve .
-```
-or
-```bash
-# Python 3
-python -m http.server 8080
-```
+1. Run `npm run build`
+2. Push the `dist/` directory contents to a branch (e.g. `gh-pages`)
+3. Enable **Pages** in repository Settings → Source: `gh-pages` / `/ (root)`
+4. Access via `https://<user>.github.io/<repo>/`
 
 ---
 
