@@ -65,14 +65,16 @@ const s = {
     fontSize: 13, fontWeight: 700,
     background: 'linear-gradient(90deg, var(--link), var(--purple))',
     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-    flexShrink: 0,
+    // Title shrinks and truncates first; never wraps to a second line
+    flex: '1 1 0', minWidth: 0,
+    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   }),
-  wcoClock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0 }),
-  wcoSpacer: css({ flex: 1, minWidth: 0 }),
+  wcoClock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0, whiteSpace: 'nowrap' }),
   wcoBtn: css({
     background: 'none', border: 'none', cursor: 'pointer',
     fontSize: 16, padding: '4px 6px', borderRadius: 6, lineHeight: 1,
     color: 'var(--text)', fontFamily: 'inherit',
+    flexShrink: 0,
     WebkitAppRegion: 'no-drag',
     transition: 'background 0.12s',
     '&:hover': { background: 'rgba(255,255,255,0.1)' },
@@ -304,7 +306,6 @@ export function App() {
             jsx('img', { src: './icon-192.png', className: s.wcoIcon, alt: '' }),
             jsx('span', { className: s.wcoTitle, children: t('appTitle') }),
             jsx('span', { className: s.wcoClock, children: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
-            jsx('div', { className: s.wcoSpacer }),
             updateInfo && jsx('button', {
               onClick: () => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn')),
               className: s.wcoBtn, title: t('updateAvail'), children: '⬆️',
