@@ -73,8 +73,6 @@ const s = {
   body:       css({ overflow: 'hidden', minHeight: 0, background: 'rgba(13,17,23,0.50)', paddingTop: 2, paddingBottom: 4 }),
   bodyWithBg: css({ background: 'rgba(13,17,23,0.30)' }),
 
-  // Task wrapper — base (no animation; enter animation applied separately)
-  taskRow: css({}),
   taskRowEnter: css({ animation: `${taskEnter} ${EXIT_MS}ms ease forwards` }),
   // Task wrapper — exit animation
   taskRowExit: css({
@@ -192,7 +190,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   // Wrap a task row with enter/exit animation div
   const wrapTask = (tk, el) => jsx('div', {
     key: tk.id,
-    className: cx(s.taskRow, exitingIds.has(tk.id) ? s.taskRowExit : (enteringIds.has(tk.id) ? s.taskRowEnter : null)),
+    className: exitingIds.has(tk.id) ? s.taskRowExit : enteringIds.has(tk.id) ? s.taskRowEnter : undefined,
     children: el,
   }, tk.id);
 
