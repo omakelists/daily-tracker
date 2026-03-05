@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { css, cx, keyframes } from '@emotion/css';
+import { cx } from './util/cx';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
@@ -11,79 +11,7 @@ import { ConfirmDialog } from './ui/UI';
 import { GameCard } from './ui/GameCard';
 import { SettingsModal } from './ui/Settings';
 import { CalendarModal } from './ui/Calendar';
-
-// ── Styles ────────────────────────────────────────────────────────
-const pulseUpdate = keyframes({
-  '0%, 100%': { boxShadow: '0 0 0 0 rgba(227,179,65,0)' },
-  '50%':      { boxShadow: '0 0 0 4px rgba(227,179,65,0.25)' },
-});
-
-const s = {
-  loading: css({ background: 'var(--bg-app)', color: 'var(--muted)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
-  root:    css({ minHeight: '100vh', color: 'var(--text)', position: 'relative' }),
-  rootNoBg: css({ background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%)' }),
-
-  appBgImg: css({
-    position: 'fixed', inset: 0, zIndex: -2,
-    backgroundSize: 'cover', backgroundPosition: 'center',
-  }),
-  appBgOverlay: css({
-    position: 'fixed', inset: 0, zIndex: -1,
-    background: 'linear-gradient(135deg, var(--bg-app) 0%, var(--bg-app) 35%, rgba(13,17,23,0.82) 58%, rgba(13,17,23,0.28) 82%, rgba(13,17,23,0.05) 100%)',
-  }),
-
-  header:  css({ background: 'var(--bg-header)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '13px 18px', position: 'sticky', top: 0, zIndex: 100 }),
-  headerInner: css({ maxWidth: 740, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }),
-  headerLeft:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
-  title: css({ fontSize: 17, fontWeight: 800, background: 'linear-gradient(90deg, var(--link), var(--purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }),
-
-  wcoBar: css({
-    position: 'fixed',
-    top:    'env(titlebar-area-y,    0px)',
-    left:   'env(titlebar-area-x,    0px)',
-    width:  'env(titlebar-area-width,  100%)',
-    height: 'env(titlebar-area-height, 40px)',
-    zIndex: 200,
-    display: 'flex', alignItems: 'center',
-    background: 'var(--bg-header)',
-    backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
-    WebkitAppRegion: 'drag',
-    gap: 8, padding: '0 10px',
-    userSelect: 'none',
-    overflow: 'hidden',
-  }),
-  wcoIcon:  css({ width: 18, height: 18, borderRadius: 4, flexShrink: 0, WebkitAppRegion: 'no-drag' }),
-  wcoTitle: css({
-    fontSize: 13, fontWeight: 700,
-    background: 'linear-gradient(90deg, var(--link), var(--purple))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-    flex: '1 1 0', minWidth: 0,
-    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-  }),
-  wcoClock: css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace', flexShrink: 0, whiteSpace: 'nowrap' }),
-  wcoBtn: css({
-    background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 16, padding: '4px 6px', borderRadius: 6, lineHeight: 1,
-    color: 'var(--text)', fontFamily: 'inherit',
-    flexShrink: 0,
-    WebkitAppRegion: 'no-drag',
-    transition: 'background 0.12s',
-    '&:hover': { background: 'rgba(255,255,255,0.1)' },
-  }),
-  wcoOffset: css({
-    height: 'env(titlebar-area-height, 40px)',
-    paddingTop: 'env(titlebar-area-y, 0px)',
-  }),
-  clock:   css({ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }),
-  actions: css({ display: 'flex', gap: 8 }),
-  main:    css({ padding: '12px var(--page-m) 24px', maxWidth: 740, margin: '0 auto', position: 'relative' }),
-  noGames: css({ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }),
-
-  btnRecord:   css({ background: 'var(--bg-surface)', border: '1px solid rgba(88,166,255,.27)',   borderRadius: 8, color: 'var(--link)',   padding: '7px 13px', fontSize: 13, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }),
-  btnSettings: css({ background: 'var(--bg-surface)', border: '1px solid rgba(188,140,255,.27)', borderRadius: 8, color: 'var(--purple)', padding: '7px 13px', fontSize: 13, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }),
-  btnUpdate:   css({ background: 'var(--bg-surface)', border: '1px solid rgba(227,179,65,.4)',    borderRadius: 8, color: 'var(--warn)',   padding: '7px 10px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', animation: `${pulseUpdate} 2s ease-in-out infinite` }),
-};
+import s from './App.module.css';
 
 export function App() {
   const [games,        setGames]        = useState(null);
@@ -101,7 +29,6 @@ export function App() {
   const [updateInfo,   setUpdateInfo]   = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  const isPwa = !!(navigator.windowControlsOverlay);
   const [wcoEnabled, setWcoEnabledState] = useState(() => {
     try { const v = localStorage.getItem('dt:wcoEnabled'); return v === null ? true : v === '1'; }
     catch { return true; }
@@ -238,7 +165,6 @@ export function App() {
 
   const toggle = useCallback((taskId, game, isMaster = false) => {
     let shouldCollapse = false;
-
     const applyUpdates = () => {
       flushSync(() => {
         setChecks((prev) => {
@@ -269,7 +195,6 @@ export function App() {
       });
       if (shouldCollapse) flushSync(() => setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; }));
     };
-
     if (document.startViewTransition) document.startViewTransition(applyUpdates);
     else applyUpdates();
   }, [now, getDailyTasks]);

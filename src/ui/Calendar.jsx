@@ -1,21 +1,9 @@
 import { useState, useEffect } from 'react';
-import { css } from '@emotion/css';
 import { t, ta } from '../util/i18n';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants';
 import { checkKey } from '../util/helpers';
 import { inputCls, Modal, sharedStyles as ss } from './UI';
-
-// ── Styles ────────────────────────────────────────────────────────
-const s = {
-  filters:   css({ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }),
-  header:    css({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }),
-  month:     css({ fontWeight: 700, fontSize: 15 }),
-  grid:      css({ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }),
-  dayName:   css({ textAlign: 'center', fontSize: 11, color: 'var(--muted)', padding: '3px 0' }),
-  day:       css({ aspectRatio: '1', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }),
-  legend:    css({ display: 'flex', gap: 14, marginTop: 12, fontSize: 12, color: 'var(--muted)' }),
-  legendDot: css({ display: 'inline-block', width: 11, height: 11, borderRadius: 3, marginRight: 4 }),
-};
+import s from './Calendar.module.css';
 
 export function CalendarModal({ games, checks, now, onClose }) {
   const [year,    setYear]    = useState(now.getUTCFullYear());
@@ -82,10 +70,10 @@ export function CalendarModal({ games, checks, now, onClose }) {
             const st  = getStatus(dk);
             return (
               <div key={dk} className={s.day} style={{
-                fontWeight: dk === today ? 700 : 400,
-                background: st === 'all' ? 'var(--checked-bg)' : st === 'partial' ? '#1f3a27' : 'rgba(255,255,255,0.03)',
-                border: dk === today ? '2px solid var(--link)' : '1px solid rgba(255,255,255,0.05)',
-                color: st === 'all' || st === 'partial' ? 'var(--green)' : 'var(--dim)',
+                fontWeight:  dk === today ? 700 : 400,
+                background:  st === 'all' ? 'var(--checked-bg)' : st === 'partial' ? '#1f3a27' : 'rgba(255,255,255,0.03)',
+                border:      dk === today ? '2px solid var(--link)' : '1px solid rgba(255,255,255,0.05)',
+                color:       st === 'all' || st === 'partial' ? 'var(--green)' : 'var(--dim)',
               }}>
                 {day}
               </div>

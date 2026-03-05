@@ -1,0 +1,175 @@
+@keyframes pulseUpdate {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(227, 179, 65, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(227, 179, 65, 0.25); }
+}
+
+.loading {
+  background: var(--bg-app);
+  color: var(--muted);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.root {
+  min-height: 100vh;
+  color: var(--text);
+  position: relative;
+}
+
+.rootNoBg {
+  background: linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%);
+}
+
+/* App background image layers */
+.appBgImg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+}
+.appBgOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg,
+    var(--bg-app) 0%,
+    var(--bg-app) 35%,
+    rgba(13, 17, 23, 0.82) 58%,
+    rgba(13, 17, 23, 0.28) 82%,
+    rgba(13, 17, 23, 0.05) 100%
+  );
+}
+
+/* Non-WCO header */
+.header {
+  background: var(--bg-header);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 13px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.headerInner {
+  max-width: 740px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.headerLeft { display: flex; align-items: center; gap: 10px; }
+.title {
+  font-size: 17px;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--link), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* WCO titlebar */
+.wcoBar {
+  position: fixed;
+  top:    env(titlebar-area-y,      0px);
+  left:   env(titlebar-area-x,      0px);
+  width:  env(titlebar-area-width,  100%);
+  height: env(titlebar-area-height, 40px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  background: var(--bg-header);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  -webkit-app-region: drag;
+  gap: 8px;
+  padding: 0 10px;
+  user-select: none;
+  overflow: hidden;
+}
+.wcoIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+.wcoTitle {
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--link), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wcoClock {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: monospace;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.wcoBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  color: var(--text);
+  font-family: inherit;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  transition: background 0.12s;
+}
+.wcoBtn:hover { background: rgba(255, 255, 255, 0.1); }
+
+.wcoOffset {
+  height: env(titlebar-area-height, 40px);
+  padding-top: env(titlebar-area-y, 0px);
+}
+
+.clock   { font-size: 11px; color: var(--muted); font-family: monospace; }
+.actions { display: flex; gap: 8px; }
+.main    { padding: 12px var(--page-m) 24px; max-width: 740px; margin: 0 auto; position: relative; }
+.noGames { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+.btnRecord {
+  background: var(--bg-surface);
+  border: 1px solid rgba(88, 166, 255, 0.27);
+  border-radius: 8px;
+  color: var(--link);
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+}
+.btnSettings {
+  background: var(--bg-surface);
+  border: 1px solid rgba(188, 140, 255, 0.27);
+  border-radius: 8px;
+  color: var(--purple);
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+}
+.btnUpdate {
+  background: var(--bg-surface);
+  border: 1px solid rgba(227, 179, 65, 0.4);
+  border-radius: 8px;
+  color: var(--warn);
+  padding: 7px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  animation: pulseUpdate 2s ease-in-out infinite;
+}

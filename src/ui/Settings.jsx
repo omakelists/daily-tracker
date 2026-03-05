@@ -1,67 +1,11 @@
 import { useState, useRef } from 'react';
-import { css, cx, keyframes } from '@emotion/css';
+import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { inputCls, Modal, sharedStyles as ss } from './UI';
 import { CropModal } from './CropModal';
-
-// ── Keyframes ─────────────────────────────────────────────────────
-const itemEnter = keyframes({ from: { opacity: 0, transform: 'translateY(-6px)' }, to: { opacity: 1, transform: 'translateY(0)' } });
-const itemExit  = keyframes({ from: { opacity: 1, transform: 'translateY(0)', maxHeight: '200px', marginBottom: '10px' }, to: { opacity: 0, transform: 'translateY(-4px)', maxHeight: '0', marginBottom: '0' } });
-
-// ── Styles ────────────────────────────────────────────────────────
-const s = {
-  list:           css({ display: 'flex', flexDirection: 'column', gap: 0 }),
-  gameItem:       css({ borderRadius: 10, overflow: 'hidden', background: 'var(--bg-surface)', marginBottom: 10, animation: `${itemEnter} 0.2s ease forwards` }),
-  gameItemExit:   css({ animation: `${itemExit} 0.2s ease forwards`, overflow: 'hidden', pointerEvents: 'none' }),
-  gameHeader:     css({ padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' }),
-  colorInput:     css({ width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 }),
-  nameInput:      css({ flex: 1, minWidth: 0, fontWeight: 700 }),
-  resetLbl:       css({ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }),
-  gameBody:       css({ padding: '8px 13px 10px' }),
-  taskItem:       css({ animation: `${itemEnter} 0.2s ease forwards` }),
-  taskItemExit:   css({ animation: `${itemExit} 0.2s ease forwards`, overflow: 'hidden', pointerEvents: 'none' }),
-  extraLbl:       css({ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }),
-  addTaskBtn:     css({ marginTop: 4 }),
-  newGameBox:     css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 10 }),
-  newGameHeader:  css({ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }),
-  newGameActions: css({ display: 'flex', gap: 8 }),
-  addGameBtn:     css({
-    background: 'transparent', border: '2px dashed var(--border)', borderRadius: 10,
-    color: 'var(--muted)', padding: 12, cursor: 'pointer', fontSize: 14, width: '100%',
-    fontFamily: 'inherit', transition: 'border-color 0.15s, color 0.15s',
-    '&:hover': { borderColor: 'var(--link)', color: 'var(--link)' },
-  }),
-  dragHandle: css({ fontSize: 14, color: '#484f58', cursor: 'grab', lineHeight: 1, paddingRight: 2, flexShrink: 0, '&:active': { cursor: 'grabbing' } }),
-
-  imgSection:      css({ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 13px', marginBottom: 14 }),
-  imgSectionTitle: css({ fontSize: 12, fontWeight: 700, color: 'var(--muted)', marginBottom: 8, letterSpacing: 0.5 }),
-
-  dropZone:      css({
-    border: '2px dashed var(--border)', borderRadius: 8,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: 8, cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s',
-    fontSize: 12, color: 'var(--muted)', fontFamily: 'inherit', background: 'transparent',
-    '&:hover': { borderColor: 'var(--link)', color: 'var(--link)', background: 'rgba(88,166,255,0.05)' },
-  }),
-  dropZoneLarge: css({ padding: '14px 0', width: '100%' }),
-  dropZoneOver:  css({ borderColor: 'var(--link)', background: 'rgba(88,166,255,0.08)', color: 'var(--link)' }),
-
-  thumbRow:  css({ display: 'flex', alignItems: 'center', gap: 10 }),
-  thumb:     css({ width: 72, height: 48, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border)', flexShrink: 0 }),
-  thumbInfo: css({ flex: 1, fontSize: 11, color: 'var(--muted)' }),
-
-  imgBtn: css({
-    width: 32, height: 26, borderRadius: 5, border: '1px dashed var(--border)',
-    background: 'transparent', cursor: 'pointer', flexShrink: 0,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 13, color: 'var(--muted)', transition: 'border-color 0.15s',
-    overflow: 'hidden', padding: 0,
-    '&:hover': { borderColor: 'var(--link)' },
-  }),
-  imgBtnThumb: css({ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }),
-};
+import s from './Settings.module.css';
 
 const TYPE_OPTS = ['daily', 'weekly', 'webdaily', 'monthly', 'halfmonthly'];
 const DragHandle = <span className={s.dragHandle}>⠿</span>;
@@ -97,12 +41,7 @@ function TaskExtraFields({ task, onChange }) {
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
-
-  const handleDrop = (e) => {
-    e.preventDefault(); setOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) onFile(file);
-  };
+  const handleDrop = (e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files?.[0]; if (f && f.type.startsWith('image/')) onFile(f); };
 
   if (mode === 'compact') {
     return (
@@ -148,7 +87,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
   const [cropFile,   setCropFile]   = useState(null);
   const [cropTarget, setCropTarget] = useState(null);
-
   const [appBgThumb,   setAppBgThumb]   = useState(null);
   const [gameBgThumbs, setGameBgThumbs] = useState({});
 
@@ -170,18 +108,12 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
       const id = cropTarget.replace('game-', '');
       setGameBgThumbs((prev) => ({ ...prev, [id]: dataUrl }));
     }
-    setCropFile(null); setCropTarget(null);
-    refreshImages();
+    setCropFile(null); setCropTarget(null); refreshImages();
   };
 
   const handleCropCancel = () => { setCropFile(null); setCropTarget(null); };
 
-  const removeAppBg = async () => {
-    await imgDelete('app-bg');
-    setAppBgThumb(null);
-    refreshImages();
-  };
-
+  const removeAppBg = async () => { await imgDelete('app-bg'); setAppBgThumb(null); refreshImages(); };
   const removeGameBg = async (gameId) => {
     await imgDelete(`game-${gameId}`);
     setGameBgThumbs((prev) => { const n = { ...prev }; delete n[gameId]; return n; });
@@ -189,15 +121,13 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   };
 
   const animateDelete = (id, doDelete) => {
-    setDeletingIds((prev) => { const s = new Set(prev); s.add(id); return s; });
-    setTimeout(() => { doDelete(); setDeletingIds((prev) => { const s = new Set(prev); s.delete(id); return s; }); }, 190);
+    setDeletingIds((prev) => { const st = new Set(prev); st.add(id); return st; });
+    setTimeout(() => { doDelete(); setDeletingIds((prev) => { const st = new Set(prev); st.delete(id); return st; }); }, 190);
   };
 
   const handleExport = () => {
-    const json = JSON.stringify({ games }, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
+    const blob = new Blob([JSON.stringify({ games }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = `daily-tracker-settings-${new Date().toISOString().slice(0, 10)}.json`; a.click();
     URL.revokeObjectURL(url);
   };
@@ -207,15 +137,13 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const parsed   = JSON.parse(ev.target.result);
-        const imported = parsed.games ?? parsed;
+        const parsed = JSON.parse(ev.target.result), imported = parsed.games ?? parsed;
         if (!Array.isArray(imported)) throw new Error('invalid');
         const fresh = imported.map((g) => ({ ...g, id: uid(), tasks: (g.tasks ?? []).map((tk) => ({ ...tk, id: uid() })) }));
         showConfirm(t('importConfirm', { n: fresh.length }), () => setGames(fresh));
       } catch { alert(t('importError')); }
     };
-    reader.readAsText(file);
-    e.target.value = '';
+    reader.readAsText(file); e.target.value = '';
   };
 
   const [dgFrom, setDgFrom] = useState(null);
@@ -243,10 +171,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   };
   const openAddTask = (gid) => { setAddTo(gid); setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); };
 
-  const onGameDS  = (i)      => (e) => { setDgFrom(i); setDgOver(i); e.dataTransfer.effectAllowed = 'move'; };
-  const onGameDO  = (i)      => (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dgFrom != null) setDgOver(i); };
-  const onGameDrp = (i)      => (e) => { e.preventDefault(); if (dgFrom == null || dgFrom === i) { setDgFrom(null); setDgOver(null); return; } setGames((g) => { const a = [...g], [it] = a.splice(dgFrom, 1); a.splice(i, 0, it); return a; }); setDgFrom(null); setDgOver(null); };
-  const onGameDE  = ()       => { setDgFrom(null); setDgOver(null); };
+  const onGameDS  = (i) => (e) => { setDgFrom(i); setDgOver(i); e.dataTransfer.effectAllowed = 'move'; };
+  const onGameDO  = (i) => (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dgFrom != null) setDgOver(i); };
+  const onGameDrp = (i) => (e) => { e.preventDefault(); if (dgFrom == null || dgFrom === i) { setDgFrom(null); setDgOver(null); return; } setGames((g) => { const a = [...g], [it] = a.splice(dgFrom, 1); a.splice(i, 0, it); return a; }); setDgFrom(null); setDgOver(null); };
+  const onGameDE  = () => { setDgFrom(null); setDgOver(null); };
 
   const onTaskDS  = (gid, i) => (e) => { setDtDrag({ gid, from: i, over: i }); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); };
   const onTaskDO  = (gid, i) => (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; if (dtDrag?.gid === gid) setDtDrag((p) => ({ ...p, over: i })); };
@@ -344,7 +272,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                 <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={inputCls} style={{ width: 86, fontFamily: 'monospace' }} />
               </div>
               <div className={s.newGameActions}>
-                <button onClick={addGame}               className={cx(ss.btn, ss.btnConfirm)}>{t('add')}</button>
+                <button onClick={addGame}                className={cx(ss.btn, ss.btnConfirm)}>{t('add')}</button>
                 <button onClick={() => setShowNG(false)} className={ss.btn}>{t('cancel')}</button>
               </div>
             </div>

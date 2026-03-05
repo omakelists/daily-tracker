@@ -1,87 +1,16 @@
 import { useState, useCallback } from 'react';
-import { css, cx, keyframes } from '@emotion/css';
+import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
 import { Row, PrevBar, sharedStyles as ss } from './UI';
 import { TaskRow } from './TaskRow';
+import s from './GameCard.module.css';
 
-// ── Animation constants ───────────────────────────────────────────
+// Animation duration constants — keep in sync with GameCard.module.css
 const EXIT_MS  = 220;
 const OPEN_MS  = 280;
 const CLOSE_MS = 240;
-
-const taskExit = keyframes({
-  from: { opacity: 1,  transform: 'translateY(0)    scaleY(1)',    maxHeight: '80px' },
-  to:   { opacity: 0,  transform: 'translateY(-14px) scaleY(0.7)', maxHeight: '0', marginBottom: '0' },
-});
-const taskEnter = keyframes({
-  from: { opacity: 0,  transform: 'translateY(-10px) scaleY(0.85)' },
-  to:   { opacity: 1,  transform: 'translateY(0)     scaleY(1)' },
-});
-const chevronDown = keyframes({
-  from: { transform: 'rotate(-90deg)' },
-  to:   { transform: 'rotate(0deg)' },
-});
-const chevronRight = keyframes({
-  from: { transform: 'rotate(0deg)' },
-  to:   { transform: 'rotate(-90deg)' },
-});
-
-// ── Styles ────────────────────────────────────────────────────────
-const s = {
-  card: css({
-    borderRadius: 12, marginBottom: 10, overflow: 'hidden',
-    border: 'var(--card-border) solid var(--border)',
-    transition: 'opacity 0.5s',
-    position: 'relative',
-  }),
-  cardDone: css({ opacity: 0.62 }),
-
-  bgLayer:   css({ position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }),
-  bgOverlay: css({ position: 'absolute', inset: 0, background: 'black', zIndex: 1 }),
-  content:   css({ position: 'relative', zIndex: 2 }),
-
-  accordionBtn: css({
-    width: 'var(--bar-slot)', height: 'var(--bar-slot)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'none', border: 'none', cursor: 'pointer',
-    color: 'var(--dim)', fontSize: 9, padding: 0, flexShrink: 0,
-    transition: 'color 0.15s',
-    '&:hover': { color: 'var(--text)' },
-  }),
-  chevronOpen:  css({ animation: `${chevronDown}  ${CLOSE_MS}ms ease forwards` }),
-  chevronClose: css({ animation: `${chevronRight} ${CLOSE_MS}ms ease forwards` }),
-
-  bodyWrap: css({
-    display: 'grid',
-    gridTemplateRows: '0fr',
-    transition: `grid-template-rows ${CLOSE_MS}ms ease`,
-  }),
-  bodyWrapOpen: css({
-    gridTemplateRows: '1fr',
-    transition: `grid-template-rows ${OPEN_MS}ms ease`,
-  }),
-  body:       css({ overflow: 'hidden', minHeight: 0, background: 'rgba(13,17,23,0.50)', paddingTop: 2, paddingBottom: 4 }),
-  bodyWithBg: css({ background: 'rgba(13,17,23,0.30)' }),
-
-  taskRow:      css({}),
-  taskRowEnter: css({ animation: `${taskEnter} ${EXIT_MS}ms ease forwards` }),
-  taskRowExit:  css({
-    animation: `${taskExit} ${EXIT_MS}ms ease forwards`,
-    pointerEvents: 'none', overflow: 'hidden', transformOrigin: 'top center',
-  }),
-
-  divider:  css({ margin: '5px 0', borderTop: '1px solid rgba(255,255,255,0.07)', position: 'relative' }),
-  sepLabel: css({
-    position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)',
-    background: 'transparent', padding: '0 8px', fontSize: 10,
-    color: '#8b949e', letterSpacing: 1, whiteSpace: 'nowrap',
-  }),
-
-  countdown: css({ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', flexShrink: 0, WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill' }),
-  resetTime: css({ fontSize: 11, color: 'var(--dim)', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill' }),
-};
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5 }) {
   const [masterPop,   setMasterPop]   = useState(false);
@@ -100,11 +29,8 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   // ── Accordion toggle with animations ─────────────────────────
   const handleToggleCollapse = useCallback(() => {
     const doToggle = () => {
-      if (document.startViewTransition) {
-        document.startViewTransition(() => onToggleCollapse(game.id));
-      } else {
-        onToggleCollapse(game.id);
-      }
+      if (document.startViewTransition) document.startViewTransition(() => onToggleCollapse(game.id));
+      else onToggleCollapse(game.id);
     };
 
     if (!collapsed) {
@@ -158,7 +84,10 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   );
 
   return (
-    <div className={cx(s.card, allDone && s.cardDone)} style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}>
+    <div
+      className={cx(s.card, allDone && s.cardDone)}
+      style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}
+    >
       {bgDataUrl && <div className={s.bgLayer} style={{ backgroundImage: `url(${bgDataUrl})` }} />}
       {bgDataUrl && <div className={s.bgOverlay} style={{ opacity: 1 - bgOpacity }} />}
 
@@ -169,16 +98,29 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           onClick={hasDailyTasks ? handleToggleCollapse : undefined}
           style={hasDailyTasks ? { cursor: 'pointer' } : undefined}
           preSlot={hasDailyTasks ? (
-            <span className={cx(s.accordionBtn, animDir === 'open' && s.chevronOpen, animDir === 'close' && s.chevronClose)} style={{ pointerEvents: 'none' }}>▼</span>
+            <span
+              className={cx(s.accordionBtn, animDir === 'open' && s.chevronOpen, animDir === 'close' && s.chevronClose)}
+              style={{ pointerEvents: 'none' }}
+            >▼</span>
           ) : null}
           barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
           checkbox={
-            <button onClick={(e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); }} className={cx(ss.cb, ss.cbGame, allTodayDone && ss.cbChecked, masterPop && ss.cbPop)}>
+            <button
+              onClick={(e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); }}
+              className={cx(ss.cb, ss.cbGame, allTodayDone && ss.cbChecked, masterPop && ss.cbPop)}
+            >
               {allTodayDone ? '✓' : ''}
             </button>
           }
           content={
-            <span style={{ fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: allDone ? 'var(--dim)' : visColor, textDecoration: allDone ? 'line-through' : 'none', WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', textStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill', transition: 'all 0.3s' }}>
+            <span style={{
+              fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              color: allDone ? 'var(--dim)' : visColor,
+              textDecoration: allDone ? 'line-through' : 'none',
+              WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill',
+              transition: 'all 0.3s',
+            }}>
               {game.name}
             </span>
           }

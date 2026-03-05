@@ -1,0 +1,107 @@
+/* Animation durations — keep in sync with GameCard.jsx constants */
+@keyframes taskExit {
+  from { opacity: 1; transform: translateY(0)     scaleY(1);   max-height: 80px; }
+  to   { opacity: 0; transform: translateY(-14px) scaleY(0.7); max-height: 0; margin-bottom: 0; }
+}
+@keyframes taskEnter {
+  from { opacity: 0; transform: translateY(-10px) scaleY(0.85); }
+  to   { opacity: 1; transform: translateY(0)     scaleY(1); }
+}
+@keyframes chevronDown  { from { transform: rotate(-90deg); } to { transform: rotate(0deg);   } }
+@keyframes chevronRight { from { transform: rotate(0deg);   } to { transform: rotate(-90deg); } }
+
+.card {
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: var(--card-border) solid var(--border);
+  transition: opacity 0.5s;
+  position: relative;
+}
+.cardDone { opacity: 0.62; }
+
+.bgLayer   { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+.bgOverlay { position: absolute; inset: 0; background: black; z-index: 1; }
+.content   { position: relative; z-index: 2; }
+
+.accordionBtn {
+  width: var(--bar-slot);
+  height: var(--bar-slot);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 9px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.accordionBtn:hover { color: var(--text); }
+
+/* 240ms = CLOSE_MS */
+.chevronOpen  { animation: chevronDown  240ms ease forwards; }
+.chevronClose { animation: chevronRight 240ms ease forwards; }
+
+.bodyWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 240ms ease; /* CLOSE_MS */
+}
+.bodyWrapOpen {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 280ms ease; /* OPEN_MS */
+}
+.body {
+  overflow: hidden;
+  min-height: 0;
+  background: rgba(13, 17, 23, 0.50);
+  padding-top: 2px;
+  padding-bottom: 4px;
+}
+.bodyWithBg { background: rgba(13, 17, 23, 0.30); }
+
+/* Task row wrappers */
+.taskRow {}
+.taskRowEnter { animation: taskEnter 220ms ease forwards; } /* EXIT_MS */
+.taskRowExit  {
+  animation: taskExit 220ms ease forwards;
+  pointer-events: none;
+  overflow: hidden;
+  transform-origin: top center;
+}
+
+.divider {
+  margin: 5px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+}
+.sepLabel {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: transparent;
+  padding: 0 8px;
+  font-size: 10px;
+  color: #8b949e;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.countdown {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: monospace;
+  flex-shrink: 0;
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}
+.resetTime {
+  font-size: 11px;
+  color: var(--dim);
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}
