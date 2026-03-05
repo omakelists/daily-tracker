@@ -6,9 +6,8 @@ import { t } from './util/i18n.js';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants.js';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage.js';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset, getTasksOrSolo } from './util/helpers.js';
+         msUntilTaskReset } from './util/helpers.js';
 import { imgGet, imgPurgeOrphans } from './util/imageStorage.js';
-import { useWindowControlsOverlay } from './util/useWindowControlsOverlay.js';
 import { ConfirmDialog } from './ui/UI.js';
 import { GameCard } from './ui/GameCard.js';
 import { SettingsModal } from './ui/Settings.js';
@@ -106,7 +105,27 @@ export function App() {
   const [updateInfo,   setUpdateInfo]   = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  const { wcoVisible } = useWindowControlsOverlay();
+  // isPwa: true when the WCO API is present (= launched as installed PWA)
+  const isPwa = !!(navigator.windowControlsOverlay);
+  // wcoEnabled: user preference, persisted in localStorage (default: true)
+  const [wcoEnabled, setWcoEnabledState] = useState(() => {
+    try { const v = localStorage.getItem('dt:wcoEnabled'); return v === null ? true : v === '1'; }
+    catch { return true; }
+  });
+  const setWcoEnabled = (val) => {
+    setWcoEnabledState(val);
+    try { localStorage.setItem('dt:wcoEnabled', val ? '1' : '0'); } catch {}
+  };
+  // wcoActive: WCO API is present AND user has it enabled
+  const [wcoOsVisible, setWcoOsVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
+  useEffect(() => {
+    const wco = navigator.windowControlsOverlay;
+    if (!wco) return;
+    const handler = () => setWcoOsVisible(wco.visible);
+    wco.addEventListener('geometrychange', handler);
+    return () => wco.removeEventListener('geometrychange', handler);
+  }, []);
+  const wcoVisible = wcoEnabled && wcoOsVisible;
 
   // ── Image states ──────────────────────────────────────────────
   const [appBg,   setAppBg]   = useState(null);       // dataUrl | null
@@ -116,7 +135,6 @@ export function App() {
   const refreshImages = useCallback(() => setImgVer((v) => v + 1), []);
 
   useEffect(() => {
-    const games = gamesRef.current;
     if (!games) return;
     let cancelled = false;
     (async () => {
@@ -131,13 +149,7 @@ export function App() {
       if (!cancelled) setGameBgs(bgs);
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imgVer]); // games accessed via gamesRef — only imgVer triggers reload
-
-  // Ref that always holds the latest games list, used inside the image-load
-  // effect so we can remove `games` from its dependency array.
-  const gamesRef = useRef(games);
-  useEffect(() => { gamesRef.current = games; }, [games]);
+  }, [imgVer, games]);
 
   const prevAllDoneRef = useRef({});
 
@@ -150,7 +162,7 @@ export function App() {
     if (!games) return;
     let minMs = Infinity;
     games.forEach((game) => {
-      const tasks = getTasksOrSolo(game);
+      const tasks = game.tasks.length ? game.tasks : [{ id: game.id + '_solo', type: 'daily' }];
       tasks.forEach((task) => {
         const ms = msUntilTaskReset(task, game, now);
         if (ms > 0 && ms < minMs) minMs = ms;
@@ -164,8 +176,6 @@ export function App() {
   useEffect(() => {
     setGames(loadGames() ?? DEFAULT_GAMES);
     setChecks(loadChecks());
-    // Bump imgVer so the image-load effect fires once games is populated
-    setImgVer((v) => v + 1);
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
@@ -200,9 +210,10 @@ export function App() {
   }, []);
 
   const cd     = { d: t('cd.d'), h: t('cd.h'), m: t('cd.m') };
+  const soloId = (game) => `${game.id}_solo`;
 
   const getDailyTasks = useCallback((game) => {
-    const tasks = getTasksOrSolo(game);
+    const tasks = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
     return tasks.filter((tk) => DAILY_TYPES.has(tk.type));
   }, []);
 
@@ -237,7 +248,7 @@ export function App() {
         setChecks((prev) => {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
-          const allTasks   = getTasksOrSolo(game);
+          const allTasks   = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
