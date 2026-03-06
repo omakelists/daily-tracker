@@ -160,7 +160,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
       </div>
 
       {loading
-        ? <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{t('crop.loading')}</div>
+        ? <div className={s.loadingText}>{t('crop.loading')}</div>
         : <canvas ref={cropCanvasRef} className={s.cropCanvas} onPointerDown={onPointerDown} onPointerMove={onPointerMoveForCursor} onPointerUp={onPointerUp} />
       }
 

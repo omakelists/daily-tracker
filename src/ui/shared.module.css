@@ -99,3 +99,9 @@
 .btnDanger  { color: var(--danger); border-color: rgba(248, 81, 73, 0.27); }
 .btnAdd     { color: var(--link);   border-color: rgba(88, 166, 255, 0.27); }
 .btnConfirm { color: var(--green);  border-color: rgba(63, 185, 80, 0.27); }
+
+/* ── Layout utilities ────────────────────────────────────────────── */
+.cbWrap       { flex-shrink: 0; display: flex; }
+.flexInput    { flex: 1; min-width: 0; }
+.hidden       { display: none; }
+.clipContents { overflow: hidden; }

@@ -51,12 +51,13 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
       content={
         <>
           <span className={cx(shared.badge, BADGE_MAP[task.type])}>{t(`types.${task.type}`)}</span>
-          <span style={{
-            fontSize: 13, color: isChecked ? 'var(--dim)' : 'var(--text)',
-            textDecoration: isChecked ? 'line-through' : 'none',
-            WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill',
-            transition: 'color 0.2s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+          <span
+            className={s.taskName}
+            style={{
+              color: isChecked ? 'var(--dim)' : 'var(--text)',
+              textDecoration: isChecked ? 'line-through' : 'none',
+            }}
+          >
             {task.name.trim() || t(`types.${task.type}`)}
           </span>
         </>

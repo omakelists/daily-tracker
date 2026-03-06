@@ -20,3 +20,13 @@
   -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;
 }
+
+.taskName {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+  transition: color 0.2s;
+}

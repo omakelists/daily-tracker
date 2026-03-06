@@ -26,6 +26,7 @@
   padding: 0;
   flex-shrink: 0;
   transition: color 0.15s;
+  pointer-events: none;
 }
 .accordionBtn:hover { color: var(--text); }
 
@@ -64,3 +65,18 @@
   -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;
 }
+
+.gameName {
+  font-weight: 700;
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+  transition: all 0.3s;
+}
+
+.cardClickable { cursor: pointer; }

@@ -60,3 +60,5 @@
 .confirmIcon    { font-size: 30px; margin-bottom: 10px; }
 .confirmMsg     { font-size: 14px; color: var(--text); margin-bottom: 20px; line-height: 1.7; white-space: pre-line; }
 .confirmActions { display: flex; gap: 10px; justify-content: center; }
+
+.prevBar { width: var(--bar-w); height: 18px; border-radius: 2px; }

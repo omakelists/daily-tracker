@@ -42,11 +42,10 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
   const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
 
-  const ms         = msUntilReset(now, game.resetTime);
-  const h          = ms / 3600000;
-  const cdColor    = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
-  const visColor   = ensureContrast(game.color);
-  const localReset = utcToLocalHHMM(game.resetTime);
+  const ms       = msUntilReset(now, game.resetTime);
+  const h        = ms / 3600000;
+  const cdColor  = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
+  const visColor = ensureContrast(game.color);
 
   const headerBg = bgDataUrl
     ? `linear-gradient(90deg, ${game.color}40 0%, ${game.color}18 40%, rgba(13,17,23,0.60) 100%)`
@@ -68,7 +67,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
       key={tk.id}
       variants={taskVariants}
       initial="initial" animate="animate" exit="exit"
-      style={{ overflow: 'hidden' }}
+      className={shared.clipContents}
     >
       <TaskRow task={tk} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} />
     </motion.div>
@@ -87,13 +86,13 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           bg={headerBg}
           borderBottom={hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none'}
           onClick={hasDailyTasks ? handleToggleCollapse : undefined}
-          style={hasDailyTasks ? { cursor: 'pointer' } : undefined}
+          className={hasDailyTasks ? s.cardClickable : undefined}
           preSlot={hasDailyTasks ? (
+            // pointer-events: none is already set in .accordionBtn CSS
             <motion.span
               className={s.accordionBtn}
               animate={{ rotate: collapsed ? -90 : 0 }}
               transition={{ duration: 0.22 }}
-              style={{ pointerEvents: 'none' }}
             >▼</motion.span>
           ) : null}
           barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
@@ -107,21 +106,20 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
             </button>
           }
           content={
-            <span style={{
-              fontWeight: 700, fontSize: 14, flex: 1, minWidth: 0,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              color: allDone ? 'var(--dim)' : visColor,
-              textDecoration: allDone ? 'line-through' : 'none',
-              WebkitTextStroke: '0.6px rgba(0,0,0,0.85)', paintOrder: 'stroke fill',
-              transition: 'all 0.3s',
-            }}>
+            <span
+              className={s.gameName}
+              style={{
+                color: allDone ? 'var(--dim)' : visColor,
+                textDecoration: allDone ? 'line-through' : 'none',
+              }}
+            >
               {game.name}
             </span>
           }
           meta={
             <>
               {!allTodayDone && <span className={s.countdown} style={{ color: cdColor }}>⏱{formatCountdown(ms, cd)}</span>}
-              <span className={s.resetTime}>{localReset}</span>
+              <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
             </>
           }
           rightSlot={null}
@@ -133,7 +131,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
               key="body"
               variants={bodyVariants}
               initial="initial" animate="animate" exit="exit"
-              style={{ overflow: 'hidden' }}
+              className={shared.clipContents}
             >
               <div className={cx(s.body, bgDataUrl && s.bodyWithBg)}>
                 <AnimatePresence mode="popLayout" initial={false}>

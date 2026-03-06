@@ -31,7 +31,7 @@ export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, 
     >
       {preSlot != null && <div className={shared.preSlot}>{preSlot}</div>}
       <div className={shared.barSlot}>{barSlot}</div>
-      {checkbox != null && <div style={{ flexShrink: 0, display: 'flex' }} onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
+      {checkbox != null && <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
       <div className={shared.content}>{content}</div>
       {meta      && <div className={shared.meta}>{meta}</div>}
       {rightSlot && <div className={shared.right}>{rightSlot}</div>}
@@ -45,8 +45,8 @@ export function PrevBar({ show, checked, partial }) {
   const color = checked ? 'var(--prev-done)' : partial ? 'var(--prev-partial)' : 'var(--prev-miss)';
   return (
     <div title={t('prevTip')} className={s.prevbarWrap}>
-      <div style={{
-        width: 'var(--bar-w)', height: 18, borderRadius: 2, background: color,
+      <div className={s.prevBar} style={{
+        background: color,
         boxShadow: checked ? `0 0 0 1.5px rgba(0,0,0,0.85), 0 0 5px ${color}88` : '0 0 0 1.5px rgba(0,0,0,0.85)',
       }} />
     </div>

@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
+import { cx } from '../util/cx';
 import { t, ta } from '../util/i18n';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants';
 import { checkKey } from '../util/helpers';
 import { Modal } from './UI';
 import s from './Calendar.module.css';
 import shared from './shared.module.css';
+
+const LEGEND_ITEMS = [
+  { key: 'all',     dotClass: 'legendDotAll',     label: 'allDone'    },
+  { key: 'partial', dotClass: 'legendDotPartial',  label: 'partial'    },
+  { key: 'none',    dotClass: 'legendDotNone',     label: 'incomplete' },
+];
 
 export function CalendarModal({ games, checks, now, onClose }) {
   const [year,    setYear]    = useState(now.getUTCFullYear());
@@ -45,11 +52,11 @@ export function CalendarModal({ games, checks, now, onClose }) {
     <Modal title={`📅 ${t('record')}`} onClose={onClose}>
       <div>
         <div className={s.filters}>
-          <select value={selGame ?? ''} onChange={(e) => setSelGame(e.target.value)} className={shared.inputCls} style={{ flex: 1, minWidth: 120 }}>
+          <select value={selGame ?? ''} onChange={(e) => setSelGame(e.target.value)} className={cx(shared.inputCls, s.filterSelect)}>
             {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
           {dailyTasks.length > 0 && (
-            <select value={selTask ?? ''} onChange={(e) => setSelTask(e.target.value || null)} className={shared.inputCls} style={{ flex: 1, minWidth: 100 }}>
+            <select value={selTask ?? ''} onChange={(e) => setSelTask(e.target.value || null)} className={cx(shared.inputCls, s.filterSelect)}>
               <option value="">{t('taskAll')}</option>
               {dailyTasks.map((tk) => <option key={tk.id} value={tk.id}>{tk.name.trim() || t(`types.${tk.type}`)}</option>)}
             </select>
@@ -70,12 +77,14 @@ export function CalendarModal({ games, checks, now, onClose }) {
             const dk  = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const st  = getStatus(dk);
             return (
-              <div key={dk} className={s.day} style={{
-                fontWeight:  dk === today ? 700 : 400,
-                background:  st === 'all' ? 'var(--checked-bg)' : st === 'partial' ? '#1f3a27' : 'rgba(255,255,255,0.03)',
-                border:      dk === today ? '2px solid var(--link)' : '1px solid rgba(255,255,255,0.05)',
-                color:       st === 'all' || st === 'partial' ? 'var(--green)' : 'var(--dim)',
-              }}>
+              <div
+                key={dk}
+                className={cx(
+                  s.day,
+                  st === 'all'     ? s.dayAll     : st === 'partial' ? s.dayPartial : s.dayDefault,
+                  dk === today && s.dayToday,
+                )}
+              >
                 {day}
               </div>
             );
@@ -83,10 +92,10 @@ export function CalendarModal({ games, checks, now, onClose }) {
         </div>
 
         <div className={s.legend}>
-          {[['var(--checked-bg)', t('allDone')], ['#1f3a27', t('partial')], ['rgba(255,255,255,0.05)', t('incomplete')]].map(([bg, lbl]) => (
-            <span key={lbl}>
-              <span className={s.legendDot} style={{ background: bg, border: bg.includes('rgba') ? '1px solid rgba(255,255,255,0.1)' : 'none' }} />
-              {lbl}
+          {LEGEND_ITEMS.map(({ key, dotClass, label }) => (
+            <span key={key}>
+              <span className={cx(s.legendDot, s[dotClass])} />
+              {t(label)}
             </span>
           ))}
         </div>

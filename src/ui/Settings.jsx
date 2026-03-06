@@ -24,9 +24,9 @@ const taskItemVariants = {
   exit:    { opacity: 0, height: 0,      transition: { duration: 0.13 } },
 };
 
-function TypeSelect({ value, onChange, style }) {
+function TypeSelect({ value, onChange }) {
   return (
-    <select value={value} onChange={onChange} className={shared.inputCls} style={style}>
+    <select value={value} onChange={onChange} className={cx(shared.inputCls, s.typeSelect)}>
       {TYPE_OPTS.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
     </select>
   );
@@ -38,13 +38,13 @@ function TaskExtraFields({ task, onChange }) {
       {task.type === 'webdaily' && (
         <>
           <span className={s.extraLbl}>{t('resetLbl')}</span>
-          <input type="time" value={utcToLocalHHMM(task.webResetTime ?? '00:00')} onChange={(e) => onChange('webResetTime', localToUtcHHMM(e.target.value))} className={shared.inputCls} style={{ width: 84, fontFamily: 'monospace' }} />
+          <input type="time" value={utcToLocalHHMM(task.webResetTime ?? '00:00')} onChange={(e) => onChange('webResetTime', localToUtcHHMM(e.target.value))} className={cx(shared.inputCls, s.inputTime)} />
         </>
       )}
       {task.type === 'monthly' && (
         <>
           <span className={s.extraLbl}>{t('resetDay')}</span>
-          <input type="number" min="1" max="28" value={task.monthlyResetDay ?? 1} onChange={(e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={shared.inputCls} style={{ width: 52, fontFamily: 'monospace', textAlign: 'center' }} />
+          <input type="number" min="1" max="28" value={task.monthlyResetDay ?? 1} onChange={(e) => onChange('monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={cx(shared.inputCls, s.inputNumber)} />
           <span className={s.extraLbl}>{t('dayUnit')}</span>
         </>
       )}
@@ -59,14 +59,14 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 
   if (mode === 'compact') {
     return (
-      <div style={{ position: 'relative', flexShrink: 0 }}>
+      <div className={s.imgBtnCompactWrap}>
         <button className={s.imgBtn} title={t('imgSetBg')} onClick={() => fileRef.current?.click()} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={handleDrop} style={over ? { borderColor: 'var(--link)' } : undefined}>
           {currentDataUrl ? <img src={currentDataUrl} className={s.imgBtnThumb} draggable={false} /> : <span>🖼️</span>}
         </button>
         {currentDataUrl && (
-          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} style={{ position: 'absolute', top: -5, right: -5, width: 14, height: 14, borderRadius: '50%', background: 'var(--danger)', border: 'none', color: 'white', fontSize: 9, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>✕</button>
+          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className={s.imgBtnRemove}>✕</button>
         )}
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+        <input ref={fileRef} type="file" accept="image/*" className={shared.hidden} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
       </div>
     );
   }
@@ -85,7 +85,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
           {t('imgDrop')}
         </button>
       )}
-      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+      <input ref={fileRef} type="file" accept="image/*" className={shared.hidden} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
     </div>
   );
 }
@@ -162,7 +162,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), async () => {
     await imgDelete(`game-${id}`);
     setGameBgThumbs((prev) => { const n = { ...prev }; delete n[id]; return n; });
-    setGames((g) => g.filter((gm) => gm.id !== id));  // AnimatePresence handles exit
+    setGames((g) => g.filter((gm) => gm.id !== id));
     refreshImages();
   });
   const addGame = () => {
@@ -194,10 +194,8 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     setDtDrag(null);
   };
   const onTaskDE = () => setDtDrag(null);
-
   const gameDrop = (i)      => ({ borderTop: dgFrom != null && dgOver === i && dgFrom !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
   const taskDrop = (gid, i) => ({ borderTop: dtDrag?.gid === gid && dtDrag.over === i && dtDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
-  const rowStyle = { display: 'flex', alignItems: 'center', gap: 7 };
 
   return (
     <>
@@ -209,7 +207,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           <>
             <button onClick={handleExport}                     className={cx(shared.btn, shared.btnAdd)} title={t('exportSettings')}>📤</button>
             <button onClick={() => importRef.current?.click()} className={cx(shared.btn, shared.btnAdd)} title={t('importSettings')}>📥</button>
-            <input ref={importRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={handleImportFile} />
+            <input ref={importRef} type="file" accept=".json,application/json" className={shared.hidden} onChange={handleImportFile} />
           </>
         }
         onClose={onClose}
@@ -227,7 +225,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                 key={game.id}
                 variants={itemVariants}
                 initial="initial" animate="animate" exit="exit"
-                style={{ overflow: 'hidden' }}
+                className={shared.clipContents}
               >
                 <div
                   draggable
@@ -240,7 +238,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
                     <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={cx(s.nameInput, shared.inputCls)} placeholder={t('gameName')} />
                     <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={shared.inputCls} style={{ width: 86, fontFamily: 'monospace', flexShrink: 0 }} />
+                    <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={cx(shared.inputCls, s.inputTimeGame)} />
                     <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
                     <button onClick={() => delGame(game.id, game.name)} className={cx(shared.btn, shared.btnDanger)}>✕</button>
                   </div>
@@ -252,16 +250,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           key={task.id}
                           variants={taskItemVariants}
                           initial="initial" animate="animate" exit="exit"
-                          style={{ overflow: 'hidden' }}
+                          className={shared.clipContents}
                         >
                           <div
                             draggable
                             onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE}
-                            style={{ ...taskDrop(game.id, ti), ...rowStyle, marginBottom: 6, opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                            className={s.taskFormRow}
+                            style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' }}
                           >
                             {DragHandle}
-                            <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} style={{ width: 104 }} />
-                            <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${task.type}`)} />
+                            <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} />
+                            <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={cx(shared.inputCls, shared.flexInput)} placeholder={t(`types.${task.type}`)} />
                             <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
                             <button onClick={() => delTask(game.id, task.id)} className={cx(shared.btn, shared.btnDanger)}>✕</button>
                           </div>
@@ -270,9 +269,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     </AnimatePresence>
 
                     {addTo === game.id ? (
-                      <div style={{ ...rowStyle, marginTop: 4 }}>
-                        <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} style={{ width: 104 }} />
-                        <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${newTask.type}`)} autoFocus />
+                      <div className={s.addTaskFormRow}>
+                        <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} />
+                        <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={cx(shared.inputCls, shared.flexInput)} placeholder={t(`types.${newTask.type}`)} autoFocus />
                         <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
                         <button onClick={() => addTask(game.id)} className={cx(shared.btn, shared.btnConfirm)}>{t('add')}</button>
                         <button onClick={() => setAddTo(null)}   className={shared.btn}>✕</button>
@@ -293,14 +292,14 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto', transition: { duration: 0.18 } }}
                 exit={{    opacity: 0, height: 0,      transition: { duration: 0.14 } }}
-                style={{ overflow: 'hidden' }}
+                className={shared.clipContents}
               >
                 <div className={s.newGameBox}>
                   <div className={s.newGameHeader}>
                     <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value }))} className={s.colorInput} />
-                    <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addGame()} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t('gameName')} autoFocus />
+                    <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addGame()} className={cx(shared.inputCls, shared.flexInput)} placeholder={t('gameName')} autoFocus />
                     <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={shared.inputCls} style={{ width: 86, fontFamily: 'monospace' }} />
+                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={cx(shared.inputCls, s.inputTimeGame)} />
                   </div>
                   <div className={s.newGameActions}>
                     <button onClick={addGame}                className={cx(shared.btn, shared.btnConfirm)}>{t('add')}</button>
