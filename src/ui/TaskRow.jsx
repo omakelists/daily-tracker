@@ -1,5 +1,4 @@
 import { useAnimate } from 'motion/react';
-import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { DAILY_TYPES, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, formatCountdown, checkKey } from '../util/helpers';
@@ -43,14 +42,14 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
         <button
           ref={cbScope}
           onClick={handleClick}
-          className={cx(shared.cb, isChecked && shared.cbChecked)}
+          className={`${shared.cb}${isChecked ? ` ${shared.cbChecked}` : ""}`}
         >
           {isChecked ? '✓' : ''}
         </button>
       }
       content={
         <>
-          <span className={cx(shared.badge, BADGE_MAP[task.type])}>{t(`types.${task.type}`)}</span>
+          <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}>{t(`types.${task.type}`)}</span>
           <span
             className={s.taskName}
             style={{

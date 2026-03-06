@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { AnimatePresence } from 'motion/react';
-import { cx } from './util/cx';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
@@ -219,7 +218,7 @@ export function App() {
   if (!games) return <div className={s.loading}>{t('loading')}</div>;
 
   return (
-    <div className={cx(s.root, !appBg && s.rootNoBg)}>
+    <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ""}`}>
       {appBg && <div className={s.appBgImg} style={{ backgroundImage: `url(${appBg})` }} />}
       {appBg && <div className={s.appBgOverlay} />}
 

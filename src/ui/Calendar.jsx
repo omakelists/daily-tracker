@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { cx } from '../util/cx';
 import { t, ta } from '../util/i18n';
 import { getDaysInMonth, fmtDate, DAILY_TYPES } from '../constants';
 import { checkKey } from '../util/helpers';
@@ -52,11 +51,11 @@ export function CalendarModal({ games, checks, now, onClose }) {
     <Modal title={`📅 ${t('record')}`} onClose={onClose}>
       <div>
         <div className={s.filters}>
-          <select value={selGame ?? ''} onChange={(e) => setSelGame(e.target.value)} className={cx(shared.inputCls, s.filterSelect)}>
+          <select value={selGame ?? ''} onChange={(e) => setSelGame(e.target.value)} className={`${shared.inputCls} ${s.filterSelect}`}>
             {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
           {dailyTasks.length > 0 && (
-            <select value={selTask ?? ''} onChange={(e) => setSelTask(e.target.value || null)} className={cx(shared.inputCls, s.filterSelect)}>
+            <select value={selTask ?? ''} onChange={(e) => setSelTask(e.target.value || null)} className={`${shared.inputCls} ${s.filterSelect}`}>
               <option value="">{t('taskAll')}</option>
               {dailyTasks.map((tk) => <option key={tk.id} value={tk.id}>{tk.name.trim() || t(`types.${tk.type}`)}</option>)}
             </select>
@@ -79,11 +78,7 @@ export function CalendarModal({ games, checks, now, onClose }) {
             return (
               <div
                 key={dk}
-                className={cx(
-                  s.day,
-                  st === 'all'     ? s.dayAll     : st === 'partial' ? s.dayPartial : s.dayDefault,
-                  dk === today && s.dayToday,
-                )}
+                className={`${st === 'all' ? s.dayAll : st === 'partial' ? s.dayPartial : s.dayDefault} ${s.day}${dk === today ? ` ${s.dayToday}` : ""}`}
               >
                 {day}
               </div>
@@ -94,7 +89,7 @@ export function CalendarModal({ games, checks, now, onClose }) {
         <div className={s.legend}>
           {LEGEND_ITEMS.map(({ key, dotClass, label }) => (
             <span key={key}>
-              <span className={cx(s.legendDot, s[dotClass])} />
+              <span className={`${s.legendDot} ${s[dotClass]}`} />
               {t(label)}
             </span>
           ))}

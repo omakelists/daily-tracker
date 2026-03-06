@@ -1,5 +1,4 @@
 import { motion } from 'motion/react';
-import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import s from './UI.module.css';
 import shared from './shared.module.css';
@@ -25,7 +24,7 @@ const confirmBoxVariants = {
 export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
   return (
     <div
-      className={cx(shared.row, className)}
+      className={`${shared.row}${className ? ` ${className}` : ""}`}
       style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
       onClick={onClick}
     >
@@ -99,7 +98,7 @@ export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
         <div className={s.confirmMsg}>{message}</div>
         <div className={s.confirmActions}>
           <button onClick={onCancel}  className={shared.btn}>{t('cancel')}</button>
-          <button onClick={onConfirm} className={cx(shared.btn, shared.btnDanger)}>{confirmLabel ?? t('deleteBtn')}</button>
+          <button onClick={onConfirm} className={`${shared.btn} ${shared.btnDanger}`}>{confirmLabel ?? t('deleteBtn')}</button>
         </div>
       </motion.div>
     </motion.div>

@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
-import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
@@ -75,7 +74,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
 
   return (
     <div
-      className={cx(s.card, allDone && s.cardDone)}
+      className={`${s.card}${allDone ? ` ${s.cardDone}` : ""}`}
       style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}
     >
       {bgDataUrl && <div className={s.bgLayer} style={{ backgroundImage: `url(${bgDataUrl})` }} />}
@@ -100,7 +99,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
             <button
               ref={cbScope}
               onClick={handleMasterClick}
-              className={cx(shared.cb, shared.cbGame, allTodayDone && shared.cbChecked)}
+              className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ""}`}
             >
               {allTodayDone ? '✓' : ''}
             </button>
@@ -133,7 +132,7 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
               initial="initial" animate="animate" exit="exit"
               className={shared.clipContents}
             >
-              <div className={cx(s.body, bgDataUrl && s.bodyWithBg)}>
+              <div className={`${s.body}${bgDataUrl ? ` ${s.bodyWithBg}` : ""}`}>
                 <AnimatePresence mode="popLayout" initial={false}>
                   {visibleDaily.map(wrapTask)}
                 </AnimatePresence>
