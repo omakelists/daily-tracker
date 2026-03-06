@@ -166,7 +166,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
       {dispSize.w > 0 && (
         <div className={s.sliderWrap}>
           <span className={s.sliderLabel}>{t('crop.opacity')}</span>
-          <input type="range" min={0} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(parseFloat(e.target.value))} className={s.slider} />
+          <input type="range" min={0} max={1} step={0.05} value={1 - opacity} onChange={(e) => setOpacity(1 - parseFloat(e.target.value))} className={s.slider} />
           <span className={s.sliderValue}>{opacity.toFixed(2)}</span>
         </div>
       )}

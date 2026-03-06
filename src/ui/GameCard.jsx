@@ -74,11 +74,11 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
 
   return (
     <div
-      className={`${s.card}${allDone ? ` ${s.cardDone}` : ""}`}
+      className={`${s.card}${allDone && !bgDataUrl ? ` ${s.cardDone}` : ""}`}
       style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}
     >
       {bgDataUrl && <div className={s.bgLayer} style={{ backgroundImage: `url(${bgDataUrl})` }} />}
-      {bgDataUrl && <div className={s.bgOverlay} style={{ opacity: 1 - bgOpacity }} />}
+      {bgDataUrl && <div className={s.bgOverlay} style={{ opacity: bgOpacity }} />}
 
       <div className={s.content}>
         <Row
