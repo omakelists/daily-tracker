@@ -56,13 +56,13 @@
   font-weight: 600;
   font-family: monospace;
   flex-shrink: 0;
-  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;
 }
 .resetTime {
   font-size: 11px;
   color: var(--dim);
-  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;
 }
 
@@ -74,7 +74,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.85);
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;
   transition: all 0.3s;
 }
