@@ -47,7 +47,7 @@
   "updateAvail": "アプリの更新があります",
   "updateBtn": "更新",
   "updateCancel": "後で",
-  "updateMsg": "アプリを更新しますか？\n\n現在: {current}\n新しい: {next}",
+  "updateMsg": "アプリを更新しますか？\n\n現在: {current}\n最新: {next}",
   "exportSettings": "設定をエクスポート",
   "importSettings": "設定をインポート",
   "importConfirm": "{n}件のゲームデータをインポートして現在の設定を上書きしますか？",
