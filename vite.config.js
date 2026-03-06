@@ -1,8 +1,28 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+
+    VitePWA({
+      // Use our hand-written sw.js as the source; Workbox injects __WB_MANIFEST into it.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+
+      // Output sw.js to the dist root (default).
+      // The injected manifest covers all files Vite emits.
+      injectManifest: {
+        // sw.js itself must not be listed in its own cache manifest.
+        globIgnores: ['sw.js'],
+      },
+
+      // Keep manifest.json managed by us (already in public/).
+      manifest: false,
+    }),
+  ],
 
   // Serve from './' so PWA assets resolve correctly in subdirectory deployments
   base: './',
