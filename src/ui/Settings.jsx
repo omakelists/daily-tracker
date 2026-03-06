@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
@@ -10,6 +11,18 @@ import shared from './shared.module.css';
 
 const TYPE_OPTS = ['daily', 'weekly', 'webdaily', 'monthly', 'halfmonthly'];
 const DragHandle = <span className={s.dragHandle}>⠿</span>;
+
+// Shared item variants for game/task rows
+const itemVariants = {
+  initial: { opacity: 0, height: 0, marginBottom: 0 },
+  animate: { opacity: 1, height: 'auto', marginBottom: 10, transition: { duration: 0.18 } },
+  exit:    { opacity: 0, height: 0, marginBottom: 0,       transition: { duration: 0.16 } },
+};
+const taskItemVariants = {
+  initial: { opacity: 0, height: 0 },
+  animate: { opacity: 1, height: 'auto', transition: { duration: 0.15 } },
+  exit:    { opacity: 0, height: 0,      transition: { duration: 0.13 } },
+};
 
 function TypeSelect({ value, onChange, style }) {
   return (
@@ -83,7 +96,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const [showNG,      setShowNG]      = useState(false);
   const [newTask,     setNewTask]     = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
   const [addTo,       setAddTo]       = useState(null);
-  const [deletingIds, setDeletingIds] = useState(new Set());
   const importRef = useRef(null);
 
   const [cropFile,     setCropFile]     = useState(null);
@@ -121,11 +133,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     refreshImages();
   };
 
-  const animateDelete = (id, doDelete) => {
-    setDeletingIds((prev) => { const st = new Set(prev); st.add(id); return st; });
-    setTimeout(() => { doDelete(); setDeletingIds((prev) => { const st = new Set(prev); st.delete(id); return st; }); }, 190);
-  };
-
   const handleExport = () => {
     const blob = new Blob([JSON.stringify({ games }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -155,7 +162,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), async () => {
     await imgDelete(`game-${id}`);
     setGameBgThumbs((prev) => { const n = { ...prev }; delete n[id]; return n; });
-    animateDelete(id, () => setGames((g) => g.filter((gm) => gm.id !== id)));
+    setGames((g) => g.filter((gm) => gm.id !== id));  // AnimatePresence handles exit
     refreshImages();
   });
   const addGame = () => {
@@ -165,7 +172,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   };
 
   const upTask  = (gid, tid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.map((tk) => tk.id === tid ? { ...tk, [f]: v } : tk) } : gm));
-  const delTask = (gid, tid) => animateDelete(tid, () => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm)));
+  const delTask = (gid, tid) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm));
   const addTask = (gid) => {
     setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...newTask }] } : gm));
     setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); setAddTo(null);
@@ -190,7 +197,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
   const gameDrop = (i)      => ({ borderTop: dgFrom != null && dgOver === i && dgFrom !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
   const taskDrop = (gid, i) => ({ borderTop: dtDrag?.gid === gid && dtDrag.over === i && dtDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
-  const rowStyle = { display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 };
+  const rowStyle = { display: 'flex', alignItems: 'center', gap: 7 };
 
   return (
     <>
@@ -214,72 +221,106 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
             <ImageDropZone currentDataUrl={appBgThumb} onFile={(file) => openCrop('app-bg', file)} onRemove={removeAppBg} mode="large" />
           </div>
 
-          {games.map((game, gi) => (
-            <div
-              key={game.id}
-              draggable
-              onDragStart={onGameDS(gi)} onDragOver={onGameDO(gi)} onDrop={onGameDrp(gi)} onDragEnd={onGameDE}
-              className={cx(s.gameItem, deletingIds.has(game.id) && s.gameItemExit)}
-              style={{ ...gameDrop(gi), border: `1px solid ${game.color}44`, opacity: dgFrom === gi ? 0.4 : 1, transition: 'opacity 0.15s' }}
-            >
-              <div className={s.gameHeader}>
-                {DragHandle}
-                <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
-                <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={cx(s.nameInput, shared.inputCls)} placeholder={t('gameName')} />
-                <span className={s.resetLbl}>{t('resetLbl')}</span>
-                <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={shared.inputCls} style={{ width: 86, fontFamily: 'monospace', flexShrink: 0 }} />
-                <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
-                <button onClick={() => delGame(game.id, game.name)} className={cx(shared.btn, shared.btnDanger)}>✕</button>
-              </div>
-
-              <div className={s.gameBody}>
-                {game.tasks.map((task, ti) => (
-                  <div
-                    key={task.id}
-                    draggable
-                    onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE}
-                    className={cx(s.taskItem, deletingIds.has(task.id) && s.taskItemExit)}
-                    style={{ ...taskDrop(game.id, ti), ...rowStyle, opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' }}
-                  >
+          <AnimatePresence initial={false}>
+            {games.map((game, gi) => (
+              <motion.div
+                key={game.id}
+                variants={itemVariants}
+                initial="initial" animate="animate" exit="exit"
+                style={{ overflow: 'hidden' }}
+              >
+                <div
+                  draggable
+                  onDragStart={onGameDS(gi)} onDragOver={onGameDO(gi)} onDrop={onGameDrp(gi)} onDragEnd={onGameDE}
+                  className={s.gameItem}
+                  style={{ ...gameDrop(gi), border: `1px solid ${game.color}44`, opacity: dgFrom === gi ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                >
+                  <div className={s.gameHeader}>
                     {DragHandle}
-                    <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} style={{ width: 104 }} />
-                    <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${task.type}`)} />
-                    <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
-                    <button onClick={() => delTask(game.id, task.id)} className={cx(shared.btn, shared.btnDanger)}>✕</button>
+                    <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
+                    <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={cx(s.nameInput, shared.inputCls)} placeholder={t('gameName')} />
+                    <span className={s.resetLbl}>{t('resetLbl')}</span>
+                    <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={shared.inputCls} style={{ width: 86, fontFamily: 'monospace', flexShrink: 0 }} />
+                    <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
+                    <button onClick={() => delGame(game.id, game.name)} className={cx(shared.btn, shared.btnDanger)}>✕</button>
                   </div>
-                ))}
 
-                {addTo === game.id ? (
-                  <div style={rowStyle}>
-                    <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} style={{ width: 104 }} />
-                    <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${newTask.type}`)} autoFocus />
-                    <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
-                    <button onClick={() => addTask(game.id)} className={cx(shared.btn, shared.btnConfirm)}>{t('add')}</button>
-                    <button onClick={() => setAddTo(null)}   className={shared.btn}>✕</button>
+                  <div className={s.gameBody}>
+                    <AnimatePresence initial={false}>
+                      {game.tasks.map((task, ti) => (
+                        <motion.div
+                          key={task.id}
+                          variants={taskItemVariants}
+                          initial="initial" animate="animate" exit="exit"
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div
+                            draggable
+                            onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE}
+                            style={{ ...taskDrop(game.id, ti), ...rowStyle, marginBottom: 6, opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                          >
+                            {DragHandle}
+                            <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} style={{ width: 104 }} />
+                            <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${task.type}`)} />
+                            <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
+                            <button onClick={() => delTask(game.id, task.id)} className={cx(shared.btn, shared.btnDanger)}>✕</button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {addTo === game.id ? (
+                      <div style={{ ...rowStyle, marginTop: 4 }}>
+                        <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} style={{ width: 104 }} />
+                        <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t(`types.${newTask.type}`)} autoFocus />
+                        <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
+                        <button onClick={() => addTask(game.id)} className={cx(shared.btn, shared.btnConfirm)}>{t('add')}</button>
+                        <button onClick={() => setAddTo(null)}   className={shared.btn}>✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => openAddTask(game.id)} className={cx(shared.btn, shared.btnAdd, s.addTaskBtn)}>{t('addTask')}</button>
+                    )}
                   </div>
-                ) : (
-                  <button onClick={() => openAddTask(game.id)} className={cx(shared.btn, shared.btnAdd, s.addTaskBtn)}>{t('addTask')}</button>
-                )}
-              </div>
-            </div>
-          ))}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
-          {showNG ? (
-            <div className={s.newGameBox}>
-              <div className={s.newGameHeader}>
-                <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value }))} className={s.colorInput} />
-                <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addGame()} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t('gameName')} autoFocus />
-                <span className={s.resetLbl}>{t('resetLbl')}</span>
-                <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={shared.inputCls} style={{ width: 86, fontFamily: 'monospace' }} />
-              </div>
-              <div className={s.newGameActions}>
-                <button onClick={addGame}                className={cx(shared.btn, shared.btnConfirm)}>{t('add')}</button>
-                <button onClick={() => setShowNG(false)} className={shared.btn}>{t('cancel')}</button>
-              </div>
-            </div>
-          ) : (
-            <button className={s.addGameBtn} onClick={() => setShowNG(true)}>{t('addGame')}</button>
-          )}
+          <AnimatePresence mode="wait">
+            {showNG ? (
+              <motion.div
+                key="newgame"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto', transition: { duration: 0.18 } }}
+                exit={{    opacity: 0, height: 0,      transition: { duration: 0.14 } }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div className={s.newGameBox}>
+                  <div className={s.newGameHeader}>
+                    <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value }))} className={s.colorInput} />
+                    <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addGame()} className={shared.inputCls} style={{ flex: 1, minWidth: 0 }} placeholder={t('gameName')} autoFocus />
+                    <span className={s.resetLbl}>{t('resetLbl')}</span>
+                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={shared.inputCls} style={{ width: 86, fontFamily: 'monospace' }} />
+                  </div>
+                  <div className={s.newGameActions}>
+                    <button onClick={addGame}                className={cx(shared.btn, shared.btnConfirm)}>{t('add')}</button>
+                    <button onClick={() => setShowNG(false)} className={shared.btn}>{t('cancel')}</button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.button
+                key="addgamebtn"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { duration: 0.15 } }}
+                exit={{    opacity: 0, transition: { duration: 0.1  } }}
+                className={s.addGameBtn}
+                onClick={() => setShowNG(true)}
+              >
+                {t('addGame')}
+              </motion.button>
+            )}
+          </AnimatePresence>
 
         </div>
       </Modal>

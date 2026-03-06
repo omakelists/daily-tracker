@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants';
@@ -8,18 +9,22 @@ import { TaskRow } from './TaskRow';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
 
-// Animation duration constants — keep in sync with GameCard.module.css
-const EXIT_MS  = 220;
-const OPEN_MS  = 280;
-const CLOSE_MS = 240;
+// Task enter/exit variants
+const taskVariants = {
+  initial: { opacity: 0, height: 0 },
+  animate: { opacity: 1, height: 'auto', transition: { duration: 0.2 } },
+  exit:    { opacity: 0, height: 0,    transition: { duration: 0.18 } },
+};
+
+// Accordion body variants
+const bodyVariants = {
+  initial: { height: 0, opacity: 0 },
+  animate: { height: 'auto', opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } },
+  exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
+};
 
 export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5 }) {
-  const [masterPop,   setMasterPop]   = useState(false);
-  const [exitingIds,  setExitingIds]  = useState(new Set());
-  const [enteringIds, setEnteringIds] = useState(new Set());
-  const [animDir,     setAnimDir]     = useState(null);
-
-  const fireMasterPop = () => { setMasterPop(true); setTimeout(() => setMasterPop(false), 260); };
+  const [cbScope, animateCb] = useAnimate();
 
   const dailyGroup    = game.tasks.filter((tk) => !PERIOD_TYPES.has(tk.type));
   const periodGroup   = game.tasks.filter((tk) =>  PERIOD_TYPES.has(tk.type));
@@ -27,40 +32,9 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
 
   const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
 
-  // ── Accordion toggle with animations ─────────────────────────
-  const handleToggleCollapse = useCallback(() => {
-    const doToggle = () => {
-      if (document.startViewTransition) document.startViewTransition(() => onToggleCollapse(game.id));
-      else onToggleCollapse(game.id);
-    };
-
-    if (!collapsed) {
-      setAnimDir('close');
-      const toExit = [...dailyGroup.filter(isChecked), ...periodGroup.filter(isChecked)];
-      if (toExit.length > 0) {
-        setExitingIds(new Set(toExit.map((tk) => tk.id)));
-        doToggle();
-        setTimeout(() => setExitingIds(new Set()), CLOSE_MS);
-      } else {
-        doToggle();
-      }
-    } else {
-      setAnimDir('open');
-      setTimeout(() => setAnimDir(null), OPEN_MS);
-      const toEnter = [...dailyGroup.filter(isChecked), ...periodGroup.filter(isChecked)];
-      if (toEnter.length > 0) {
-        setEnteringIds(new Set(toEnter.map((tk) => tk.id)));
-        onToggleCollapse(game.id);
-        setTimeout(() => setEnteringIds(new Set()), EXIT_MS);
-      } else {
-        onToggleCollapse(game.id);
-      }
-    }
-  }, [collapsed, dailyGroup, periodGroup, game.id, onToggleCollapse, checks, now]);
-
-  // ── Visible task lists (include exiting tasks temporarily) ────
-  const visibleDaily  = collapsed ? dailyGroup.filter((tk)  => !isChecked(tk) || exitingIds.has(tk.id)) : dailyGroup;
-  const visiblePeriod = collapsed ? periodGroup.filter((tk) => !isChecked(tk) || exitingIds.has(tk.id)) : periodGroup;
+  // When collapsed, hide checked tasks — AnimatePresence handles their exit animation
+  const visibleDaily  = collapsed ? dailyGroup.filter((tk)  => !isChecked(tk)) : dailyGroup;
+  const visiblePeriod = collapsed ? periodGroup.filter((tk) => !isChecked(tk)) : periodGroup;
   const hasVisible    = visibleDaily.length > 0 || visiblePeriod.length > 0;
 
   const allTodayDone = dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
@@ -78,10 +52,26 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
     ? `linear-gradient(90deg, ${game.color}40 0%, ${game.color}18 40%, rgba(13,17,23,0.60) 100%)`
     : `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`;
 
+  const handleToggleCollapse = useCallback(() => {
+    if (document.startViewTransition) document.startViewTransition(() => onToggleCollapse(game.id));
+    else onToggleCollapse(game.id);
+  }, [game.id, onToggleCollapse]);
+
+  const handleMasterClick = (e) => {
+    e.stopPropagation();
+    animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
+    onToggle(null, game, true);
+  };
+
   const wrapTask = (tk) => (
-    <div key={tk.id} className={cx(s.taskRow, exitingIds.has(tk.id) ? s.taskRowExit : (enteringIds.has(tk.id) ? s.taskRowEnter : null))}>
+    <motion.div
+      key={tk.id}
+      variants={taskVariants}
+      initial="initial" animate="animate" exit="exit"
+      style={{ overflow: 'hidden' }}
+    >
       <TaskRow task={tk} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} />
-    </div>
+    </motion.div>
   );
 
   return (
@@ -99,16 +89,19 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           onClick={hasDailyTasks ? handleToggleCollapse : undefined}
           style={hasDailyTasks ? { cursor: 'pointer' } : undefined}
           preSlot={hasDailyTasks ? (
-            <span
-              className={cx(s.accordionBtn, animDir === 'open' && s.chevronOpen, animDir === 'close' && s.chevronClose)}
+            <motion.span
+              className={s.accordionBtn}
+              animate={{ rotate: collapsed ? -90 : 0 }}
+              transition={{ duration: 0.22 }}
               style={{ pointerEvents: 'none' }}
-            >▼</span>
+            >▼</motion.span>
           ) : null}
           barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
           checkbox={
             <button
-              onClick={(e) => { e.stopPropagation(); fireMasterPop(); onToggle(null, game, true); }}
-              className={cx(shared.cb, shared.cbGame, allTodayDone && shared.cbChecked, masterPop && shared.cbPop)}
+              ref={cbScope}
+              onClick={handleMasterClick}
+              className={cx(shared.cb, shared.cbGame, allTodayDone && shared.cbChecked)}
             >
               {allTodayDone ? '✓' : ''}
             </button>
@@ -134,17 +127,32 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
           rightSlot={null}
         />
 
-        <div className={cx(s.bodyWrap, hasVisible && s.bodyWrapOpen)} style={!hasDailyTasks ? { display: 'none' } : undefined}>
-          <div className={cx(s.body, bgDataUrl && s.bodyWithBg)}>
-            {visibleDaily.map(wrapTask)}
-            {visibleDaily.length > 0 && visiblePeriod.length > 0 && (
-              <div className={s.divider}>
-                <span className={s.sepLabel}>— {t('periodic')} —</span>
+        <AnimatePresence initial={false}>
+          {hasDailyTasks && hasVisible && (
+            <motion.div
+              key="body"
+              variants={bodyVariants}
+              initial="initial" animate="animate" exit="exit"
+              style={{ overflow: 'hidden' }}
+            >
+              <div className={cx(s.body, bgDataUrl && s.bodyWithBg)}>
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {visibleDaily.map(wrapTask)}
+                </AnimatePresence>
+
+                {visibleDaily.length > 0 && visiblePeriod.length > 0 && (
+                  <div className={s.divider}>
+                    <span className={s.sepLabel}>— {t('periodic')} —</span>
+                  </div>
+                )}
+
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {visiblePeriod.map(wrapTask)}
+                </AnimatePresence>
               </div>
-            )}
-            {visiblePeriod.map(wrapTask)}
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

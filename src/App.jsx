@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
+import { AnimatePresence } from 'motion/react';
 import { cx } from './util/cx';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES } from './constants';
@@ -263,15 +264,22 @@ export function App() {
         {games.length === 0 && <div className={s.noGames}>{t('noGames')}</div>}
       </main>
 
-      {showSettings && <SettingsModal games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} />}
-      {showCalendar && <CalendarModal games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}
-      {confirm && (
-        <ConfirmDialog
-          message={confirm.message} confirmLabel={confirm.confirmLabel}
-          onConfirm={() => { confirm.onConfirm(); setConfirm(null); }}
-          onCancel={() => setConfirm(null)}
-        />
-      )}
+      <AnimatePresence>
+        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {confirm && (
+          <ConfirmDialog
+            key="confirm"
+            message={confirm.message} confirmLabel={confirm.confirmLabel}
+            onConfirm={() => { confirm.onConfirm(); setConfirm(null); }}
+            onCancel={() => setConfirm(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useAnimate } from 'motion/react';
 import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import { DAILY_TYPES, utcToLocalHHMM } from '../constants';
@@ -16,8 +16,7 @@ const BADGE_MAP = {
 };
 
 export function TaskRow({ task, game, checks, now, onToggle, cd }) {
-  const [pop, setPop] = useState(false);
-  const firePop = () => { setPop(true); setTimeout(() => setPop(false), 260); };
+  const [cbScope, animateCb] = useAnimate();
 
   const isChecked   = !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
   const prevChecked = !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
@@ -31,12 +30,21 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
 
   const localWebReset = task.webResetTime ? utcToLocalHHMM(task.webResetTime) : null;
 
+  const handleClick = () => {
+    animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
+    onToggle(task.id, game);
+  };
+
   return (
     <Row
       className={s.row}
       barSlot={<PrevBar show={showPrev} checked={prevChecked} />}
       checkbox={
-        <button onClick={() => { firePop(); onToggle(task.id, game); }} className={cx(shared.cb, isChecked && shared.cbChecked, pop && shared.cbPop)}>
+        <button
+          ref={cbScope}
+          onClick={handleClick}
+          className={cx(shared.cb, isChecked && shared.cbChecked)}
+        >
           {isChecked ? '✓' : ''}
         </button>
       }

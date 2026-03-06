@@ -1,8 +1,25 @@
-import { useState } from 'react';
+import { motion } from 'motion/react';
 import { cx } from '../util/cx';
 import { t } from '../util/i18n';
 import s from './UI.module.css';
 import shared from './shared.module.css';
+
+// ── Shared motion variants ────────────────────────────────────────
+const overlayVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.2 } },
+  exit:    { opacity: 0, transition: { duration: 0.18 } },
+};
+const boxVariants = {
+  initial: { opacity: 0, y: 14, scale: 0.97 },
+  animate: { opacity: 1, y: 0,  scale: 1,    transition: { duration: 0.22 } },
+  exit:    { opacity: 0, y: 8,  scale: 0.97, transition: { duration: 0.18 } },
+};
+const confirmBoxVariants = {
+  initial: { opacity: 0, scale: 0.92 },
+  animate: { opacity: 1, scale: 1,    transition: { duration: 0.18 } },
+  exit:    { opacity: 0, scale: 0.92, transition: { duration: 0.15 } },
+};
 
 // ── Row ───────────────────────────────────────────────────────────
 export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
@@ -37,39 +54,54 @@ export function PrevBar({ show, checked, partial }) {
 }
 
 // ── Modal ─────────────────────────────────────────────────────────
+// AnimatePresence must wrap the conditional render at the call site.
 export function Modal({ title, titleExtra, onClose, children }) {
-  const [closing, setClosing] = useState(false);
-  const handleClose = () => { setClosing(true); setTimeout(onClose, 170); };
   return (
-    <div className={cx(s.overlay, closing && s.overlayClosing)} onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
-      <div className={cx(s.box, closing && s.boxClosing)}>
+    <motion.div
+      className={s.overlay}
+      variants={overlayVariants}
+      initial="initial" animate="animate" exit="exit"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <motion.div
+        className={s.box}
+        variants={boxVariants}
+        initial="initial" animate="animate" exit="exit"
+      >
         <div className={s.modalHeader}>
           <div className={s.modalTitleGroup}>
             <span className={s.modalTitle}>{title}</span>
             {titleExtra}
           </div>
-          <button onClick={handleClose} className={s.modalClose}>✕</button>
+          <button onClick={onClose} className={s.modalClose}>✕</button>
         </div>
         {children}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
 // ── ConfirmDialog ─────────────────────────────────────────────────
+// AnimatePresence must wrap the conditional render at the call site.
 export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
-  const [closing, setClosing] = useState(false);
-  const dismiss = (fn) => () => { setClosing(true); setTimeout(fn, 140); };
   return (
-    <div className={cx(s.confirmOverlay, closing && s.confirmOverlayClosing)}>
-      <div className={cx(s.confirmBox, closing && s.confirmBoxClosing)}>
+    <motion.div
+      className={s.confirmOverlay}
+      variants={overlayVariants}
+      initial="initial" animate="animate" exit="exit"
+    >
+      <motion.div
+        className={s.confirmBox}
+        variants={confirmBoxVariants}
+        initial="initial" animate="animate" exit="exit"
+      >
         <div className={s.confirmIcon}>🗑️</div>
         <div className={s.confirmMsg}>{message}</div>
         <div className={s.confirmActions}>
-          <button onClick={dismiss(onCancel)}  className={shared.btn}>{t('cancel')}</button>
-          <button onClick={dismiss(onConfirm)} className={cx(shared.btn, shared.btnDanger)}>{confirmLabel ?? t('deleteBtn')}</button>
+          <button onClick={onCancel}  className={shared.btn}>{t('cancel')}</button>
+          <button onClick={onConfirm} className={cx(shared.btn, shared.btnDanger)}>{confirmLabel ?? t('deleteBtn')}</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

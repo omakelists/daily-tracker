@@ -40,6 +40,8 @@ export default defineConfig({
         'react',
         'react-dom',
         'react-dom/client',
+        'motion',
+        'motion/react',
       ],
       // preserveModules requires preserveEntrySignatures to be non-false.
       // Vite sets it to false by default, so we override it here.
