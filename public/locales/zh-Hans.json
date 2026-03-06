@@ -67,5 +67,6 @@
     "flipV": "垂直翻转",
     "rotateCCW": "逆时针旋转",
     "rotateCW": "顺时针旋转"
-  }
+  },
+  "loadBtn": "导入"
 }

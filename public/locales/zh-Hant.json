@@ -67,5 +67,6 @@
     "flipV": "垂直翻轉",
     "rotateCCW": "逆時針旋轉",
     "rotateCW": "順時針旋轉"
-  }
+  },
+  "loadBtn": "匯入"
 }

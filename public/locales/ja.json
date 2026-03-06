@@ -67,5 +67,6 @@
     "flipV": "上下反転",
     "rotateCCW": "反時計回り",
     "rotateCW": "時計回り"
-  }
+  },
+  "loadBtn": "読み込む"
 }

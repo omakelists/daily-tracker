@@ -67,5 +67,6 @@
     "flipV": "Flip vertical",
     "rotateCCW": "Rotate counter-clockwise",
     "rotateCW": "Rotate clockwise"
-  }
+  },
+  "loadBtn": "Load"
 }

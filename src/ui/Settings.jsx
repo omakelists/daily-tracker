@@ -147,7 +147,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
         const parsed = JSON.parse(ev.target.result), imported = parsed.games ?? parsed;
         if (!Array.isArray(imported)) throw new Error('invalid');
         const fresh = imported.map((g) => ({ ...g, id: uid(), tasks: (g.tasks ?? []).map((tk) => ({ ...tk, id: uid() })) }));
-        showConfirm(t('importConfirm', { n: fresh.length }), () => setGames(fresh));
+        showConfirm(t('importConfirm', { n: fresh.length }), () => setGames(fresh), t('loadBtn'));
       } catch { alert(t('importError')); }
     };
     reader.readAsText(file); e.target.value = '';

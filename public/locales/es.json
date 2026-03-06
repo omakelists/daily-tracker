@@ -67,5 +67,6 @@
     "flipV": "Voltear vertical",
     "rotateCCW": "Rotar antihorario",
     "rotateCW": "Rotar horario"
-  }
+  },
+  "loadBtn": "Cargar"
 }
