@@ -53,8 +53,9 @@ export function TaskRow({ task, game, checks, now, onToggle, cd }) {
           <span
             className={s.taskName}
             style={{
-              color: isChecked ? 'var(--dim)' : 'var(--text)',
+              color: isChecked ? 'var(--muted)' : 'var(--text)',
               textDecoration: isChecked ? 'line-through' : 'none',
+              textDecorationThickness: isChecked ? '2px' : undefined,
             }}
           >
             {task.name.trim() || t(`types.${task.type}`)}

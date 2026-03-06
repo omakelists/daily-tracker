@@ -108,8 +108,9 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
             <span
               className={s.gameName}
               style={{
-                color: allDone ? 'var(--dim)' : visColor,
+                color: allDone ? 'var(--muted)' : visColor,
                 textDecoration: allDone ? 'line-through' : 'none',
+                textDecorationThickness: allDone ? '2px' : undefined,
               }}
             >
               {game.name}
