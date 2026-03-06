@@ -166,6 +166,7 @@ export function App() {
 
   const toggle = useCallback((taskId, game, isMaster = false) => {
     let shouldCollapse = false;
+    let sound = null; // decided inside updater, played once outside
     const applyUpdates = () => {
       flushSync(() => {
         setChecks((prev) => {
@@ -175,8 +176,8 @@ export function App() {
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
-            if (!allDone) { playAllDoneSound(); shouldCollapse = true; }
-            else playCheckSound();
+            if (!allDone) { sound = 'allDone'; shouldCollapse = true; }
+            else sound = 'check';
           } else {
             const task = allTasks.find((tk) => tk.id === taskId);
             if (!task) return prev;
@@ -186,14 +187,17 @@ export function App() {
             if (!was) {
               const fanfare = DAILY_TYPES.has(task.type) &&
                 dailyTasks.every((tk) => { const k2 = checkKey(tk.id, getPeriodKey(tk, game, now)); return k2 === k ? true : !!prev[k2]; });
-              if (fanfare) { playAllDoneSound(); shouldCollapse = true; }
-              else playCheckSound();
+              if (fanfare) { sound = 'allDone'; shouldCollapse = true; }
+              else sound = 'check';
             }
           }
           saveChecks(next);
           return next;
         });
       });
+      // Play sound after state update — never inside the updater function
+      if (sound === 'allDone') playAllDoneSound();
+      else if (sound === 'check') playCheckSound();
       if (shouldCollapse) flushSync(() => setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; }));
     };
     if (document.startViewTransition) document.startViewTransition(applyUpdates);
