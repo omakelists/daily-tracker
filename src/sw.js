@@ -4,7 +4,7 @@ const CACHE = 'daily-tracker';
 // It expands to an array of { url, revision } objects covering all build output files.
 const LOCAL_ASSETS = (self.__WB_MANIFEST || []).map((e) => e.url);
 
-const CDN_ORIGINS = ['cdn.jsdelivr.net'];
+const CDN_ORIGINS = ['esm.sh'];
 
 // Install: cache all assets but do NOT call skipWaiting().
 // The new SW waits until the user confirms the update in the app UI,
