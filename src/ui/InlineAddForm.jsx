@@ -141,7 +141,7 @@ export function InlineAddForm({
           )}
           {type === 'monthly' && (
             <>
-              <span className={s.deadlineLbl}>{t('everyDay', { day: '' })}</span>
+              <span className={s.deadlineLbl}>{t('resetLbl')}</span>
               <input
                 type="number"
                 value={monthDay}
@@ -150,6 +150,7 @@ export function InlineAddForm({
                 onChange={(e) => setMonthDay(e.target.value)}
                 className={`${shared.inputCls} ${s.dayInput}`}
               />
+              <span className={s.deadlineLbl}>{t('dayUnit')}</span>
             </>
           )}
         </div>
