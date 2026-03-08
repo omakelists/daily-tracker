@@ -87,7 +87,7 @@
 .dragHandle    { font-size: 14px; color: #484f58; cursor: grab; line-height: 1; padding: 0 6px; display: flex; align-items: center; flex-shrink: 0; }
 .dragHandle:active { cursor: grabbing; }
 
-/* ── タスク追加フォーム ───────────────────────────────────────────── */
+/* ── Task add form ────────────────────────────────────────────────── */
 .taskAddForm {
   padding: 8px 13px 10px;
   background: rgba(13, 17, 23, 0.55);

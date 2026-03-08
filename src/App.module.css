@@ -196,7 +196,7 @@
   animation: pulseUpdate 2s ease-in-out infinite;
 }
 
-/* ── ゲーム追加フォーム ──────────────────────────────────────── */
+/* ── New game form ────────────────────────────────────────────── */
 .gameAddRow {
   display: flex;
   align-items: center;

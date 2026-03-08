@@ -70,7 +70,7 @@
 }
 .quickBtn:hover { color: var(--text); }
 
-/* 月日 + ⏱ をまとめたインライン要素 */
+/* Inline deadline date + countdown display */
 .deadlineInfo {
   display: inline-flex;
   align-items: center;

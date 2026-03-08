@@ -280,7 +280,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   </div>
 
                   <div className={s.gameBody}>
-                    {/* ── Section 1: デイリー / Webデイリー ── */}
+                    {/* ── Section 1: Daily / Web-daily ── */}
                     {(() => {
                       const dailyTasks = game.tasks.filter((t) => t.type === 'daily' || t.type === 'webdaily');
                       return (
@@ -319,7 +319,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       );
                     })()}
 
-                    {/* ── Section 2: 定期タスク ── */}
+                    {/* ── Section 2: Periodic tasks ── */}
                     {(() => {
                       const periodTasks = game.tasks.filter((t) => t.type === 'weekly' || t.type === 'halfmonthly' || t.type === 'monthly');
                       return (
@@ -358,7 +358,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       );
                     })()}
 
-                    {/* ── Section 3: イベント ── */}
+                    {/* ── Section 3: Events ── */}
                     {(() => {
                       const evList = game.events ?? [];
                       return (
