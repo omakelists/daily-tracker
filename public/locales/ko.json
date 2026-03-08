@@ -76,7 +76,7 @@
   "todoName": "TODO",
   "todoPlaceholder": "TODO 이름",
   "save": "저장",
-  "ctxAddEvent": "이벤트 추가",
+  "ctxAddEvent": "이벤트",
   "ctxEditEvent": "이벤트 편집",
   "ctxDeleteEvent": "이벤트 삭제",
   "ctxAddTodo": "TODO 추가",
@@ -90,7 +90,7 @@
   "ctxDeleteSchedule": "일정 삭제",
   "dateFmt": "{m}월{d}일",
   "ctxAddTask": "작업 추가",
-  "ctxAddDaily": "데일리 추가",
+  "ctxAddDaily": "데일리",
   "ctxEditTask": "작업 편집",
-  "ctxAddPeriodic": "정기 작업 추가"
+  "ctxAddPeriodic": "정기 작업"
 }

@@ -76,7 +76,7 @@
   "todoName": "TODO",
   "todoPlaceholder": "TODO名",
   "save": "保存",
-  "ctxAddEvent": "イベントを追加",
+  "ctxAddEvent": "イベント",
   "ctxEditEvent": "イベントを編集",
   "ctxDeleteEvent": "イベントを削除",
   "ctxAddTodo": "TODOを追加",
@@ -90,7 +90,7 @@
   "ctxDeleteSchedule": "予定を削除",
   "dateFmt": "{m}月{d}日",
   "ctxAddTask": "タスクを追加",
-  "ctxAddDaily": "デイリーを追加",
+  "ctxAddDaily": "デイリー",
   "ctxEditTask": "タスクを編集",
-  "ctxAddPeriodic": "定期タスクを追加"
+  "ctxAddPeriodic": "定期タスク"
 }

@@ -159,7 +159,7 @@ export function GameCard({
       ? [
           { label: t('ctxAddDaily'),    icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
           { label: t('ctxAddPeriodic'), icon: '➕', onClick: () => setFormState({ mode: 'addPeriodic' }) },
-          { label: t('ctxAddEvent'),    icon: '📌', onClick: () => setFormState({ mode: 'addEvent' }) },
+          { label: t('ctxAddEvent'),    icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
         ]
       : ctxMenu.target === 'task'
         ? [

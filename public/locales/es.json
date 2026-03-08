@@ -76,7 +76,7 @@
   "todoName": "Tareas",
   "todoPlaceholder": "Nombre de tarea",
   "save": "Guardar",
-  "ctxAddEvent": "Agregar evento",
+  "ctxAddEvent": "Evento",
   "ctxEditEvent": "Editar evento",
   "ctxDeleteEvent": "Eliminar evento",
   "ctxAddTodo": "Agregar tarea",
@@ -90,7 +90,7 @@
   "ctxDeleteSchedule": "Eliminar horario",
   "dateFmt": "{d}/{m}",
   "ctxAddTask": "Agregar tarea",
-  "ctxAddDaily": "Agregar tarea diaria",
+  "ctxAddDaily": "Diaria",
   "ctxEditTask": "Editar tarea",
-  "ctxAddPeriodic": "Agregar tarea periódica"
+  "ctxAddPeriodic": "Periódica"
 }

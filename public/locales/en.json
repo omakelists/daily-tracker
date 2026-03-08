@@ -76,7 +76,7 @@
   "todoName": "To-do",
   "todoPlaceholder": "To-do name",
   "save": "Save",
-  "ctxAddEvent": "Add event",
+  "ctxAddEvent": "Event",
   "ctxEditEvent": "Edit event",
   "ctxDeleteEvent": "Delete event",
   "ctxAddTodo": "Add to-do",
@@ -90,7 +90,7 @@
   "ctxDeleteSchedule": "Delete schedule",
   "dateFmt": "{m}/{d}",
   "ctxAddTask": "Add task",
-  "ctxAddDaily": "Add daily task",
+  "ctxAddDaily": "Daily",
   "ctxEditTask": "Edit task",
-  "ctxAddPeriodic": "Add periodic task"
+  "ctxAddPeriodic": "Periodic"
 }

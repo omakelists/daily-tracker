@@ -76,7 +76,7 @@
   "todoName": "待办",
   "todoPlaceholder": "待办名称",
   "save": "保存",
-  "ctxAddEvent": "添加活动",
+  "ctxAddEvent": "活动",
   "ctxEditEvent": "编辑活动",
   "ctxDeleteEvent": "删除活动",
   "ctxAddTodo": "添加待办",
@@ -90,7 +90,7 @@
   "ctxDeleteSchedule": "删除计划",
   "dateFmt": "{m}月{d}日",
   "ctxAddTask": "添加任务",
-  "ctxAddDaily": "添加每日任务",
+  "ctxAddDaily": "每日任务",
   "ctxEditTask": "编辑任务",
-  "ctxAddPeriodic": "添加定期任务"
+  "ctxAddPeriodic": "定期任务"
 }

@@ -76,7 +76,7 @@
   "todoName": "待辦",
   "todoPlaceholder": "待辦名稱",
   "save": "儲存",
-  "ctxAddEvent": "新增活動",
+  "ctxAddEvent": "活動",
   "ctxEditEvent": "編輯活動",
   "ctxDeleteEvent": "刪除活動",
   "ctxAddTodo": "新增待辦",
@@ -90,7 +90,7 @@
   "ctxDeleteSchedule": "刪除計劃",
   "dateFmt": "{m}月{d}日",
   "ctxAddTask": "添加任务",
-  "ctxAddDaily": "新增每日任務",
+  "ctxAddDaily": "每日任務",
   "ctxEditTask": "編輯任務",
-  "ctxAddPeriodic": "新增定期任務"
+  "ctxAddPeriodic": "定期任務"
 }
