@@ -38,7 +38,7 @@ function applyOrder(items, storedOrder) {
 export function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks, cd,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
-  events = [], onAddEvent, onAddTask, onDeleteEvent, onToggleEvent, onEditEvent,
+  events = [], onAddEvent, onAddTask, onDeleteEvent, onToggleEvent, onEditEvent, onEditTask,
 }) {
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
@@ -51,6 +51,9 @@ export function GameCard({
   );
   const handleEventContextMenu = useCallback((id, x, y) => {
     setCtxMenu({ x, y, target: 'event', eventId: id });
+  }, []);
+  const handleTaskContextMenu = useCallback((id, x, y) => {
+    setCtxMenu({ x, y, target: 'task', taskId: id });
   }, []);
 
   // ── Item grouping ────────────────────────────────────────────────
@@ -100,7 +103,7 @@ export function GameCard({
 
   const wrapTask = (tk) => (
     <motion.div key={tk.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-      <TaskRow task={tk} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} />
+      <TaskRow task={tk} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={handleTaskContextMenu} />
     </motion.div>
   );
 
@@ -118,16 +121,33 @@ export function GameCard({
           { label: t('ctxAddPeriodic'), icon: '➕', onClick: () => setFormState({ mode: 'addPeriodic' }) },
           { label: t('ctxAddEvent'),    icon: '📌', onClick: () => setFormState({ mode: 'addEvent' }) },
         ]
-      : ctxMenu.target === 'event'
-        ? [
-            { label: t('ctxEditEvent'),   icon: '✏️', onClick: () => {
-              const ev = events.find((e) => e.id === ctxMenu.eventId);
-              if (ev) setFormState({ mode: 'editEvent', eventId: ev.id, name: ev.name, deadline: ev.deadline || '', deadlineTime: ev.deadlineTime || '' });
-            }},
-            { separator: true },
-            { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteEvent(game.id, ctxMenu.eventId) },
-          ]
-        : []
+      : ctxMenu.target === 'task'
+        ? (() => {
+            const tk = game.tasks.find((t) => t.id === ctxMenu.taskId);
+            if (!tk) return [];
+            const isDaily = DAILY_TASK_TYPES.includes(tk.type);
+            return [
+              { label: t('ctxEditTask'), icon: '✏️', onClick: () => setFormState({
+                  mode: 'editTask',
+                  taskId:             tk.id,
+                  name:               tk.name,
+                  type:               tk.type,
+                  typeGroup:          isDaily ? 'daily' : 'periodic',
+                  webResetTime:       tk.webResetTime   ?? '',
+                  monthlyResetDay:    tk.monthlyResetDay ?? 1,
+                }) },
+            ];
+          })()
+        : ctxMenu.target === 'event'
+          ? [
+              { label: t('ctxEditEvent'),   icon: '✏️', onClick: () => {
+                const ev = events.find((e) => e.id === ctxMenu.eventId);
+                if (ev) setFormState({ mode: 'editEvent', eventId: ev.id, name: ev.name, deadline: ev.deadline || '', deadlineTime: ev.deadlineTime || '' });
+              }},
+              { separator: true },
+              { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteEvent(game.id, ctxMenu.eventId) },
+            ]
+          : []
     : [];
 
   return (
@@ -180,6 +200,19 @@ export function GameCard({
                   typeOpts={formState.mode === 'addDaily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
                   gameResetTime={game.resetTime}
                   onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                  onCancel={() => setFormState(null)}
+                />
+              )}
+              {formState.mode === 'editTask' && (
+                <InlineAddForm
+                  typeOpts={formState.typeGroup === 'daily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
+                  gameResetTime={game.resetTime}
+                  initialName={formState.name}
+                  initialType={formState.type}
+                  initialWebResetTime={formState.webResetTime}
+                  initialMonthlyResetDay={formState.monthlyResetDay}
+                  submitLabel={t('save')}
+                  onSave={(task) => { onEditTask?.(game.id, formState.taskId, task); setFormState(null); }}
                   onCancel={() => setFormState(null)}
                 />
               )}

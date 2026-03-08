@@ -91,5 +91,6 @@
   "dateFmt": "{d}/{m}",
   "ctxAddTask": "Agregar tarea",
   "ctxAddDaily": "Agregar tarea diaria",
+  "ctxEditTask": "Editar tarea",
   "ctxAddPeriodic": "Agregar tarea periódica"
 }

@@ -17,7 +17,9 @@ function addDaysToDate(dateStr, n) {
  * Unified inline form for adding/editing tasks and events.
  *
  * Task mode — enabled when `typeOpts` array is provided:
- *   Props : typeOpts, gameResetTime, onAdd(task), onCancel
+ *   Props : typeOpts, gameResetTime, onAdd(task) / onSave(task), onCancel
+ *           initialName, initialType, initialWebResetTime, initialMonthlyResetDay
+ *           submitLabel — override button label (e.g. t('save') for edit mode)
  *   Fields: type select, name input, optional webReset time / monthlyResetDay
  *
  * Event mode — default when `typeOpts` is omitted:
@@ -30,6 +32,9 @@ export function InlineAddForm({
   // Task mode props
   typeOpts,
   gameResetTime,
+  initialType,
+  initialWebResetTime,
+  initialMonthlyResetDay,
   // Event mode props
   onAdd, onSave, onCancel,
   initialName = '', initialDeadline = '', initialDeadlineTime = '',
@@ -40,9 +45,11 @@ export function InlineAddForm({
   const isTaskMode = Array.isArray(typeOpts) && typeOpts.length > 0;
 
   // --- Task mode state ---
-  const [type,     setType]     = useState(isTaskMode ? typeOpts[0] : '');
-  const [webReset, setWebReset] = useState(isTaskMode ? utcToLocalHHMM(gameResetTime ?? '00:00') : '');
-  const [monthDay, setMonthDay] = useState(1);
+  const [type,     setType]     = useState(isTaskMode ? (initialType ?? typeOpts[0]) : '');
+  const [webReset, setWebReset] = useState(isTaskMode
+    ? (initialWebResetTime ? utcToLocalHHMM(initialWebResetTime) : utcToLocalHHMM(gameResetTime ?? '00:00'))
+    : '');
+  const [monthDay, setMonthDay] = useState(initialMonthlyResetDay ?? 1);
 
   // --- Shared / event mode state ---
   const [name,  setName]  = useState(initialName);
@@ -71,7 +78,7 @@ export function InlineAddForm({
     const task = { type, name: name.trim() };
     if (type === 'webdaily') task.webResetTime      = localToUtcHHMM(webReset);
     if (type === 'monthly')  task.monthlyResetDay   = Number(monthDay);
-    onAdd(task);
+    if (onSave) onSave(task); else onAdd(task);
   };
 
   const handleEventSubmit = () => {
@@ -162,7 +169,7 @@ export function InlineAddForm({
             onClick={handleSubmit}
             disabled={!name.trim()}
           >
-            {t('add')}
+            {submitLabel ?? t('add')}
           </button>
           <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
         </div>

@@ -91,5 +91,6 @@
   "dateFmt": "{m}月{d}日",
   "ctxAddTask": "添加任务",
   "ctxAddDaily": "添加每日任务",
+  "ctxEditTask": "编辑任务",
   "ctxAddPeriodic": "添加定期任务"
 }

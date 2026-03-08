@@ -152,8 +152,8 @@ export function TaskRow({
     />
   );
 
-  // Event rows need a context-menu wrapper; task rows do not
-  if (isEvent) {
+  // Wrap with context-menu trigger whenever a handler is provided (both task and event modes)
+  if (isEvent || onContextMenu) {
     return <div {...trigger} style={{ userSelect: 'none' }}>{row}</div>;
   }
   return row;

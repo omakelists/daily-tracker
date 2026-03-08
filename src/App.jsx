@@ -235,6 +235,13 @@ export function App() {
     ));
   }, []);
 
+  const editTask = useCallback((gameId, taskId, updates) => {
+    setGames((prev) => prev.map((g) => g.id === gameId
+      ? { ...g, tasks: g.tasks.map((tk) => tk.id === taskId ? { ...tk, ...updates } : tk) }
+      : g
+    ));
+  }, []);
+
   if (!games) return <div className={s.loading}>{t('loading')}</div>;
 
   return (
@@ -289,6 +296,7 @@ export function App() {
               onDeleteEvent={deleteEvent}
               onToggleEvent={toggleEvent}
               onEditEvent={editEvent}
+              onEditTask={editTask}
             />
           ))}
         </AnimatePresence>

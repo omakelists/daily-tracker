@@ -91,5 +91,6 @@
   "dateFmt": "{m}月{d}日",
   "ctxAddTask": "タスクを追加",
   "ctxAddDaily": "デイリーを追加",
+  "ctxEditTask": "タスクを編集",
   "ctxAddPeriodic": "定期タスクを追加"
 }
