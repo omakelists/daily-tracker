@@ -55,7 +55,12 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 13px;
-  margin-bottom: 14px;
+  margin-top: 0;
+}
+.listSeparator {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 6px 0 14px;
 }
 .imgSectionTitle { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
 

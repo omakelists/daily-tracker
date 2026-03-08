@@ -229,11 +229,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
       >
         <div className={s.list}>
 
-          <div className={s.imgSection}>
-            <div className={s.imgSectionTitle}>{t('appBgImage')}</div>
-            <ImageDropZone currentDataUrl={appBgThumb} onFile={(file) => openCrop('app-bg', file)} onRemove={removeAppBg} mode="large" />
-          </div>
-
           <AnimatePresence initial={false}>
             {games.map((game, gi) => (
               <motion.div
@@ -417,6 +412,13 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
               </motion.button>
             )}
           </AnimatePresence>
+
+          <div className={s.listSeparator} />
+
+          <div className={s.imgSection}>
+            <div className={s.imgSectionTitle}>{t('appBgImage')}</div>
+            <ImageDropZone currentDataUrl={appBgThumb} onFile={(file) => openCrop('app-bg', file)} onRemove={removeAppBg} mode="large" />
+          </div>
 
         </div>
       </Modal>
