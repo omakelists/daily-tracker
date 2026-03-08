@@ -88,3 +88,7 @@
 .cdLabel    { opacity: 0.9; }
 
 .spacer { flex: 1; }
+
+/* ─ Task mode extras ─ */
+.typeSelect { width: 108px; flex-shrink: 0; }
+.dayInput   { width: 52px;  flex-shrink: 0; }

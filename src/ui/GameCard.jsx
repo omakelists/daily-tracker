@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { ensureContrast, utcToLocalHHMM, localToUtcHHMM } from '../constants';
+import { ensureContrast, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
@@ -33,57 +33,6 @@ function applyOrder(items, storedOrder) {
     ...orderedIds.map((id) => items.find((x) => x.id === id)).filter(Boolean),
     ...unordered,
   ];
-}
-
-// ── タスク追加フォーム ─────────────────────────────────────────────
-function InlineTaskForm({ typeOpts, gameResetTime, onAdd, onCancel }) {
-  const [type,     setType]     = useState(typeOpts[0]);
-  const [name,     setName]     = useState('');
-  const [webReset, setWebReset] = useState(utcToLocalHHMM(gameResetTime ?? '00:00'));
-  const [monthDay, setMonthDay] = useState(1);
-  const inputRef = useRef(null);
-  useState(() => { setTimeout(() => inputRef.current?.focus(), 0); });
-
-  const submit = () => {
-    if (!name.trim()) return;
-    const task = { type, name: name.trim() };
-    if (type === 'webdaily') task.webResetTime = localToUtcHHMM(webReset);
-    if (type === 'monthly')  task.monthlyResetDay = Number(monthDay);
-    onAdd(task);
-  };
-
-  return (
-    <div className={s.taskAddForm}>
-      <div className={s.taskAddRow}>
-        {typeOpts.length > 1 && (
-          <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.taskTypeSelect}`}>
-            {typeOpts.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
-          </select>
-        )}
-        <input
-          ref={inputRef}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onCancel(); }}
-          placeholder={t(`types.${type}`)}
-          className={`${shared.inputCls} ${s.taskAddName}`}
-        />
-        {type === 'webdaily' && (
-          <><span className={s.taskAddLbl}>{t('resetLbl')}</span>
-          <input type="time" value={webReset} onChange={(e) => setWebReset(e.target.value)} className={`${shared.inputCls} ${s.taskAddTime}`} /></>
-        )}
-        {type === 'monthly' && (
-          <><span className={s.taskAddLbl}>{t('everyDay', { day: '' })}</span>
-          <input type="number" value={monthDay} min={1} max={31} onChange={(e) => setMonthDay(e.target.value)} className={`${shared.inputCls} ${s.taskAddDay}`} /></>
-        )}
-      </div>
-      <div className={s.taskAddActions}>
-        <div className={s.taskAddSpacer} />
-        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={submit} disabled={!name.trim()}>{t('add')}</button>
-        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
-      </div>
-    </div>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -228,7 +177,7 @@ export function GameCard({
           {showForm && (
             <motion.div key="form" variants={bodyVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
               {(formState.mode === 'addDaily' || formState.mode === 'addPeriodic') && (
-                <InlineTaskForm
+                <InlineAddForm
                   typeOpts={formState.mode === 'addDaily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
                   gameResetTime={game.resetTime}
                   onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
