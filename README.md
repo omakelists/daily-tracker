@@ -28,7 +28,17 @@ npm run preview  # preview the build locally
 
 ## Deployment
 
-### GitHub Pages
+### GitHub Actions
+
+A workflow is included at `.github/workflows/` that automatically builds and publishes the app to GitHub Pages on every push to `main`.
+
+To enable it:
+
+1. Go to repository Settings → Pages → Source: **GitHub Actions**
+2. Push to `main` — the site will be built and deployed automatically
+3. Access via `https://<user>.github.io/<repo>/`
+
+### GitHub Pages (manual alternative)
 
 1. Run `npm run build`
 2. Push the `dist/` directory contents to a branch (e.g. `gh-pages`)
