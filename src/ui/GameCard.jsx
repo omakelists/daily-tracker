@@ -6,7 +6,6 @@ import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
 import { TaskRow } from './TaskRow';
-import { EventRow } from './EventRow';
 import { InlineAddForm } from './InlineAddForm';
 import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
@@ -107,7 +106,7 @@ export function GameCard({
 
   const wrapEvent = (ev) => (
     <motion.div key={ev.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-      <EventRow item={ev} now={now} cd={cd} onToggle={(id) => onToggleEvent(game.id, id)} onContextMenu={handleEventContextMenu} onDelete={(id) => onDeleteEvent(game.id, id)} gameResetTime={game.resetTime} />
+      <TaskRow task={ev} now={now} cd={cd} onToggle={(id) => onToggleEvent(game.id, id)} onContextMenu={handleEventContextMenu} onDelete={(id) => onDeleteEvent(game.id, id)} gameResetTime={game.resetTime} />
     </motion.div>
   );
 
