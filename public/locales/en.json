@@ -92,5 +92,13 @@
   "ctxAddTask": "Add task",
   "ctxAddDaily": "Daily",
   "ctxEditTask": "Edit task",
-  "ctxAddPeriodic": "Periodic"
+  "ctxAddPeriodic": "Periodic",
+  "verPanel": "Version",
+  "verCheck": "Check for updates",
+  "verChecking": "Checking…",
+  "verCurrent": "Current",
+  "verLatest": "Latest",
+  "verUpToDate": "Up to date",
+  "verUpdate": "Update",
+  "verUnavail": "Could not fetch version info"
 }

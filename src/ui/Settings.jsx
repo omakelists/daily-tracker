@@ -91,11 +91,14 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
   const [addTo,    setAddTo]    = useState(null);
   const importRef = useRef(null);
+
+  // Version panel state
+  const [verState, setVerState] = useState(null); // null | 'checking' | { current, latest, hasUpdate } | 'error'
 
   const [cropFile,     setCropFile]     = useState(null);
   const [cropTarget,   setCropTarget]   = useState(null);
@@ -110,6 +113,29 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   });
 
   const openCrop = (target, file) => { setCropTarget(target); setCropFile(file); };
+
+  const handleCheckVersion = async () => {
+    setVerState('checking');
+    try {
+      const [cachedRes, netRes] = await Promise.all([
+        fetch('./version.json'),
+        fetch('./version.json?check=' + Date.now()),
+      ]);
+      if (!cachedRes.ok || !netRes.ok) throw new Error('fetch failed');
+      const [cached, net] = await Promise.all([cachedRes.json(), netRes.json()]);
+      setVerState({ current: cached.version ?? '?', latest: net.version ?? '?', hasUpdate: net.version && net.version !== cached.version });
+    } catch {
+      setVerState('error');
+    }
+  };
+
+  const handleDoUpdate = async () => {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+    onUpdate?.();
+  };
 
   const handleCropConfirm = async (dataUrl, opacity) => {
     if (!cropTarget) return;
@@ -418,6 +444,39 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           <div className={s.imgSection}>
             <div className={s.imgSectionTitle}>{t('appBgImage')}</div>
             <ImageDropZone currentDataUrl={appBgThumb} onFile={(file) => openCrop('app-bg', file)} onRemove={removeAppBg} mode="large" />
+          </div>
+
+          <div className={s.listSeparator} />
+
+          {/* Version panel */}
+          <div className={s.verPanel}>
+            <div className={s.verPanelHeader}>
+              <span className={s.verPanelTitle}>{t('verPanel')}</span>
+              <button
+                className={`${shared.btn} ${shared.btnAdd}`}
+                onClick={handleCheckVersion}
+                disabled={verState === 'checking'}
+              >
+                {verState === 'checking' ? t('verChecking') : t('verCheck')}
+              </button>
+            </div>
+            {verState && verState !== 'checking' && (
+              <div className={s.verPanelBody}>
+                {verState === 'error' ? (
+                  <span className={s.verError}>{t('verUnavail')}</span>
+                ) : (
+                  <>
+                    <span className={s.verRow}><span className={s.verLbl}>{t('verCurrent')}</span><span className={s.verVal}>{verState.current}</span></span>
+                    <span className={s.verRow}><span className={s.verLbl}>{t('verLatest')}</span><span className={s.verVal}>{verState.latest}</span></span>
+                    {verState.hasUpdate ? (
+                      <button className={`${shared.btn} ${shared.btnConfirm} ${s.verUpdateBtn}`} onClick={handleDoUpdate}>{t('verUpdate')}</button>
+                    ) : (
+                      <span className={s.verUpToDate}>✓ {t('verUpToDate')}</span>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
         </div>

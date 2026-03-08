@@ -92,5 +92,13 @@
   "ctxAddTask": "Agregar tarea",
   "ctxAddDaily": "Diaria",
   "ctxEditTask": "Editar tarea",
-  "ctxAddPeriodic": "Periódica"
+  "ctxAddPeriodic": "Periódica",
+  "verPanel": "Versión",
+  "verCheck": "Buscar actualizaciones",
+  "verChecking": "Verificando…",
+  "verCurrent": "Actual",
+  "verLatest": "Última",
+  "verUpToDate": "Actualizado",
+  "verUpdate": "Actualizar",
+  "verUnavail": "No se pudo obtener información de versión"
 }

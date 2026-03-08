@@ -92,5 +92,13 @@
   "ctxAddTask": "添加任务",
   "ctxAddDaily": "每日任务",
   "ctxEditTask": "编辑任务",
-  "ctxAddPeriodic": "定期任务"
+  "ctxAddPeriodic": "定期任务",
+  "verPanel": "版本信息",
+  "verCheck": "检查更新",
+  "verChecking": "检查中…",
+  "verCurrent": "当前",
+  "verLatest": "最新",
+  "verUpToDate": "已是最新版本",
+  "verUpdate": "更新",
+  "verUnavail": "无法获取版本信息"
 }

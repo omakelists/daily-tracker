@@ -92,5 +92,13 @@
   "ctxAddTask": "タスクを追加",
   "ctxAddDaily": "デイリー",
   "ctxEditTask": "タスクを編集",
-  "ctxAddPeriodic": "定期タスク"
+  "ctxAddPeriodic": "定期タスク",
+  "verPanel": "バージョン情報",
+  "verCheck": "バージョン確認",
+  "verChecking": "確認中…",
+  "verCurrent": "現在",
+  "verLatest": "最新",
+  "verUpToDate": "最新バージョンです",
+  "verUpdate": "アップデート",
+  "verUnavail": "バージョン情報を取得できません"
 }

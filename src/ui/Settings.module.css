@@ -62,6 +62,60 @@
   border-top: 1px solid var(--border);
   margin: 6px 0 14px;
 }
+
+/* ─ Version panel ─ */
+.verPanel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 13px;
+  margin-bottom: 14px;
+}
+.verPanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.verPanelTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+.verPanelBody {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.verRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.verLbl {
+  color: var(--muted);
+}
+.verVal {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text);
+}
+.verUpToDate {
+  color: var(--muted);
+  font-size: 12px;
+}
+.verError {
+  color: var(--danger);
+  font-size: 12px;
+}
+.verUpdateBtn {
+  font-size: 12px;
+  padding: 3px 12px;
+}
 .imgSectionTitle { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
 
 .dropZone {

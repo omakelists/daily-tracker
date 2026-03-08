@@ -92,5 +92,13 @@
   "ctxAddTask": "작업 추가",
   "ctxAddDaily": "데일리",
   "ctxEditTask": "작업 편집",
-  "ctxAddPeriodic": "정기 작업"
+  "ctxAddPeriodic": "정기 작업",
+  "verPanel": "버전 정보",
+  "verCheck": "버전 확인",
+  "verChecking": "확인 중…",
+  "verCurrent": "현재",
+  "verLatest": "최신",
+  "verUpToDate": "최신 버전입니다",
+  "verUpdate": "업데이트",
+  "verUnavail": "버전 정보를 가져올 수 없습니다"
 }
