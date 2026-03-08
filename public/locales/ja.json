@@ -11,7 +11,7 @@
   "add": "追加",
   "addTask": "+ タスク追加",
   "addGame": "+ ゲームを追加",
-  "webReset": "Webリセット",
+  "webReset": "リセット",
   "resetDay": "リセット日",
   "dayUnit": "日",
   "periodic": "定期タスク",
@@ -27,7 +27,7 @@
     "weekly": "ウィークリー",
     "webdaily": "Webデイリー",
     "monthly": "マンスリー",
-    "halfmonthly": "半月",
+    "halfmonthly": "ハーフマンス",
     "event": "イベント"
   },
   "cd": {
