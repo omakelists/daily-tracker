@@ -81,8 +81,12 @@ export function GameCard({
   const hasVisDaily  = visDaily.length > 0;
   const hasVisPeriod = visPeriod.length > 0;
   const hasVisEvents = visEvents.length > 0;
-  const showBody     = hasVisDaily || hasVisPeriod || hasVisEvents;
-  const showForm     = formState !== null;
+
+  // Each section is visible if it has items OR its add-form is active
+  const showDailySection  = hasVisDaily  || formState?.mode === 'addDaily';
+  const showPeriodSection = hasVisPeriod || formState?.mode === 'addPeriodic';
+  const showEventSection  = hasVisEvents || formState?.mode === 'addEvent';
+  const showBody = showDailySection || showPeriodSection || showEventSection;
 
   const ms      = msUntilReset(now, game.resetTime);
   const h       = ms / 3600000;
@@ -184,7 +188,7 @@ export function GameCard({
         <div {...headerTrigger}>
           <Row
             bg={headerBg}
-            borderBottom={showBody || showForm ? '1px solid rgba(255,255,255,0.055)' : 'none'}
+            borderBottom={showBody ? '1px solid rgba(255,255,255,0.055)' : 'none'}
             onClick={dailyItems.length > 0 ? handleToggleCollapse : undefined}
             className={dailyItems.length > 0 ? s.cardClickable : undefined}
             preSlot={dailyItems.length > 0 ? (
@@ -211,29 +215,6 @@ export function GameCard({
           />
         </div>
 
-        {/* Inline add form — shown at card top for new items only */}
-        <AnimatePresence initial={false}>
-          {showForm && (
-            <motion.div key="form" variants={bodyVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-              {(formState.mode === 'addDaily' || formState.mode === 'addPeriodic') && (
-                <InlineAddForm
-                  typeOpts={formState.mode === 'addDaily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
-                  gameResetTime={game.resetTime}
-                  onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
-                  onCancel={() => setFormState(null)}
-                />
-              )}
-              {formState.mode === 'addEvent' && (
-                <InlineAddForm
-                  defaultTime={game.resetTime}
-                  onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
-                  onCancel={() => setFormState(null)}
-                />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Body */}
         <AnimatePresence initial={false}>
           {showBody && (
@@ -241,28 +222,65 @@ export function GameCard({
               <div className={`${s.body}${bgDataUrl ? ` ${s.bodyWithBg}` : ''}`}>
 
                 {/* Section 1: Daily / WebDaily */}
-                {hasVisDaily && (
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {visDaily.map(wrapTask)}
-                  </AnimatePresence>
+                {showDailySection && (
+                  <>
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {visDaily.map(wrapTask)}
+                    </AnimatePresence>
+                    <AnimatePresence initial={false}>
+                      {formState?.mode === 'addDaily' && (
+                        <motion.div key="add-daily" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                          <InlineAddForm
+                            typeOpts={DAILY_TASK_TYPES}
+                            gameResetTime={game.resetTime}
+                            onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                            onCancel={() => setFormState(null)}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
                 )}
 
                 {/* Section 2: Periodic tasks */}
-                {hasVisPeriod && (
+                {showPeriodSection && (
                   <>
                     <div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>
                     <AnimatePresence mode="popLayout" initial={false}>
                       {visPeriod.map(wrapTask)}
                     </AnimatePresence>
+                    <AnimatePresence initial={false}>
+                      {formState?.mode === 'addPeriodic' && (
+                        <motion.div key="add-periodic" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                          <InlineAddForm
+                            typeOpts={PERIOD_TASK_TYPES}
+                            gameResetTime={game.resetTime}
+                            onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                            onCancel={() => setFormState(null)}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </>
                 )}
 
                 {/* Section 3: Events */}
-                {hasVisEvents && (
+                {showEventSection && (
                   <>
                     <div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>
                     <AnimatePresence mode="popLayout" initial={false}>
                       {visEvents.map(wrapEvent)}
+                    </AnimatePresence>
+                    <AnimatePresence initial={false}>
+                      {formState?.mode === 'addEvent' && (
+                        <motion.div key="add-event" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                          <InlineAddForm
+                            defaultTime={game.resetTime}
+                            onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
+                            onCancel={() => setFormState(null)}
+                          />
+                        </motion.div>
+                      )}
                     </AnimatePresence>
                   </>
                 )}
