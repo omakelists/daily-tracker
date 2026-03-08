@@ -360,25 +360,34 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           <AnimatePresence initial={false}>
                             {evList.map((ev, ei) => (
                               <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                                <div draggable onDragStart={onEvDS(game.id, ei)} onDragOver={onEvDO(game.id, ei)} onDrop={onEvDrp(game.id, ei)} onDragEnd={onEvDE} className={s.eventFormRow} style={{ ...evDrop(game.id, ei), opacity: evDrag?.gid === game.id && evDrag.from === ei ? 0.4 : 1 }}>
-                                  {DragHandle}
-                                  <input value={ev.name} onChange={(e) => upEvent(game.id, ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
-                                  <span className={s.extraLbl}>{t('resetLbl')}</span>
-                                  <input type="date" value={ev.deadline ?? ''} onChange={(e) => upEvent(game.id, ev.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-                                  <input type="time" value={ev.deadlineTime ? utcToLocalHHMM(ev.deadlineTime) : ''} onChange={(e) => upEvent(game.id, ev.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!ev.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: ev.deadline ? 1 : 0.35 }} />
-                                  <button onClick={() => delEvent(game.id, ev.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                <div draggable onDragStart={onEvDS(game.id, ei)} onDragOver={onEvDO(game.id, ei)} onDrop={onEvDrp(game.id, ei)} onDragEnd={onEvDE} className={s.eventFormCard} style={{ ...evDrop(game.id, ei), opacity: evDrag?.gid === game.id && evDrag.from === ei ? 0.4 : 1 }}>
+                                  <div className={s.eventFormRow1}>
+                                    {DragHandle}
+                                    <input value={ev.name} onChange={(e) => upEvent(game.id, ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
+                                    <button onClick={() => delEvent(game.id, ev.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                  </div>
+                                  <div className={s.eventFormRow2}>
+                                    <span className={s.extraLbl}>{t('resetLbl')}</span>
+                                    <input type="date" value={ev.deadline ?? ''} onChange={(e) => upEvent(game.id, ev.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+                                    <input type="time" value={ev.deadlineTime ? utcToLocalHHMM(ev.deadlineTime) : ''} onChange={(e) => upEvent(game.id, ev.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!ev.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: ev.deadline ? 1 : 0.35 }} />
+                                  </div>
                                 </div>
                               </motion.div>
                             ))}
                           </AnimatePresence>
                           {addTo === `event-${game.id}` ? (
-                            <div className={s.eventFormRow}>
-                              <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') addTask(game.id); if (e.key === 'Escape') setAddTo(null); }} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} autoFocus />
-                              <span className={s.extraLbl}>{t('resetLbl')}</span>
-                              <input type="date" value={newTask.deadline ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadline: e.target.value || null }))} className={`${shared.inputCls} ${s.inputDate}`} />
-                              <input type="time" value={newTask.deadlineTime ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadlineTime: e.target.value || null }))} disabled={!newTask.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: newTask.deadline ? 1 : 0.35 }} />
-                              <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
-                              <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
+                            <div className={s.eventFormCard}>
+                              <div className={s.eventFormRow1}>
+                                <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') addTask(game.id); if (e.key === 'Escape') setAddTo(null); }} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} autoFocus />
+                              </div>
+                              <div className={s.eventFormRow2}>
+                                <span className={s.extraLbl}>{t('resetLbl')}</span>
+                                <input type="date" value={newTask.deadline ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadline: e.target.value || null }))} className={`${shared.inputCls} ${s.inputDate}`} />
+                                <input type="time" value={newTask.deadlineTime ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadlineTime: e.target.value || null }))} disabled={!newTask.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: newTask.deadline ? 1 : 0.35 }} />
+                                <div className={s.eventFormSpacer} />
+                                <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
+                                <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
+                              </div>
                             </div>
                           ) : (
                             <button onClick={() => { setAddTo(`event-${game.id}`); setNewTask({ name: '', type: 'event', deadline: null }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('events')}</button>

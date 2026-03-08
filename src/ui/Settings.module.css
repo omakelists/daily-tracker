@@ -139,3 +139,9 @@
 
 /* Date input */
 .inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
+
+/* ── イベント 2行レイアウト ─────────────────────────────────────── */
+.eventFormCard  { margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px; }
+.eventFormRow1  { display: flex; align-items: center; gap: 7px; }
+.eventFormRow2  { display: flex; align-items: center; gap: 7px; padding-left: 22px; /* align under name (past drag handle) */ }
+.eventFormSpacer { flex: 1; }

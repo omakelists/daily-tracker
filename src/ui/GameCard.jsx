@@ -174,7 +174,7 @@ export function GameCard({
         ? [
             { label: t('ctxEditEvent'),   icon: '✏️', onClick: () => {
               const ev = events.find((e) => e.id === ctxMenu.eventId);
-              if (ev) setFormState({ mode: 'editEvent', eventId: ev.id, name: ev.name, deadline: ev.deadline || '', deadlineTime: ev.deadlineTime || '', color: ev.color });
+              if (ev) setFormState({ mode: 'editEvent', eventId: ev.id, name: ev.name, deadline: ev.deadline || '', deadlineTime: ev.deadlineTime || '' });
             }},
             { separator: true },
             { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteEvent(game.id, ctxMenu.eventId) },
@@ -237,7 +237,6 @@ export function GameCard({
               )}
               {formState.mode === 'addEvent' && (
                 <InlineAddForm
-                  initialColor={game.color}
                   defaultTime={game.resetTime}
                   onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
                   onCancel={() => setFormState(null)}
@@ -248,7 +247,6 @@ export function GameCard({
                   initialName={formState.name}
                   initialDeadline={formState.deadline}
                   initialDeadlineTime={formState.deadlineTime}
-                  initialColor={formState.color}
                   defaultTime={game.resetTime}
                   submitLabel={t('save')}
                   onSave={(updates) => { onEditEvent(game.id, formState.eventId, updates); setFormState(null); }}
