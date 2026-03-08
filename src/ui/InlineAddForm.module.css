@@ -1,0 +1,90 @@
+.form {
+  padding: 8px 13px 10px;
+  background: rgba(13, 17, 23, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ─ Row 1 ─ */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.nameInput  { flex: 1; min-width: 80px; }
+
+.dateWrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.dateInput {
+  width: 130px;
+  flex-shrink: 0;
+  color-scheme: dark;
+}
+
+.timeInput {
+  width: 84px;
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+.timeDisabled { opacity: 0.35; }
+
+.colorInput {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.deadlineLbl {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─ Row 2 ─ */
+.quickRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.quickBtn {
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.quickBtn:hover { color: var(--text); }
+
+/* 月日 + ⏱ をまとめたインライン要素 */
+.deadlineInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 600;
+  flex-shrink: 0;
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
+  paint-order: stroke fill;
+}
+
+.dateLabel  { letter-spacing: 0.02em; }
+.timeLabel  { opacity: 0.85; font-size: 10px; }
+.cdLabel    { opacity: 0.9; }
+
+.spacer { flex: 1; }

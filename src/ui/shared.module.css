@@ -72,17 +72,22 @@
 
 /* ── Type badges ─────────────────────────────────────────────────── */
 .badge {
+  display: inline-flex;
+  align-items: center;
   font-size: 10px;
   border-radius: 4px;
   padding: 1px 5px;
   flex-shrink: 0;
   border: 1px solid transparent;
+  line-height: 1.4;
 }
 .badgeDaily       { color: var(--type-daily);        background: rgba(0, 0, 0, 0.4); border-color: #3a6ea8; }
 .badgeWeekly      { color: var(--type-weekly);       background: rgba(0, 0, 0, 0.4); border-color: #7a5aaa; }
 .badgeWebdaily    { color: var(--type-webdaily);     background: rgba(0, 0, 0, 0.4); border-color: #2a7a35; }
 .badgeMonthly     { color: var(--type-monthly);      background: rgba(0, 0, 0, 0.4); border-color: #a8453f; }
 .badgeHalfmonthly { color: var(--type-halfmonthly);  background: rgba(0, 0, 0, 0.4); border-color: #a86030; }
+.badgeEvent       { color: var(--warn);              background: rgba(0, 0, 0, 0.4); border-color: #7a6020; }
+.badgeTodo        { color: var(--link);              background: rgba(0, 0, 0, 0.4); border-color: #1f4e7d; }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .btn {
@@ -101,7 +106,7 @@
 .btnConfirm { color: var(--green);  border-color: rgba(63, 185, 80, 0.27); }
 
 /* ── Layout utilities ────────────────────────────────────────────── */
-.cbWrap       { flex-shrink: 0; display: flex; }
+.cbWrap       { flex-shrink: 0; display: flex; align-items: center; }
 .flexInput    { flex: 1; min-width: 0; }
 .hidden       { display: none; }
 .clipContents { overflow: hidden; }

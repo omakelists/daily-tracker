@@ -1,49 +1,138 @@
-import { useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { PERIOD_TYPES, ensureContrast, utcToLocalHHMM } from '../constants';
+import { ensureContrast, utcToLocalHHMM, localToUtcHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
+import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
 import { TaskRow } from './TaskRow';
+import { EventRow } from './EventRow';
+import { InlineAddForm } from './InlineAddForm';
+import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
 
-// Task enter/exit variants
 const taskVariants = {
   initial: { opacity: 0, height: 0 },
   animate: { opacity: 1, height: 'auto', transition: { duration: 0.2 } },
   exit:    { opacity: 0, height: 0,    transition: { duration: 0.18 } },
 };
-
-// Accordion body variants
 const bodyVariants = {
   initial: { height: 0, opacity: 0 },
   animate: { height: 'auto', opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } },
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd, collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5 }) {
-  const [cbScope, animateCb] = useAnimate();
+const DAILY_TASK_TYPES  = ['daily', 'webdaily'];
+const PERIOD_TASK_TYPES = ['weekly', 'halfmonthly', 'monthly'];
 
-  const dailyGroup    = game.tasks.filter((tk) => !PERIOD_TYPES.has(tk.type));
-  const periodGroup   = game.tasks.filter((tk) =>  PERIOD_TYPES.has(tk.type));
-  const hasDailyTasks = dailyGroup.length > 0;
+function applyOrder(items, storedOrder) {
+  const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
+  const unordered  = items.filter((x) => !orderedIds.includes(x.id));
+  return [
+    ...orderedIds.map((id) => items.find((x) => x.id === id)).filter(Boolean),
+    ...unordered,
+  ];
+}
+
+// ── タスク追加フォーム ─────────────────────────────────────────────
+function InlineTaskForm({ typeOpts, gameResetTime, onAdd, onCancel }) {
+  const [type,     setType]     = useState(typeOpts[0]);
+  const [name,     setName]     = useState('');
+  const [webReset, setWebReset] = useState(utcToLocalHHMM(gameResetTime ?? '00:00'));
+  const [monthDay, setMonthDay] = useState(1);
+  const inputRef = useRef(null);
+  useState(() => { setTimeout(() => inputRef.current?.focus(), 0); });
+
+  const submit = () => {
+    if (!name.trim()) return;
+    const task = { type, name: name.trim() };
+    if (type === 'webdaily') task.webResetTime = localToUtcHHMM(webReset);
+    if (type === 'monthly')  task.monthlyResetDay = Number(monthDay);
+    onAdd(task);
+  };
+
+  return (
+    <div className={s.taskAddForm}>
+      <div className={s.taskAddRow}>
+        {typeOpts.length > 1 && (
+          <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.taskTypeSelect}`}>
+            {typeOpts.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
+          </select>
+        )}
+        <input
+          ref={inputRef}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onCancel(); }}
+          placeholder={t(`types.${type}`)}
+          className={`${shared.inputCls} ${s.taskAddName}`}
+        />
+        {type === 'webdaily' && (
+          <><span className={s.taskAddLbl}>{t('resetLbl')}</span>
+          <input type="time" value={webReset} onChange={(e) => setWebReset(e.target.value)} className={`${shared.inputCls} ${s.taskAddTime}`} /></>
+        )}
+        {type === 'monthly' && (
+          <><span className={s.taskAddLbl}>{t('everyDay', { day: '' })}</span>
+          <input type="number" value={monthDay} min={1} max={31} onChange={(e) => setMonthDay(e.target.value)} className={`${shared.inputCls} ${s.taskAddDay}`} /></>
+        )}
+      </div>
+      <div className={s.taskAddActions}>
+        <div className={s.taskAddSpacer} />
+        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={submit} disabled={!name.trim()}>{t('add')}</button>
+        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+export function GameCard({
+  game, checks, now, onToggle, allDone, dailyTasks, cd,
+  collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
+  events = [], onAddEvent, onAddTask, onDeleteEvent, onToggleEvent, onEditEvent,
+}) {
+  const [cbScope, animateCb] = useAnimate();
+  const [ctxMenu,   setCtxMenu]   = useState(null);
+  const [formState, setFormState] = useState(null);
+
+  const closeCtx = useCallback(() => setCtxMenu(null), []);
+
+  const headerTrigger = useContextTrigger(
+    useCallback((x, y) => setCtxMenu({ x, y, target: 'header' }), [])
+  );
+  const handleEventContextMenu = useCallback((id, x, y) => {
+    setCtxMenu({ x, y, target: 'event', eventId: id });
+  }, []);
+
+  // ── Item grouping ────────────────────────────────────────────────
+  const dailyItems  = game.tasks.filter((tk) => DAILY_TASK_TYPES.includes(tk.type));
+  const periodItems = game.tasks.filter((tk) => PERIOD_TASK_TYPES.includes(tk.type));
 
   const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
 
-  // When collapsed, hide checked tasks — AnimatePresence handles their exit animation
-  const visibleDaily  = collapsed ? dailyGroup.filter((tk)  => !isChecked(tk)) : dailyGroup;
-  const visiblePeriod = collapsed ? periodGroup.filter((tk) => !isChecked(tk)) : periodGroup;
-  const hasVisible    = visibleDaily.length > 0 || visiblePeriod.length > 0;
+  const sortedDaily  = applyOrder(dailyItems,  game.dailyOrder);
+  const sortedPeriod = applyOrder(periodItems, game.periodicOrder);
+  const sortedEvents = applyOrder(events,      game.eventOrder);
+
+  const visDaily  = collapsed ? sortedDaily.filter((tk) => !isChecked(tk))  : sortedDaily;
+  const visPeriod = collapsed ? sortedPeriod.filter((tk) => !isChecked(tk)) : sortedPeriod;
+  const visEvents = collapsed ? sortedEvents.filter((ev) => !ev.done)       : sortedEvents;
 
   const allTodayDone = dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
   const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
   const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
 
-  const ms       = msUntilReset(now, game.resetTime);
-  const h        = ms / 3600000;
-  const cdColor  = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
+  const hasVisDaily  = visDaily.length > 0;
+  const hasVisPeriod = visPeriod.length > 0;
+  const hasVisEvents = visEvents.length > 0;
+  const showBody     = hasVisDaily || hasVisPeriod || hasVisEvents;
+  const showForm     = formState !== null;
+
+  const ms      = msUntilReset(now, game.resetTime);
+  const h       = ms / 3600000;
+  const cdColor = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
   const visColor = ensureContrast(game.color);
 
   const headerBg = bgDataUrl
@@ -62,96 +151,156 @@ export function GameCard({ game, checks, now, onToggle, allDone, dailyTasks, cd,
   };
 
   const wrapTask = (tk) => (
-    <motion.div
-      key={tk.id}
-      variants={taskVariants}
-      initial="initial" animate="animate" exit="exit"
-      className={shared.clipContents}
-    >
+    <motion.div key={tk.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
       <TaskRow task={tk} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} />
     </motion.div>
   );
 
+  const wrapEvent = (ev) => (
+    <motion.div key={ev.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+      <EventRow item={ev} now={now} cd={cd} onToggle={(id) => onToggleEvent(game.id, id)} onContextMenu={handleEventContextMenu} onDelete={(id) => onDeleteEvent(game.id, id)} gameResetTime={game.resetTime} />
+    </motion.div>
+  );
+
+  // ── Context menu ─────────────────────────────────────────────────
+  const ctxItems = ctxMenu
+    ? ctxMenu.target === 'header'
+      ? [
+          { label: t('ctxAddDaily'),    icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
+          { label: t('ctxAddPeriodic'), icon: '➕', onClick: () => setFormState({ mode: 'addPeriodic' }) },
+          { label: t('ctxAddEvent'),    icon: '📌', onClick: () => setFormState({ mode: 'addEvent' }) },
+        ]
+      : ctxMenu.target === 'event'
+        ? [
+            { label: t('ctxEditEvent'),   icon: '✏️', onClick: () => {
+              const ev = events.find((e) => e.id === ctxMenu.eventId);
+              if (ev) setFormState({ mode: 'editEvent', eventId: ev.id, name: ev.name, deadline: ev.deadline || '', deadlineTime: ev.deadlineTime || '', color: ev.color });
+            }},
+            { separator: true },
+            { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteEvent(game.id, ctxMenu.eventId) },
+          ]
+        : []
+    : [];
+
   return (
     <div
-      className={`${s.card}${allDone && !bgDataUrl ? ` ${s.cardDone}` : ""}`}
+      className={`${s.card}${allDone && !bgDataUrl ? ` ${s.cardDone}` : ''}`}
       style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}
+      data-game-card="true"
     >
       {bgDataUrl && <div className={s.bgLayer} style={{ backgroundImage: `url(${bgDataUrl})` }} />}
       {bgDataUrl && <div className={s.bgOverlay} style={{ opacity: bgOpacity }} />}
 
       <div className={s.content}>
-        <Row
-          bg={headerBg}
-          borderBottom={hasVisible ? '1px solid rgba(255,255,255,0.055)' : 'none'}
-          onClick={hasDailyTasks ? handleToggleCollapse : undefined}
-          className={hasDailyTasks ? s.cardClickable : undefined}
-          preSlot={hasDailyTasks ? (
-            // pointer-events: none is already set in .accordionBtn CSS
-            <motion.span
-              className={s.accordionBtn}
-              animate={{ rotate: collapsed ? -90 : 0 }}
-              transition={{ duration: 0.22 }}
-            >▼</motion.span>
-          ) : null}
-          barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
-          checkbox={
-            <button
-              ref={cbScope}
-              onClick={handleMasterClick}
-              className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ""}`}
-            >
-              {allTodayDone ? '✓' : ''}
-            </button>
-          }
-          content={
-            <span
-              className={s.gameName}
-              style={{
-                color: allDone ? 'var(--muted)' : visColor,
-                textDecoration: allDone ? 'line-through' : 'none',
-                textDecorationThickness: allDone ? '2px' : undefined,
-              }}
-            >
-              {game.name}
-            </span>
-          }
-          meta={
-            <>
-              {!allTodayDone && <span className={s.countdown} style={{ color: cdColor }}>⏱{formatCountdown(ms, cd)}</span>}
-              <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
-            </>
-          }
-          rightSlot={null}
-        />
+        {/* Header */}
+        <div {...headerTrigger}>
+          <Row
+            bg={headerBg}
+            borderBottom={showBody || showForm ? '1px solid rgba(255,255,255,0.055)' : 'none'}
+            onClick={dailyItems.length > 0 ? handleToggleCollapse : undefined}
+            className={dailyItems.length > 0 ? s.cardClickable : undefined}
+            preSlot={dailyItems.length > 0 ? (
+              <motion.span className={s.accordionBtn} animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.22 }}>▼</motion.span>
+            ) : null}
+            barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
+            checkbox={
+              <button ref={cbScope} onClick={handleMasterClick} className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ''}`}>
+                {allTodayDone ? '✓' : ''}
+              </button>
+            }
+            content={
+              <span className={s.gameName} style={{ color: allDone ? 'var(--muted)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textDecorationThickness: allDone ? '2px' : undefined }}>
+                {game.name}
+              </span>
+            }
+            meta={
+              <>
+                {!allTodayDone && <span className={s.countdown} style={{ color: cdColor }}>⏱{formatCountdown(ms, cd)}</span>}
+                <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
+              </>
+            }
+            rightSlot={null}
+          />
+        </div>
 
+        {/* Inline form */}
         <AnimatePresence initial={false}>
-          {hasDailyTasks && hasVisible && (
-            <motion.div
-              key="body"
-              variants={bodyVariants}
-              initial="initial" animate="animate" exit="exit"
-              className={shared.clipContents}
-            >
-              <div className={`${s.body}${bgDataUrl ? ` ${s.bodyWithBg}` : ""}`}>
-                <AnimatePresence mode="popLayout" initial={false}>
-                  {visibleDaily.map(wrapTask)}
-                </AnimatePresence>
+          {showForm && (
+            <motion.div key="form" variants={bodyVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+              {(formState.mode === 'addDaily' || formState.mode === 'addPeriodic') && (
+                <InlineTaskForm
+                  typeOpts={formState.mode === 'addDaily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
+                  gameResetTime={game.resetTime}
+                  onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                  onCancel={() => setFormState(null)}
+                />
+              )}
+              {formState.mode === 'addEvent' && (
+                <InlineAddForm
+                  initialColor={game.color}
+                  defaultTime={game.resetTime}
+                  onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
+                  onCancel={() => setFormState(null)}
+                />
+              )}
+              {formState.mode === 'editEvent' && (
+                <InlineAddForm
+                  initialName={formState.name}
+                  initialDeadline={formState.deadline}
+                  initialDeadlineTime={formState.deadlineTime}
+                  initialColor={formState.color}
+                  defaultTime={game.resetTime}
+                  submitLabel={t('save')}
+                  onSave={(updates) => { onEditEvent(game.id, formState.eventId, updates); setFormState(null); }}
+                  onCancel={() => setFormState(null)}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                {visibleDaily.length > 0 && visiblePeriod.length > 0 && (
-                  <div className={s.divider}>
-                    <span className={s.sepLabel}>— {t('periodic')} —</span>
-                  </div>
+        {/* Body */}
+        <AnimatePresence initial={false}>
+          {showBody && (
+            <motion.div key="body" variants={bodyVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+              <div className={`${s.body}${bgDataUrl ? ` ${s.bodyWithBg}` : ''}`}>
+
+                {/* Section 1: Daily / WebDaily */}
+                {hasVisDaily && (
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {visDaily.map(wrapTask)}
+                  </AnimatePresence>
                 )}
 
-                <AnimatePresence mode="popLayout" initial={false}>
-                  {visiblePeriod.map(wrapTask)}
-                </AnimatePresence>
+                {/* Section 2: Periodic tasks */}
+                {hasVisPeriod && (
+                  <>
+                    <div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {visPeriod.map(wrapTask)}
+                    </AnimatePresence>
+                  </>
+                )}
+
+                {/* Section 3: Events */}
+                {hasVisEvents && (
+                  <>
+                    <div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {visEvents.map(wrapEvent)}
+                    </AnimatePresence>
+                  </>
+                )}
+
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {ctxMenu && <ContextMenu key="ctx" x={ctxMenu.x} y={ctxMenu.y} items={ctxItems} onClose={closeCtx} />}
+      </AnimatePresence>
     </div>
   );
 }

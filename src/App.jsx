@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
-import { DEFAULT_GAMES, DAILY_TYPES } from './constants';
+import { DEFAULT_GAMES, DAILY_TYPES, uid } from './constants';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset } from './util/helpers';
@@ -26,7 +26,7 @@ export function App() {
       return v ? new Set(JSON.parse(v)) : new Set();
     } catch { return new Set(); }
   });
-  const [updateInfo,   setUpdateInfo]   = useState(null);
+  const [updateInfo, setUpdateInfo] = useState(null);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
   const [wcoEnabled, setWcoEnabledState] = useState(() => {
@@ -158,14 +158,9 @@ export function App() {
     }
   }, [now, games, isAllDone]);
 
-  const sorted = (games ?? []).slice().sort((a, b) => {
-    const aD = isAllDone(a), bD = isAllDone(b);
-    return aD === bD ? 0 : aD ? 1 : -1;
-  });
-
   const toggle = useCallback((taskId, game, isMaster = false) => {
     let shouldCollapse = false;
-    let sound = null; // decided inside updater, played once outside
+    let sound = null;
     const applyUpdates = () => {
       flushSync(() => {
         setChecks((prev) => {
@@ -194,7 +189,6 @@ export function App() {
           return next;
         });
       });
-      // Play sound after state update — never inside the updater function
       if (sound === 'allDone') playAllDoneSound();
       else if (sound === 'check') playCheckSound();
       if (shouldCollapse) flushSync(() => setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; }));
@@ -214,6 +208,32 @@ export function App() {
   }, []);
 
   const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
+
+  const addEvent = useCallback((gameId, event) => {
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, events: [...(g.events ?? []), event] } : g));
+  }, []);
+
+  const addTask = useCallback((gameId, task) => {
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, tasks: [...g.tasks, { id: uid(), ...task }] } : g));
+  }, []);
+
+  const deleteEvent = useCallback((gameId, eventId) => {
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, events: (g.events ?? []).filter((e) => e.id !== eventId) } : g));
+  }, []);
+
+  const toggleEvent = useCallback((gameId, eventId) => {
+    setGames((prev) => prev.map((g) => {
+      if (g.id !== gameId) return g;
+      return { ...g, events: (g.events ?? []).map((e) => e.id === eventId ? { ...e, done: !e.done } : e) };
+    }));
+  }, []);
+
+  const editEvent = useCallback((gameId, eventId, updates) => {
+    setGames((prev) => prev.map((g) => g.id === gameId
+      ? { ...g, events: (g.events ?? []).map((e) => e.id === eventId ? { ...e, ...updates } : e) }
+      : g
+    ));
+  }, []);
 
   if (!games) return <div className={s.loading}>{t('loading')}</div>;
 
@@ -254,17 +274,25 @@ export function App() {
       {wcoVisible && <div className={s.wcoOffset} />}
 
       <main className={s.main}>
-        {sorted.map((game) => (
-          <GameCard
-            key={game.id}
-            game={game} checks={checks} now={now} onToggle={toggle}
-            allDone={isAllDone(game)} dailyTasks={getDailyTasks(game)} cd={cd}
-            collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
-            bgDataUrl={gameBgs[game.id]?.dataUrl || null}
-            bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}
-          />
-        ))}
-        {games.length === 0 && <div className={s.noGames}>{t('noGames')}</div>}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {(games ?? []).map((game) => (
+            <GameCard
+              key={`game-${game.id}`}
+              game={game} checks={checks} now={now} onToggle={toggle}
+              allDone={isAllDone(game)} dailyTasks={getDailyTasks(game)} cd={cd}
+              collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
+              bgDataUrl={gameBgs[game.id]?.dataUrl || null}
+              bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}
+              events={game.events ?? []}
+              onAddEvent={addEvent}
+              onAddTask={addTask}
+              onDeleteEvent={deleteEvent}
+              onToggleEvent={toggleEvent}
+              onEditEvent={editEvent}
+            />
+          ))}
+        </AnimatePresence>
+        {(games ?? []).length === 0 && <div className={s.noGames}>{t('noGames')}</div>}
       </main>
 
       <AnimatePresence>

@@ -25,9 +25,10 @@
   "types": {
     "daily": "每日",
     "weekly": "每週",
-    "webdaily": "網頁每日",
+    "webdaily": "Web 每日",
     "monthly": "每月",
-    "halfmonthly": "半月"
+    "halfmonthly": "半月",
+    "event": "活動"
   },
   "cd": {
     "d": "天",
@@ -68,5 +69,27 @@
     "rotateCCW": "逆時針旋轉",
     "rotateCW": "順時針旋轉"
   },
-  "loadBtn": "匯入"
+  "loadBtn": "匯入",
+  "events": "活動",
+  "expired": "已過期",
+  "eventName": "活動名稱",
+  "todoName": "待辦",
+  "todoPlaceholder": "待辦名稱",
+  "save": "儲存",
+  "ctxAddEvent": "新增活動",
+  "ctxEditEvent": "編輯活動",
+  "ctxDeleteEvent": "刪除活動",
+  "ctxAddTodo": "新增待辦",
+  "ctxEditTodo": "編輯待辦",
+  "ctxDeleteTodo": "刪除待辦",
+  "label": "標籤",
+  "addSchedule": "+ 新增計劃",
+  "scheduleLabel": "標籤",
+  "ctxAddSchedule": "新增計劃",
+  "ctxEditSchedule": "編輯計劃",
+  "ctxDeleteSchedule": "刪除計劃",
+  "dateFmt": "{m}月{d}日",
+  "ctxAddTask": "添加任务",
+  "ctxAddDaily": "新增每日任務",
+  "ctxAddPeriodic": "新增定期任務"
 }

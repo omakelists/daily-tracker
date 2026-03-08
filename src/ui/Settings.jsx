@@ -23,10 +23,10 @@ const taskItemVariants = {
   exit:    { opacity: 0, height: 0,      transition: { duration: 0.13 } },
 };
 
-function TypeSelect({ value, onChange }) {
+function TypeSelect({ value, onChange, typeOpts = TYPE_OPTS }) {
   return (
     <select value={value} onChange={onChange} className={`${shared.inputCls} ${s.typeSelect}`}>
-      {TYPE_OPTS.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
+      {typeOpts.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
     </select>
   );
 }
@@ -91,10 +91,10 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 
 // ── SettingsModal ─────────────────────────────────────────────────
 export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages }) {
-  const [newGame,     setNewGame]     = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
-  const [showNG,      setShowNG]      = useState(false);
-  const [newTask,     setNewTask]     = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
-  const [addTo,       setAddTo]       = useState(null);
+  const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
+  const [showNG,   setShowNG]   = useState(false);
+  const [newTask,  setNewTask]  = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
+  const [addTo,    setAddTo]    = useState(null);
   const importRef = useRef(null);
 
   const [cropFile,     setCropFile]     = useState(null);
@@ -156,6 +156,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const [dgFrom, setDgFrom] = useState(null);
   const [dgOver, setDgOver] = useState(null);
   const [dtDrag, setDtDrag] = useState(null);
+  const [evDrag, setEvDrag] = useState(null); // events D&D within Settings
 
   const upGame  = (id, f, v) => setGames((g) => g.map((gm) => gm.id === id ? { ...gm, [f]: v } : gm));
   const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), async () => {
@@ -173,15 +174,48 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const upTask  = (gid, tid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.map((tk) => tk.id === tid ? { ...tk, [f]: v } : tk) } : gm));
   const delTask = (gid, tid) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm));
   const addTask = (gid) => {
-    setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...newTask }] } : gm));
+    if (newTask.type === 'event') {
+      // Events stored in game.events[], not tasks[]
+      setGames((g) => g.map((gm) => gm.id === gid
+        ? { ...gm, events: [...(gm.events ?? []), {
+            id: uid(), type: 'event',
+            name: newTask.name,
+            deadline: newTask.deadline ?? null,
+            deadlineTime: (newTask.deadline && newTask.deadlineTime) ? localToUtcHHMM(newTask.deadlineTime) : null,
+          }] }
+        : gm
+      ));
+    } else {
+      setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...newTask }] } : gm));
+    }
     setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); setAddTo(null);
   };
   const openAddTask = (gid) => { setAddTo(gid); setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); };
+
+  // Event operations (game.events[])
+  const upEvent  = (gid, eid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).map((ev) => ev.id === eid ? { ...ev, [f]: v } : ev) } : gm));
+  const delEvent = (gid, eid)       => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).filter((ev) => ev.id !== eid) } : gm));
 
   const onGameDS  = (i) => (e) => { setDgFrom(i); setDgOver(i); e.dataTransfer.effectAllowed = 'move'; };
   const onGameDO  = (i) => (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dgFrom != null) setDgOver(i); };
   const onGameDrp = (i) => (e) => { e.preventDefault(); if (dgFrom == null || dgFrom === i) { setDgFrom(null); setDgOver(null); return; } setGames((g) => { const a = [...g], [it] = a.splice(dgFrom, 1); a.splice(i, 0, it); return a; }); setDgFrom(null); setDgOver(null); };
   const onGameDE  = () => { setDgFrom(null); setDgOver(null); };
+
+  const onEvDS  = (gid, i) => (e) => { setEvDrag({ gid, from: i, over: i }); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); };
+  const onEvDO  = (gid, i) => (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; if (evDrag?.gid === gid) setEvDrag((p) => ({ ...p, over: i })); };
+  const onEvDrp = (gid, i) => (e) => {
+    e.preventDefault();
+    if (!evDrag || evDrag.gid !== gid || evDrag.from === i) { setEvDrag(null); return; }
+    setGames((g) => g.map((gm) => {
+      if (gm.id !== gid) return gm;
+      const evs = [...(gm.events ?? [])], [it] = evs.splice(evDrag.from, 1);
+      evs.splice(i, 0, it);
+      return { ...gm, events: evs };
+    }));
+    setEvDrag(null);
+  };
+  const onEvDE  = () => setEvDrag(null);
+  const evDrop  = (gid, i) => ({ borderTop: evDrag?.gid === gid && evDrag.over === i && evDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
 
   const onTaskDS  = (gid, i) => (e) => { setDtDrag({ gid, from: i, over: i }); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); };
   const onTaskDO  = (gid, i) => (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; if (dtDrag?.gid === gid) setDtDrag((p) => ({ ...p, over: i })); };
@@ -243,41 +277,115 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   </div>
 
                   <div className={s.gameBody}>
-                    <AnimatePresence initial={false}>
-                      {game.tasks.map((task, ti) => (
-                        <motion.div
-                          key={task.id}
-                          variants={taskItemVariants}
-                          initial="initial" animate="animate" exit="exit"
-                          className={shared.clipContents}
-                        >
-                          <div
-                            draggable
-                            onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE}
-                            className={s.taskFormRow}
-                            style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1, transition: 'opacity 0.15s' }}
-                          >
-                            {DragHandle}
-                            <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} />
-                            <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
-                            <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
-                            <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                    {/* ── Section 1: デイリー / Webデイリー ── */}
+                    {(() => {
+                      const dailyTasks = game.tasks.filter((t) => t.type === 'daily' || t.type === 'webdaily');
+                      return (
+                        <>
+                          {dailyTasks.length > 0 && <div className={s.eventSep}>— {t('types.daily')} —</div>}
+                          <AnimatePresence initial={false}>
+                            {dailyTasks.map((task) => {
+                              const ti = game.tasks.indexOf(task);
+                              return (
+                                <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                                  <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
+                                    {DragHandle}
+                                    <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['daily','webdaily']} />
+                                    <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
+                                    <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
+                                    <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
+                          {addTo === `daily-${game.id}` ? (
+                            <div className={s.addTaskFormRow}>
+                              <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} typeOpts={['daily','webdaily']} />
+                              <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${newTask.type}`)} autoFocus />
+                              <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
+                              <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
+                              <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setAddTo(`daily-${game.id}`); setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('types.daily')}</button>
+                          )}
+                        </>
+                      );
+                    })()}
 
-                    {addTo === game.id ? (
-                      <div className={s.addTaskFormRow}>
-                        <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} />
-                        <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${newTask.type}`)} autoFocus />
-                        <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
-                        <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
-                        <button onClick={() => setAddTo(null)}   className={shared.btn}>✕</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => openAddTask(game.id)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>{t('addTask')}</button>
-                    )}
+                    {/* ── Section 2: 定期タスク ── */}
+                    {(() => {
+                      const periodTasks = game.tasks.filter((t) => t.type === 'weekly' || t.type === 'halfmonthly' || t.type === 'monthly');
+                      return (
+                        <>
+                          {periodTasks.length > 0 && <div className={s.eventSep}>— {t('periodic')} —</div>}
+                          <AnimatePresence initial={false}>
+                            {periodTasks.map((task) => {
+                              const ti = game.tasks.indexOf(task);
+                              return (
+                                <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                                  <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
+                                    {DragHandle}
+                                    <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['weekly','halfmonthly','monthly']} />
+                                    <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
+                                    <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
+                                    <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
+                          {addTo === `periodic-${game.id}` ? (
+                            <div className={s.addTaskFormRow}>
+                              <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} typeOpts={['weekly','halfmonthly','monthly']} />
+                              <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${newTask.type}`)} autoFocus />
+                              <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
+                              <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
+                              <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setAddTo(`periodic-${game.id}`); setNewTask({ name: '', type: 'weekly', webResetTime: '00:00', monthlyResetDay: 1 }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('periodic')}</button>
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    {/* ── Section 3: イベント ── */}
+                    {(() => {
+                      const evList = game.events ?? [];
+                      return (
+                        <>
+                          {(evList.length > 0 || addTo === `event-${game.id}`) && <div className={s.eventSep}>— {t('events')} —</div>}
+                          <AnimatePresence initial={false}>
+                            {evList.map((ev, ei) => (
+                              <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                                <div draggable onDragStart={onEvDS(game.id, ei)} onDragOver={onEvDO(game.id, ei)} onDrop={onEvDrp(game.id, ei)} onDragEnd={onEvDE} className={s.eventFormRow} style={{ ...evDrop(game.id, ei), opacity: evDrag?.gid === game.id && evDrag.from === ei ? 0.4 : 1 }}>
+                                  {DragHandle}
+                                  <input value={ev.name} onChange={(e) => upEvent(game.id, ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
+                                  <span className={s.extraLbl}>{t('resetLbl')}</span>
+                                  <input type="date" value={ev.deadline ?? ''} onChange={(e) => upEvent(game.id, ev.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+                                  <input type="time" value={ev.deadlineTime ? utcToLocalHHMM(ev.deadlineTime) : ''} onChange={(e) => upEvent(game.id, ev.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!ev.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: ev.deadline ? 1 : 0.35 }} />
+                                  <button onClick={() => delEvent(game.id, ev.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                          {addTo === `event-${game.id}` ? (
+                            <div className={s.eventFormRow}>
+                              <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') addTask(game.id); if (e.key === 'Escape') setAddTo(null); }} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} autoFocus />
+                              <span className={s.extraLbl}>{t('resetLbl')}</span>
+                              <input type="date" value={newTask.deadline ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadline: e.target.value || null }))} className={`${shared.inputCls} ${s.inputDate}`} />
+                              <input type="time" value={newTask.deadlineTime ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadlineTime: e.target.value || null }))} disabled={!newTask.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: newTask.deadline ? 1 : 0.35 }} />
+                              <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
+                              <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setAddTo(`event-${game.id}`); setNewTask({ name: '', type: 'event', deadline: null }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('events')}</button>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </motion.div>

@@ -27,7 +27,8 @@
     "weekly": "Weekly",
     "webdaily": "Web Daily",
     "monthly": "Monthly",
-    "halfmonthly": "Biweekly"
+    "halfmonthly": "Half-Monthly",
+    "event": "Event"
   },
   "cd": {
     "d": "d",
@@ -68,5 +69,27 @@
     "rotateCCW": "Rotate counter-clockwise",
     "rotateCW": "Rotate clockwise"
   },
-  "loadBtn": "Load"
+  "loadBtn": "Load",
+  "events": "Events",
+  "expired": "Expired",
+  "eventName": "Event name",
+  "todoName": "To-do",
+  "todoPlaceholder": "To-do name",
+  "save": "Save",
+  "ctxAddEvent": "Add event",
+  "ctxEditEvent": "Edit event",
+  "ctxDeleteEvent": "Delete event",
+  "ctxAddTodo": "Add to-do",
+  "ctxEditTodo": "Edit to-do",
+  "ctxDeleteTodo": "Delete to-do",
+  "label": "Label",
+  "addSchedule": "+ Add schedule",
+  "scheduleLabel": "Label",
+  "ctxAddSchedule": "Add schedule",
+  "ctxEditSchedule": "Edit schedule",
+  "ctxDeleteSchedule": "Delete schedule",
+  "dateFmt": "{m}/{d}",
+  "ctxAddTask": "Add task",
+  "ctxAddDaily": "Add daily task",
+  "ctxAddPeriodic": "Add periodic task"
 }

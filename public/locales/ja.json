@@ -27,7 +27,8 @@
     "weekly": "ウィークリー",
     "webdaily": "Webデイリー",
     "monthly": "マンスリー",
-    "halfmonthly": "半月"
+    "halfmonthly": "半月",
+    "event": "イベント"
   },
   "cd": {
     "d": "日",
@@ -68,5 +69,27 @@
     "rotateCCW": "反時計回り",
     "rotateCW": "時計回り"
   },
-  "loadBtn": "読み込む"
+  "loadBtn": "読み込む",
+  "events": "イベント",
+  "expired": "期限切れ",
+  "eventName": "イベント名",
+  "todoName": "TODO",
+  "todoPlaceholder": "TODO名",
+  "save": "保存",
+  "ctxAddEvent": "イベントを追加",
+  "ctxEditEvent": "イベントを編集",
+  "ctxDeleteEvent": "イベントを削除",
+  "ctxAddTodo": "TODOを追加",
+  "ctxEditTodo": "TODOを編集",
+  "ctxDeleteTodo": "TODOを削除",
+  "label": "ラベル",
+  "addSchedule": "+ 予定を追加",
+  "scheduleLabel": "ラベル",
+  "ctxAddSchedule": "予定を追加",
+  "ctxEditSchedule": "予定を編集",
+  "ctxDeleteSchedule": "予定を削除",
+  "dateFmt": "{m}月{d}日",
+  "ctxAddTask": "タスクを追加",
+  "ctxAddDaily": "デイリーを追加",
+  "ctxAddPeriodic": "定期タスクを追加"
 }

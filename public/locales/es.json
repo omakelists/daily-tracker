@@ -27,7 +27,8 @@
     "weekly": "Semanal",
     "webdaily": "Web Diario",
     "monthly": "Mensual",
-    "halfmonthly": "Quincenal"
+    "halfmonthly": "Quincenal",
+    "event": "Evento"
   },
   "cd": {
     "d": "d",
@@ -68,5 +69,27 @@
     "rotateCCW": "Rotar antihorario",
     "rotateCW": "Rotar horario"
   },
-  "loadBtn": "Cargar"
+  "loadBtn": "Cargar",
+  "events": "Eventos",
+  "expired": "Vencido",
+  "eventName": "Nombre del evento",
+  "todoName": "Tareas",
+  "todoPlaceholder": "Nombre de tarea",
+  "save": "Guardar",
+  "ctxAddEvent": "Agregar evento",
+  "ctxEditEvent": "Editar evento",
+  "ctxDeleteEvent": "Eliminar evento",
+  "ctxAddTodo": "Agregar tarea",
+  "ctxEditTodo": "Editar tarea",
+  "ctxDeleteTodo": "Eliminar tarea",
+  "label": "Etiqueta",
+  "addSchedule": "+ Agregar horario",
+  "scheduleLabel": "Etiqueta",
+  "ctxAddSchedule": "Agregar horario",
+  "ctxEditSchedule": "Editar horario",
+  "ctxDeleteSchedule": "Eliminar horario",
+  "dateFmt": "{d}/{m}",
+  "ctxAddTask": "Agregar tarea",
+  "ctxAddDaily": "Agregar tarea diaria",
+  "ctxAddPeriodic": "Agregar tarea periódica"
 }

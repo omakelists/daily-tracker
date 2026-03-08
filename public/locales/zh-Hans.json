@@ -25,9 +25,10 @@
   "types": {
     "daily": "每日",
     "weekly": "每周",
-    "webdaily": "网页每日",
+    "webdaily": "Web 每日",
     "monthly": "每月",
-    "halfmonthly": "半月"
+    "halfmonthly": "半月",
+    "event": "活动"
   },
   "cd": {
     "d": "天",
@@ -68,5 +69,27 @@
     "rotateCCW": "逆时针旋转",
     "rotateCW": "顺时针旋转"
   },
-  "loadBtn": "导入"
+  "loadBtn": "导入",
+  "events": "活动",
+  "expired": "已过期",
+  "eventName": "活动名称",
+  "todoName": "待办",
+  "todoPlaceholder": "待办名称",
+  "save": "保存",
+  "ctxAddEvent": "添加活动",
+  "ctxEditEvent": "编辑活动",
+  "ctxDeleteEvent": "删除活动",
+  "ctxAddTodo": "添加待办",
+  "ctxEditTodo": "编辑待办",
+  "ctxDeleteTodo": "删除待办",
+  "label": "标签",
+  "addSchedule": "+ 添加计划",
+  "scheduleLabel": "标签",
+  "ctxAddSchedule": "添加计划",
+  "ctxEditSchedule": "编辑计划",
+  "ctxDeleteSchedule": "删除计划",
+  "dateFmt": "{m}月{d}日",
+  "ctxAddTask": "添加任务",
+  "ctxAddDaily": "添加每日任务",
+  "ctxAddPeriodic": "添加定期任务"
 }

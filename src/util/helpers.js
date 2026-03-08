@@ -154,6 +154,21 @@ export function formatCountdown(ms, cd) {
 
 export const checkKey = (id, pk) => `${id}__${pk}`;
 
+/** ms until the deadline.
+ *  dateStr  = 'YYYY-MM-DD'
+ *  timeUtc  = 'HH:MM' in UTC (optional). If omitted, uses end-of-local-day (midnight next day).
+ */
+export function msUntilDeadline(dateStr, now, timeUtc) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if (timeUtc && timeUtc.includes(':')) {
+    const [th, tm] = timeUtc.split(':').map(Number);
+    // Build a local Date for that date at the given UTC time
+    const deadline = new Date(Date.UTC(y, m - 1, d, th, tm, 0, 0));
+    return deadline - now;
+  }
+  return new Date(y, m - 1, d + 1, 0, 0, 0, 0) - now;
+}
+
 // ── Sound effects ──────────────────────────────────────────────────
 export function playCheckSound() {
   try {
@@ -180,4 +195,14 @@ export function playAllDoneSound() {
       o.start(t); o.stop(t + 0.3);
     });
   } catch {}
+}
+
+/** Locale-aware deadline date formatter.
+ *  Uses the dateFmt key from i18n, e.g. ja "{m}月{d}日", en "{m}/{d}".
+ *  Import t from i18n at call site or pass a pre-fetched format string.
+ */
+export function fmtDeadlineDate(dateStr, tFn) {
+  if (!dateStr) return '';
+  const [, m, d] = dateStr.split('-').map(Number);
+  return tFn('dateFmt', { m, d });
 }

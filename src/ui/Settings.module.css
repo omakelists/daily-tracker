@@ -128,3 +128,14 @@
 /* ── Task / form rows ────────────────────────────────────────────── */
 .taskFormRow    { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
 .addTaskFormRow { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+.eventSep {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  padding: 6px 0 4px;
+  user-select: none;
+}
+.eventFormRow { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+
+/* Date input */
+.inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
