@@ -5,6 +5,7 @@ import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal } from './UI';
 import { CropModal } from './CropModal';
+import { InlineAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
@@ -93,7 +94,6 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
-  const [newTask,  setNewTask]  = useState({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 });
   const [addTo,    setAddTo]    = useState(null);
   const importRef = useRef(null);
 
@@ -173,24 +173,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
   const upTask  = (gid, tid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.map((tk) => tk.id === tid ? { ...tk, [f]: v } : tk) } : gm));
   const delTask = (gid, tid) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm));
-  const addTask = (gid) => {
-    if (newTask.type === 'event') {
-      // Events stored in game.events[], not tasks[]
-      setGames((g) => g.map((gm) => gm.id === gid
-        ? { ...gm, events: [...(gm.events ?? []), {
-            id: uid(), type: 'event',
-            name: newTask.name,
-            deadline: newTask.deadline ?? null,
-            deadlineTime: (newTask.deadline && newTask.deadlineTime) ? localToUtcHHMM(newTask.deadlineTime) : null,
-          }] }
-        : gm
-      ));
-    } else {
-      setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...newTask }] } : gm));
-    }
-    setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); setAddTo(null);
-  };
-  const openAddTask = (gid) => { setAddTo(gid); setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); };
 
   // Event operations (game.events[])
   const upEvent  = (gid, eid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).map((ev) => ev.id === eid ? { ...ev, [f]: v } : ev) } : gm));
@@ -300,15 +282,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                             })}
                           </AnimatePresence>
                           {addTo === `daily-${game.id}` ? (
-                            <div className={s.addTaskFormRow}>
-                              <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} typeOpts={['daily','webdaily']} />
-                              <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${newTask.type}`)} autoFocus />
-                              <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
-                              <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
-                              <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
-                            </div>
+                            <InlineAddForm
+                              typeOpts={['daily', 'webdaily']}
+                              gameResetTime={game.resetTime}
+                              onAdd={(task) => {
+                                setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...task }] } : gm));
+                                setAddTo(null);
+                              }}
+                              onCancel={() => setAddTo(null)}
+                            />
                           ) : (
-                            <button onClick={() => { setAddTo(`daily-${game.id}`); setNewTask({ name: '', type: 'daily', webResetTime: '00:00', monthlyResetDay: 1 }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('types.daily')}</button>
+                            <button onClick={() => setAddTo(`daily-${game.id}`)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('types.daily')}</button>
                           )}
                         </>
                       );
@@ -337,15 +321,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                             })}
                           </AnimatePresence>
                           {addTo === `periodic-${game.id}` ? (
-                            <div className={s.addTaskFormRow}>
-                              <TypeSelect value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value }))} typeOpts={['weekly','halfmonthly','monthly']} />
-                              <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addTask(game.id)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${newTask.type}`)} autoFocus />
-                              <TaskExtraFields task={newTask} onChange={(f, v) => setNewTask((p) => ({ ...p, [f]: v }))} />
-                              <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
-                              <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
-                            </div>
+                            <InlineAddForm
+                              typeOpts={['weekly', 'halfmonthly', 'monthly']}
+                              gameResetTime={game.resetTime}
+                              onAdd={(task) => {
+                                setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...task }] } : gm));
+                                setAddTo(null);
+                              }}
+                              onCancel={() => setAddTo(null)}
+                            />
                           ) : (
-                            <button onClick={() => { setAddTo(`periodic-${game.id}`); setNewTask({ name: '', type: 'weekly', webResetTime: '00:00', monthlyResetDay: 1 }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('periodic')}</button>
+                            <button onClick={() => setAddTo(`periodic-${game.id}`)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('periodic')}</button>
                           )}
                         </>
                       );
@@ -376,21 +362,16 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                             ))}
                           </AnimatePresence>
                           {addTo === `event-${game.id}` ? (
-                            <div className={s.eventFormCard}>
-                              <div className={s.eventFormRow1}>
-                                <input value={newTask.name} onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') addTask(game.id); if (e.key === 'Escape') setAddTo(null); }} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} autoFocus />
-                              </div>
-                              <div className={s.eventFormRow2}>
-                                <span className={s.extraLbl}>{t('resetLbl')}</span>
-                                <input type="date" value={newTask.deadline ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadline: e.target.value || null }))} className={`${shared.inputCls} ${s.inputDate}`} />
-                                <input type="time" value={newTask.deadlineTime ?? ''} onChange={(e) => setNewTask((p) => ({ ...p, deadlineTime: e.target.value || null }))} disabled={!newTask.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: newTask.deadline ? 1 : 0.35 }} />
-                                <div className={s.eventFormSpacer} />
-                                <button onClick={() => addTask(game.id)} className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>
-                                <button onClick={() => setAddTo(null)} className={shared.btn}>✕</button>
-                              </div>
-                            </div>
+                            <InlineAddForm
+                              defaultTime={game.resetTime}
+                              onAdd={(item) => {
+                                setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, events: [...(gm.events ?? []), { ...item, type: 'event' }] } : gm));
+                                setAddTo(null);
+                              }}
+                              onCancel={() => setAddTo(null)}
+                            />
                           ) : (
-                            <button onClick={() => { setAddTo(`event-${game.id}`); setNewTask({ name: '', type: 'event', deadline: null }); }} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('events')}</button>
+                            <button onClick={() => setAddTo(`event-${game.id}`)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('events')}</button>
                           )}
                         </>
                       );
