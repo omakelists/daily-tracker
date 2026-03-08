@@ -7,21 +7,21 @@
   gap: 6px;
 }
 
-/* ─ Row 1 ─ */
+/* ─ Row 1: name only ─ */
 .row {
   display: flex;
   align-items: center;
   gap: 7px;
-  flex-wrap: wrap;
 }
 
-.nameInput  { flex: 1; min-width: 80px; }
+.nameInput  { flex: 1; min-width: 0; }
 
-.dateWrap {
+/* ─ Row 2: date + actions ─ */
+.actionRow {
   display: flex;
   align-items: center;
   gap: 5px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .dateInput {
@@ -55,7 +55,7 @@
   flex-shrink: 0;
 }
 
-/* ─ Row 2 ─ */
+/* ─ Row 3: quick +N day buttons ─ */
 .quickRow {
   display: flex;
   align-items: center;

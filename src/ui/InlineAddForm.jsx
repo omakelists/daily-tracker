@@ -180,7 +180,7 @@ export function InlineAddForm({
   // ── Event mode ───────────────────────────────────────────────────
   return (
     <div className={s.form}>
-      {/* Row 1: [color] [name] [date] [time] */}
+      {/* Row 1: [color] [name] — full width */}
       <div className={s.row}>
         {showColor && (
           <input
@@ -198,25 +198,41 @@ export function InlineAddForm({
           placeholder={t('scheduleLabel')}
           className={`${shared.inputCls} ${s.nameInput}`}
         />
-        <div className={s.dateWrap}>
-          <span className={s.deadlineLbl}>{t('resetLbl')}</span>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className={`${shared.inputCls} ${s.dateInput}`}
-          />
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            disabled={!date}
-            className={`${shared.inputCls} ${s.timeInput}${!date ? ` ${s.timeDisabled}` : ''}`}
-          />
-        </div>
       </div>
 
-      {/* Row 2: [+N day buttons] [⏱ countdown] ─spacer─ [add/save] [cancel] */}
+      {/* Row 2: Reset [date] [time] [⏱countdown] ─spacer─ [add] [cancel] */}
+      <div className={s.actionRow}>
+        <span className={s.deadlineLbl}>{t('resetLbl')}</span>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => handleDateChange(e.target.value)}
+          className={`${shared.inputCls} ${s.dateInput}`}
+        />
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          disabled={!date}
+          className={`${shared.inputCls} ${s.timeInput}${!date ? ` ${s.timeDisabled}` : ''}`}
+        />
+        {date && deadlineMs !== null && (
+          <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
+            {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, getCd())}`}
+          </span>
+        )}
+        <div className={s.spacer} />
+        <button
+          className={`${shared.btn} ${shared.btnConfirm}`}
+          onClick={handleSubmit}
+          disabled={!name.trim()}
+        >
+          {submitLabel ?? t('add')}
+        </button>
+        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
+      </div>
+
+      {/* Row 3: [+N day quick buttons] */}
       <div className={s.quickRow}>
         {[1, 2, 5, 10].map((n) => (
           <button
@@ -231,22 +247,6 @@ export function InlineAddForm({
             +{n}{t('cd.d')}
           </button>
         ))}
-
-        {date && deadlineMs !== null && (
-          <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
-            {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, getCd())}`}
-          </span>
-        )}
-
-        <div className={s.spacer} />
-        <button
-          className={`${shared.btn} ${shared.btnConfirm}`}
-          onClick={handleSubmit}
-          disabled={!name.trim()}
-        >
-          {submitLabel ?? t('add')}
-        </button>
-        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
       </div>
     </div>
   );
