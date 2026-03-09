@@ -1,6 +1,6 @@
 import { useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { DAILY_TYPES, utcToLocalHHMM } from '../constants';
+import { DAILY_TYPES, EVENT_TYPES, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, fmtDeadlineDate, checkKey, playCheckSound } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
@@ -16,8 +16,6 @@ const BADGE_MAP = {
   event:       shared.badgeEvent,
   todo:        shared.badgeTodo,
 };
-
-const EVENT_TYPES = new Set(['event', 'todo']);
 
 /**
  * Unified row component for both tasks and events/todos.

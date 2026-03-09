@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM, EVENT_TYPES } from '../constants';
+import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { CropModal } from './CropModal';
@@ -10,8 +10,8 @@ import { InlineAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
-const DAILY_TYPE_OPTS    = ['daily', 'webdaily'];
-const PERIODIC_TYPE_OPTS = ['weekly', 'halfmonthly', 'monthly'];
+const DAILY_TYPE_OPTS    = [...DAILY_TYPES];
+const PERIODIC_TYPE_OPTS = [...PERIOD_TYPES];
 const DragHandle = <span className={s.dragHandle}>⠿</span>;
 
 // Shared item variants for game/task rows
