@@ -4,7 +4,7 @@ import { t } from '../util/i18n';
 import { ensureContrast, utcToLocalHHMM } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
-import { Row, PrevBar } from './UI';
+import { Row, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow';
 import { InlineAddForm } from './InlineAddForm';
 import { ContextMenu } from './ContextMenu';
@@ -16,6 +16,18 @@ const taskVariants = {
   animate: { opacity: 1, height: 'auto', transition: { duration: 0.2 } },
   exit:    { opacity: 0, height: 0,    transition: { duration: 0.18 } },
 };
+
+// Wraps an InlineAddForm in an animated motion.div for GameCard's addSlot.
+// Passing `false` as `form` lets AnimatePresence animate the exit cleanly.
+const animatedForm = (key, form) => (
+  <AnimatePresence initial={false}>
+    {form && (
+      <motion.div key={key} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+        {form}
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 const bodyVariants = {
   initial: { height: 0, opacity: 0 },
   animate: { height: 'auto', opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } },
@@ -223,66 +235,60 @@ export function GameCard({
 
                 {/* Section 1: Daily / WebDaily */}
                 {showDailySection && (
-                  <>
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      {visDaily.map(wrapTask)}
-                    </AnimatePresence>
-                    <AnimatePresence initial={false}>
-                      {formState?.mode === 'addDaily' && (
-                        <motion.div key="add-daily" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                          <InlineAddForm
-                            typeOpts={DAILY_TASK_TYPES}
-                            gameResetTime={game.resetTime}
-                            onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
-                            onCancel={() => setFormState(null)}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
+                  <TaskSection
+                    items={visDaily}
+                    wrapItem={wrapTask}
+                    popLayout
+                    addSlot={animatedForm('add-daily',
+                      formState?.mode === 'addDaily' && (
+                        <InlineAddForm
+                          typeOpts={DAILY_TASK_TYPES}
+                          gameResetTime={game.resetTime}
+                          onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                          onCancel={() => setFormState(null)}
+                        />
+                      )
+                    )}
+                  />
                 )}
 
                 {/* Section 2: Periodic tasks */}
                 {showPeriodSection && (
-                  <>
-                    <div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      {visPeriod.map(wrapTask)}
-                    </AnimatePresence>
-                    <AnimatePresence initial={false}>
-                      {formState?.mode === 'addPeriodic' && (
-                        <motion.div key="add-periodic" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                          <InlineAddForm
-                            typeOpts={PERIOD_TASK_TYPES}
-                            gameResetTime={game.resetTime}
-                            onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
-                            onCancel={() => setFormState(null)}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
+                  <TaskSection
+                    header={<div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>}
+                    items={visPeriod}
+                    wrapItem={wrapTask}
+                    popLayout
+                    addSlot={animatedForm('add-periodic',
+                      formState?.mode === 'addPeriodic' && (
+                        <InlineAddForm
+                          typeOpts={PERIOD_TASK_TYPES}
+                          gameResetTime={game.resetTime}
+                          onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                          onCancel={() => setFormState(null)}
+                        />
+                      )
+                    )}
+                  />
                 )}
 
                 {/* Section 3: Events */}
                 {showEventSection && (
-                  <>
-                    <div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      {visEvents.map(wrapEvent)}
-                    </AnimatePresence>
-                    <AnimatePresence initial={false}>
-                      {formState?.mode === 'addEvent' && (
-                        <motion.div key="add-event" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                          <InlineAddForm
-                            defaultTime={game.resetTime}
-                            onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
-                            onCancel={() => setFormState(null)}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
+                  <TaskSection
+                    header={<div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>}
+                    items={visEvents}
+                    wrapItem={wrapEvent}
+                    popLayout
+                    addSlot={animatedForm('add-event',
+                      formState?.mode === 'addEvent' && (
+                        <InlineAddForm
+                          defaultTime={game.resetTime}
+                          onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
+                          onCancel={() => setFormState(null)}
+                        />
+                      )
+                    )}
+                  />
                 )}
 
               </div>

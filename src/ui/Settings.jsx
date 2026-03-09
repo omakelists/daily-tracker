@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
-import { Modal } from './UI';
+import { Modal, TaskSection } from './UI';
 import { CropModal } from './CropModal';
 import { InlineAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
@@ -284,25 +284,24 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     {(() => {
                       const dailyTasks = game.tasks.filter((t) => t.type === 'daily' || t.type === 'webdaily');
                       return (
-                        <>
-                          {dailyTasks.length > 0 && <div className={s.eventSep}>— {t('types.daily')} —</div>}
-                          <AnimatePresence initial={false}>
-                            {dailyTasks.map((task) => {
-                              const ti = game.tasks.indexOf(task);
-                              return (
-                                <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                                  <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
-                                    {DragHandle}
-                                    <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['daily','webdaily']} />
-                                    <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
-                                    <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
-                                    <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-                                  </div>
-                                </motion.div>
-                              );
-                            })}
-                          </AnimatePresence>
-                          {addTo === `daily-${game.id}` ? (
+                        <TaskSection
+                          header={dailyTasks.length > 0 && <div className={s.eventSep}>— {t('types.daily')} —</div>}
+                          items={dailyTasks}
+                          wrapItem={(task) => {
+                            const ti = game.tasks.indexOf(task);
+                            return (
+                              <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                                <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
+                                  {DragHandle}
+                                  <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['daily','webdaily']} />
+                                  <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
+                                  <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
+                                  <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                </div>
+                              </motion.div>
+                            );
+                          }}
+                          addSlot={addTo === `daily-${game.id}` ? (
                             <InlineAddForm
                               typeOpts={['daily', 'webdaily']}
                               gameResetTime={game.resetTime}
@@ -315,7 +314,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           ) : (
                             <button onClick={() => setAddTo(`daily-${game.id}`)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('types.daily')}</button>
                           )}
-                        </>
+                        />
                       );
                     })()}
 
@@ -323,25 +322,24 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     {(() => {
                       const periodTasks = game.tasks.filter((t) => t.type === 'weekly' || t.type === 'halfmonthly' || t.type === 'monthly');
                       return (
-                        <>
-                          {periodTasks.length > 0 && <div className={s.eventSep}>— {t('periodic')} —</div>}
-                          <AnimatePresence initial={false}>
-                            {periodTasks.map((task) => {
-                              const ti = game.tasks.indexOf(task);
-                              return (
-                                <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                                  <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
-                                    {DragHandle}
-                                    <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['weekly','halfmonthly','monthly']} />
-                                    <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
-                                    <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
-                                    <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-                                  </div>
-                                </motion.div>
-                              );
-                            })}
-                          </AnimatePresence>
-                          {addTo === `periodic-${game.id}` ? (
+                        <TaskSection
+                          header={periodTasks.length > 0 && <div className={s.eventSep}>— {t('periodic')} —</div>}
+                          items={periodTasks}
+                          wrapItem={(task) => {
+                            const ti = game.tasks.indexOf(task);
+                            return (
+                              <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                                <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
+                                  {DragHandle}
+                                  <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['weekly','halfmonthly','monthly']} />
+                                  <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
+                                  <TaskExtraFields task={task} onChange={(f, v) => upTask(game.id, task.id, f, v)} />
+                                  <button onClick={() => delTask(game.id, task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                                </div>
+                              </motion.div>
+                            );
+                          }}
+                          addSlot={addTo === `periodic-${game.id}` ? (
                             <InlineAddForm
                               typeOpts={['weekly', 'halfmonthly', 'monthly']}
                               gameResetTime={game.resetTime}
@@ -354,7 +352,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           ) : (
                             <button onClick={() => setAddTo(`periodic-${game.id}`)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('periodic')}</button>
                           )}
-                        </>
+                        />
                       );
                     })()}
 
@@ -362,27 +360,26 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     {(() => {
                       const evList = game.events ?? [];
                       return (
-                        <>
-                          {(evList.length > 0 || addTo === `event-${game.id}`) && <div className={s.eventSep}>— {t('events')} —</div>}
-                          <AnimatePresence initial={false}>
-                            {evList.map((ev, ei) => (
-                              <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                                <div draggable onDragStart={onEvDS(game.id, ei)} onDragOver={onEvDO(game.id, ei)} onDrop={onEvDrp(game.id, ei)} onDragEnd={onEvDE} className={s.eventFormCard} style={{ ...evDrop(game.id, ei), opacity: evDrag?.gid === game.id && evDrag.from === ei ? 0.4 : 1 }}>
-                                  <div className={s.eventFormRow1}>
-                                    {DragHandle}
-                                    <input value={ev.name} onChange={(e) => upEvent(game.id, ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
-                                    <button onClick={() => delEvent(game.id, ev.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-                                  </div>
-                                  <div className={s.eventFormRow2}>
-                                    <span className={s.extraLbl}>{t('resetLbl')}</span>
-                                    <input type="date" value={ev.deadline ?? ''} onChange={(e) => upEvent(game.id, ev.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-                                    <input type="time" value={ev.deadlineTime ? utcToLocalHHMM(ev.deadlineTime) : ''} onChange={(e) => upEvent(game.id, ev.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!ev.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: ev.deadline ? 1 : 0.35 }} />
-                                  </div>
+                        <TaskSection
+                          header={(evList.length > 0 || addTo === `event-${game.id}`) && <div className={s.eventSep}>— {t('events')} —</div>}
+                          items={evList}
+                          wrapItem={(ev, ei) => (
+                            <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                              <div draggable onDragStart={onEvDS(game.id, ei)} onDragOver={onEvDO(game.id, ei)} onDrop={onEvDrp(game.id, ei)} onDragEnd={onEvDE} className={s.eventFormCard} style={{ ...evDrop(game.id, ei), opacity: evDrag?.gid === game.id && evDrag.from === ei ? 0.4 : 1 }}>
+                                <div className={s.eventFormRow1}>
+                                  {DragHandle}
+                                  <input value={ev.name} onChange={(e) => upEvent(game.id, ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
+                                  <button onClick={() => delEvent(game.id, ev.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
                                 </div>
-                              </motion.div>
-                            ))}
-                          </AnimatePresence>
-                          {addTo === `event-${game.id}` ? (
+                                <div className={s.eventFormRow2}>
+                                  <span className={s.extraLbl}>{t('resetLbl')}</span>
+                                  <input type="date" value={ev.deadline ?? ''} onChange={(e) => upEvent(game.id, ev.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+                                  <input type="time" value={ev.deadlineTime ? utcToLocalHHMM(ev.deadlineTime) : ''} onChange={(e) => upEvent(game.id, ev.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!ev.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: ev.deadline ? 1 : 0.35 }} />
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                          addSlot={addTo === `event-${game.id}` ? (
                             <InlineAddForm
                               defaultTime={game.resetTime}
                               onAdd={(item) => {
@@ -394,7 +391,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           ) : (
                             <button onClick={() => setAddTo(`event-${game.id}`)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('events')}</button>
                           )}
-                        </>
+                        />
                       );
                     })()}
                   </div>

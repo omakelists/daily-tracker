@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
 import s from './UI.module.css';
 import shared from './shared.module.css';
@@ -19,6 +19,29 @@ const confirmBoxVariants = {
   animate: { opacity: 1, scale: 1,    transition: { duration: 0.18 } },
   exit:    { opacity: 0, scale: 0.92, transition: { duration: 0.15 } },
 };
+
+// ── TaskSection ───────────────────────────────────────────────────
+// Shared animated section container used in both GameCard and Settings.
+//
+// Props
+//   header    ReactNode | false  — optional divider/label rendered above the list
+//   items     Array              — items passed to wrapItem
+//   wrapItem  (item) => Node     — must return a keyed element
+//   popLayout boolean            — enables mode="popLayout" on the list AnimatePresence
+//                                  (GameCard uses this; Settings does not)
+//   addSlot   ReactNode          — the "add form or add button" area below the list,
+//                                  fully composed by the caller
+export function TaskSection({ header, items, wrapItem, popLayout = false, addSlot }) {
+  return (
+    <>
+      {header}
+      <AnimatePresence mode={popLayout ? 'popLayout' : undefined} initial={false}>
+        {items.map(wrapItem)}
+      </AnimatePresence>
+      {addSlot}
+    </>
+  );
+}
 
 // ── Row ───────────────────────────────────────────────────────────
 export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
