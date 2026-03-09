@@ -34,9 +34,63 @@ const bodyVariants = {
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-// Convert shared Sets to arrays for use as typeOpts in InlineAddForm / TypeSelect
-const DAILY_TASK_TYPES  = [...DAILY_TYPES];
-const PERIOD_TASK_TYPES = [...PERIOD_TYPES];
+// Derive type option arrays from constants Sets (aligned with Settings.jsx)
+const DAILY_TYPE_OPTS    = [...DAILY_TYPES];
+const PERIODIC_TYPE_OPTS = [...PERIOD_TYPES];
+
+// ── Edit form map: one InlineAddForm config per variant ───────────
+const EDIT_FORM = {
+  daily: ({ item, game, onSave, onCancel }) => (
+    <InlineAddForm
+      typeOpts={DAILY_TYPE_OPTS}
+      gameResetTime={game.resetTime}
+      initialName={item.name}
+      initialType={item.type}
+      initialWebResetTime={item.webResetTime ?? ''}
+      initialMonthlyResetDay={item.monthlyResetDay ?? 1}
+      submitLabel={t('save')}
+      onSave={onSave}
+      onCancel={onCancel}
+    />
+  ),
+  periodic: ({ item, game, onSave, onCancel }) => (
+    <InlineAddForm
+      typeOpts={PERIODIC_TYPE_OPTS}
+      gameResetTime={game.resetTime}
+      initialName={item.name}
+      initialType={item.type}
+      initialWebResetTime={item.webResetTime ?? ''}
+      initialMonthlyResetDay={item.monthlyResetDay ?? 1}
+      submitLabel={t('save')}
+      onSave={onSave}
+      onCancel={onCancel}
+    />
+  ),
+  event: ({ item, game, onSave, onCancel }) => (
+    <InlineAddForm
+      defaultTime={game.resetTime}
+      initialName={item.name}
+      initialDeadline={item.deadline || ''}
+      initialDeadlineTime={item.deadlineTime || ''}
+      submitLabel={t('save')}
+      onSave={onSave}
+      onCancel={onCancel}
+    />
+  ),
+};
+
+// ── View row map: one TaskRow config per variant ──────────────────
+const VIEW_ROW = {
+  daily: ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
+    <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={onContextMenu} />
+  ),
+  periodic: ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
+    <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={onContextMenu} />
+  ),
+  event: ({ item, game, now, cd, onToggleItem, onDeleteItem, onContextMenu }) => (
+    <TaskRow task={item} now={now} cd={cd} onToggle={(id) => onToggleItem?.(game.id, id)} onContextMenu={onContextMenu} onDelete={(id) => onDeleteItem?.(game.id, id)} gameResetTime={game.resetTime} />
+  ),
+};
 
 function applyOrder(items, storedOrder) {
   const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
@@ -73,8 +127,8 @@ export function GameCard({
 
   // ── Item grouping ────────────────────────────────────────────────
   const allItems    = game.items ?? [];
-  const dailyItems  = allItems.filter((it) => DAILY_TASK_TYPES.includes(it.type));
-  const periodItems = allItems.filter((it) => PERIOD_TASK_TYPES.includes(it.type));
+  const dailyItems  = allItems.filter((it) => DAILY_TYPES.has(it.type));
+  const periodItems = allItems.filter((it) => PERIOD_TYPES.has(it.type));
   const eventItems  = allItems.filter((it) => EVENT_TYPES.has(it.type));
 
   const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
@@ -123,42 +177,27 @@ export function GameCard({
     onToggle(null, game, true);
   };
 
-  // Unified wrapper for all item types (tasks and events)
+  // Unified wrapper for all item types — variant resolves which map entry to use
   const wrapItem = (item) => {
-    const isEditing  = editingId === item.id;
-    const isEvent    = EVENT_TYPES.has(item.type);
-    const typeGroup  = DAILY_TASK_TYPES.includes(item.type) ? 'daily' : 'periodic';
+    const isEditing = editingId === item.id;
+    const variant   = EVENT_TYPES.has(item.type) ? 'event'
+                    : DAILY_TYPES.has(item.type)  ? 'daily' : 'periodic';
+    const sharedProps = {
+      item,
+      game,
+      checks,
+      now,
+      cd,
+      onToggle,
+      onToggleItem,
+      onDeleteItem,
+      onContextMenu: variant === 'event' ? handleEventContextMenu : handleTaskContextMenu,
+      onSave:   (updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); },
+      onCancel: closeEdit,
+    };
     return (
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {isEditing ? (
-          isEvent ? (
-            <InlineAddForm
-              defaultTime={game.resetTime}
-              initialName={item.name}
-              initialDeadline={item.deadline || ''}
-              initialDeadlineTime={item.deadlineTime || ''}
-              submitLabel={t('save')}
-              onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }}
-              onCancel={closeEdit}
-            />
-          ) : (
-            <InlineAddForm
-              typeOpts={typeGroup === 'daily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
-              gameResetTime={game.resetTime}
-              initialName={item.name}
-              initialType={item.type}
-              initialWebResetTime={item.webResetTime ?? ''}
-              initialMonthlyResetDay={item.monthlyResetDay ?? 1}
-              submitLabel={t('save')}
-              onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }}
-              onCancel={closeEdit}
-            />
-          )
-        ) : isEvent ? (
-          <TaskRow task={item} now={now} cd={cd} onToggle={(id) => onToggleItem?.(game.id, id)} onContextMenu={handleEventContextMenu} onDelete={(id) => onDeleteItem?.(game.id, id)} gameResetTime={game.resetTime} />
-        ) : (
-          <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={handleTaskContextMenu} />
-        )}
+        {isEditing ? EDIT_FORM[variant](sharedProps) : VIEW_ROW[variant](sharedProps)}
       </motion.div>
     );
   };
@@ -240,7 +279,7 @@ export function GameCard({
                     addSlot={animatedForm('add-daily',
                       formState?.mode === 'addDaily' && (
                         <InlineAddForm
-                          typeOpts={DAILY_TASK_TYPES}
+                          typeOpts={DAILY_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
@@ -260,7 +299,7 @@ export function GameCard({
                     addSlot={animatedForm('add-periodic',
                       formState?.mode === 'addPeriodic' && (
                         <InlineAddForm
-                          typeOpts={PERIOD_TASK_TYPES}
+                          typeOpts={PERIODIC_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
