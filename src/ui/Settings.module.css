@@ -83,6 +83,15 @@
   font-size: 13px;
   color: var(--text);
 }
+.prefDayInput {
+  width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.prefDayDisabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
 
 /* ─ Version panel ─ */.verPanel {
   background: var(--bg-surface);

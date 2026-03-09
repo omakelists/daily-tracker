@@ -5,7 +5,7 @@ import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES, uid } from './constants';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset } from './util/helpers';
+         msUntilTaskReset, msUntilDeadline } from './util/helpers';
 import { imgGet, imgPurgeOrphans } from './util/imageStorage';
 import { ConfirmDialog } from './ui/UI';
 import { GameCard } from './ui/GameCard';
@@ -34,6 +34,23 @@ export function App() {
   const setSortUncheckedFirst = (val) => {
     setSortUncheckedFirstState(val);
     try { localStorage.setItem('dt:sortUncheckedFirst', val ? '1' : '0'); } catch {}
+  };
+  const [autoDeleteExpired, setAutoDeleteExpiredState] = useState(() => {
+    try { const v = localStorage.getItem('dt:autoDeleteExpired'); return v === '1'; }
+    catch { return false; }
+  });
+  const setAutoDeleteExpired = (val) => {
+    setAutoDeleteExpiredState(val);
+    try { localStorage.setItem('dt:autoDeleteExpired', val ? '1' : '0'); } catch {}
+  };
+  const [autoDeleteDays, setAutoDeleteDaysState] = useState(() => {
+    try { const v = localStorage.getItem('dt:autoDeleteDays'); return v !== null ? Math.max(0, parseInt(v, 10) || 0) : 1; }
+    catch { return 1; }
+  });
+  const setAutoDeleteDays = (val) => {
+    const n = Math.max(0, parseInt(val, 10) || 0);
+    setAutoDeleteDaysState(n);
+    try { localStorage.setItem('dt:autoDeleteDays', String(n)); } catch {}
   };
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
@@ -107,6 +124,20 @@ export function App() {
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
+
+  // ── Auto-delete expired events ────────────────────────────────
+  useEffect(() => {
+    if (!autoDeleteExpired || !games) return;
+    const thresholdMs = autoDeleteDays * 86_400_000;
+    setGames((prev) => prev.map((g) => {
+      const filtered = (g.events ?? []).filter((ev) => {
+        if (!ev.deadline) return true;
+        const ms = msUntilDeadline(ev.deadline, now, ev.deadlineTime ?? null);
+        return ms > -thresholdMs; // keep if not yet past threshold
+      });
+      return filtered.length === (g.events ?? []).length ? g : { ...g, events: filtered };
+    }));
+  }, [now, autoDeleteExpired, autoDeleteDays]);
 
   useEffect(() => {
     try { localStorage.setItem('dt:collapsed', JSON.stringify([...collapsed])); } catch {}
@@ -315,7 +346,7 @@ export function App() {
       </main>
 
       <AnimatePresence>
-        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} />}
+        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} autoDeleteExpired={autoDeleteExpired} onAutoDeleteExpired={setAutoDeleteExpired} autoDeleteDays={autoDeleteDays} onAutoDeleteDays={setAutoDeleteDays} />}
       </AnimatePresence>
       <AnimatePresence>
         {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}

@@ -101,5 +101,7 @@
   "verUpToDate": "最新バージョンです",
   "verUpdate": "アップデート",
   "verUnavail": "バージョン情報を取得できません",
-  "sortUncheckedFirst": "未チェックのゲームを先頭に配置"
+  "sortUncheckedFirst": "未チェックのゲームを先頭に配置",
+  "autoDeleteExpired": "期限切れイベントを自動削除",
+  "autoDeleteDaysUnit": "日後"
 }

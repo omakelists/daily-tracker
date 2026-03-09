@@ -91,7 +91,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
   const [addTo,    setAddTo]    = useState(null);
@@ -457,6 +457,26 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
               className={s.prefCheck}
             />
             <span className={s.prefLabel}>{t('sortUncheckedFirst')}</span>
+          </label>
+
+          {/* Auto-delete expired events */}
+          <label className={s.prefRow}>
+            <input
+              type="checkbox"
+              checked={!!autoDeleteExpired}
+              onChange={(e) => onAutoDeleteExpired(e.target.checked)}
+              className={s.prefCheck}
+            />
+            <span className={s.prefLabel}>{t('autoDeleteExpired')}</span>
+            <input
+              type="number"
+              min="0"
+              value={autoDeleteDays}
+              onChange={(e) => onAutoDeleteDays(e.target.value)}
+              disabled={!autoDeleteExpired}
+              className={`${shared.inputCls} ${s.prefDayInput}${!autoDeleteExpired ? ` ${s.prefDayDisabled}` : ''}`}
+            />
+            <span className={`${s.prefLabel}${!autoDeleteExpired ? ` ${s.prefDayDisabled}` : ''}`}>{t('autoDeleteDaysUnit')}</span>
           </label>
 
           <div className={s.listSeparator} />

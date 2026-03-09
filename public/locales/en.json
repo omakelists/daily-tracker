@@ -101,5 +101,7 @@
   "verUpToDate": "Up to date",
   "verUpdate": "Update",
   "verUnavail": "Could not fetch version info",
-  "sortUncheckedFirst": "Show unchecked games first"
+  "sortUncheckedFirst": "Show unchecked games first",
+  "autoDeleteExpired": "Auto-delete expired events after",
+  "autoDeleteDaysUnit": "day(s)"
 }

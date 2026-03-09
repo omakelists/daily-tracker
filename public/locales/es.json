@@ -101,5 +101,7 @@
   "verUpToDate": "Actualizado",
   "verUpdate": "Actualizar",
   "verUnavail": "No se pudo obtener información de versión",
-  "sortUncheckedFirst": "Mostrar juegos sin marcar primero"
+  "sortUncheckedFirst": "Mostrar juegos sin marcar primero",
+  "autoDeleteExpired": "Eliminar eventos expirados automáticamente después de",
+  "autoDeleteDaysUnit": "día(s)"
 }
