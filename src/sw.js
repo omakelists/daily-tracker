@@ -1,4 +1,9 @@
-const CACHE = 'daily-tracker';
+// __BUILD_HASH__ is replaced with an 8-character hex hash at build time by the
+// replaceBuildHash Vite plugin defined in vite.config.js.
+// Each deployment therefore gets a unique cache name, which prevents the old SW
+// and the new SW from sharing the same cache bucket and serving a mixed set of
+// old/new files while the SW transition is in progress.
+const CACHE = 'daily-tracker-__BUILD_HASH__';
 
 // self.__WB_MANIFEST is injected by vite-plugin-pwa (Workbox injectManifest) at build time.
 // It expands to an array of { url, revision } objects covering all build output files.
