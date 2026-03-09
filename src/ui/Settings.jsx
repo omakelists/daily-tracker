@@ -167,10 +167,10 @@ function GameItemSection({ game, items, variant, typeOpts, headerLabel, addKey, 
       }}
       addSlot={addTo === addKey ? (
         <InlineAddForm
-          {...(isEvent
-            ? { defaultTime: game.resetTime }
-            : { typeOpts, gameResetTime: game.resetTime }
-          )}
+          variant={variant}
+          typeOpts={typeOpts}
+          gameResetTime={game.resetTime}
+          defaultTime={game.resetTime}
           onAdd={(item) => { onAdd(item); onAddToChange(null); }}
           onCancel={() => onAddToChange(null)}
         />

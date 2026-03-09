@@ -42,6 +42,7 @@ const PERIODIC_TYPE_OPTS = [...PERIOD_TYPES];
 const EDIT_FORM = {
   daily: ({ item, game, onSave, onCancel }) => (
     <InlineAddForm
+      variant="daily"
       typeOpts={DAILY_TYPE_OPTS}
       gameResetTime={game.resetTime}
       initialName={item.name}
@@ -55,6 +56,7 @@ const EDIT_FORM = {
   ),
   periodic: ({ item, game, onSave, onCancel }) => (
     <InlineAddForm
+      variant="periodic"
       typeOpts={PERIODIC_TYPE_OPTS}
       gameResetTime={game.resetTime}
       initialName={item.name}
@@ -68,6 +70,7 @@ const EDIT_FORM = {
   ),
   event: ({ item, game, onSave, onCancel }) => (
     <InlineAddForm
+      variant="event"
       defaultTime={game.resetTime}
       initialName={item.name}
       initialDeadline={item.deadline || ''}
@@ -279,6 +282,7 @@ export function GameCard({
                     addSlot={animatedForm('add-daily',
                       formState?.mode === 'addDaily' && (
                         <InlineAddForm
+                          variant="daily"
                           typeOpts={DAILY_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
@@ -299,6 +303,7 @@ export function GameCard({
                     addSlot={animatedForm('add-periodic',
                       formState?.mode === 'addPeriodic' && (
                         <InlineAddForm
+                          variant="periodic"
                           typeOpts={PERIODIC_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
@@ -319,6 +324,7 @@ export function GameCard({
                     addSlot={animatedForm('add-event',
                       formState?.mode === 'addEvent' && (
                         <InlineAddForm
+                          variant="event"
                           defaultTime={game.resetTime}
                           onAdd={(item) => { onAddItem?.(game.id, { ...item, type: 'event' }); setFormState(null); }}
                           onCancel={() => setFormState(null)}

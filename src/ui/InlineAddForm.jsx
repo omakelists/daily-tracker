@@ -14,59 +14,61 @@ function addDaysToDate(dateStr, n) {
 }
 
 /**
- * Unified inline form for adding/editing tasks and events.
+ * Inline form for adding/editing items. Rendering is controlled by `variant`.
  *
- * Task mode — enabled when `typeOpts` array is provided:
- *   Props : typeOpts, gameResetTime, onAdd(task) / onSave(task), onCancel
+ * variant='daily' | 'periodic':
+ *   Props : variant, typeOpts, gameResetTime, onAdd(task) / onSave(task), onCancel
  *           initialName, initialType, initialWebResetTime, initialMonthlyResetDay
- *           submitLabel — override button label (e.g. t('save') for edit mode)
+ *           submitLabel -- override button label (e.g. t('save') for edit mode)
  *   Fields: type select, name input, optional webReset time / monthlyResetDay
  *
- * Event mode — default when `typeOpts` is omitted:
- *   Props : onAdd(item) / onSave(item), onCancel
+ * variant='event':
+ *   Props : variant, onAdd(item) / onSave(item), onCancel
  *           initialName, initialDeadline, initialDeadlineTime, initialColor,
  *           submitLabel, defaultTime
  *   Fields: optional color picker, name input, date + time inputs, quick +N day buttons
  */
 export function InlineAddForm({
-  // Task mode props
+  // Variant selector
+  variant,
+  // Daily / periodic props
   typeOpts,
   gameResetTime,
   initialType,
   initialWebResetTime,
   initialMonthlyResetDay,
-  // Event mode props
+  // Event props
   onAdd, onSave, onCancel,
   initialName = '', initialDeadline = '', initialDeadlineTime = '',
   initialColor,
   submitLabel,
   defaultTime = '',
 }) {
-  const isTaskMode = Array.isArray(typeOpts) && typeOpts.length > 0;
+  const isEvent = variant === 'event';
 
-  // --- Task mode state ---
-  const [type,     setType]     = useState(isTaskMode ? (initialType ?? typeOpts[0]) : '');
-  const [webReset, setWebReset] = useState(isTaskMode
+  // --- Daily / periodic state ---
+  const [type,     setType]     = useState(!isEvent ? (initialType ?? typeOpts?.[0] ?? '') : '');
+  const [webReset, setWebReset] = useState(!isEvent
     ? (initialWebResetTime ? utcToLocalHHMM(initialWebResetTime) : utcToLocalHHMM(gameResetTime ?? '00:00'))
     : '');
   const [monthDay, setMonthDay] = useState(initialMonthlyResetDay ?? 1);
 
-  // --- Shared / event mode state ---
+  // --- Shared / event state ---
   const [name,  setName]  = useState(initialName);
   const [date,  setDate]  = useState(initialDeadline);
   const [time,  setTime]  = useState(initialDeadlineTime ? utcToLocalHHMM(initialDeadlineTime) : '');
   const [color, setColor] = useState(initialColor ?? '#4a9eff');
-  const showColor = !isTaskMode && initialColor !== undefined;
+  const showColor = isEvent && initialColor !== undefined;
 
   const inputRef = useRef(null);
 
   useEffect(() => {
-    // Task mode uses setTimeout to allow AnimatePresence to finish mounting first
-    if (isTaskMode) setTimeout(() => inputRef.current?.focus(), 0);
+    // Daily / periodic uses setTimeout to allow AnimatePresence to finish mounting first
+    if (!isEvent) setTimeout(() => inputRef.current?.focus(), 0);
     else inputRef.current?.focus();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- Event mode: auto-apply defaultTime on first date selection ---
+  // --- Event: auto-apply defaultTime on first date selection ---
   const handleDateChange = (val) => {
     setDate(val);
     if (val && !time && defaultTime) setTime(utcToLocalHHMM(defaultTime));
@@ -76,8 +78,8 @@ export function InlineAddForm({
   const handleTaskSubmit = () => {
     if (!name.trim()) return;
     const task = { type, name: name.trim() };
-    if (type === 'webdaily') task.webResetTime      = localToUtcHHMM(webReset);
-    if (type === 'monthly')  task.monthlyResetDay   = Number(monthDay);
+    if (type === 'webdaily') task.webResetTime    = localToUtcHHMM(webReset);
+    if (type === 'monthly')  task.monthlyResetDay = Number(monthDay);
     if (onSave) onSave(task); else onAdd(task);
   };
 
@@ -93,25 +95,25 @@ export function InlineAddForm({
     if (onSave) onSave(item); else onAdd({ id: uid(), ...item });
   };
 
-  const handleSubmit = isTaskMode ? handleTaskSubmit : handleEventSubmit;
+  const handleSubmit = isEvent ? handleEventSubmit : handleTaskSubmit;
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter')  handleSubmit();
     if (e.key === 'Escape') onCancel();
   };
 
-  // --- Event mode: countdown to currently-set deadline ---
+  // --- Event: countdown to currently-set deadline ---
   const timeUtcForCd    = (date && time) ? localToUtcHHMM(time) : undefined;
   const deadlineMs      = date ? msUntilDeadline(date, new Date(), timeUtcForCd) : null;
   const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
   const dh              = deadlineMs != null ? deadlineMs / 3600000 : Infinity;
-  const deadlineColor   = deadlineExpired    ? 'var(--danger)'
-                        : dh < 24           ? 'var(--cd-urgent)'
-                        : dh < 48           ? 'var(--cd-warn)'
-                        :                     'var(--muted)';
+  const deadlineColor   = deadlineExpired ? 'var(--danger)'
+                        : dh < 24        ? 'var(--cd-urgent)'
+                        : dh < 48        ? 'var(--cd-warn)'
+                        :                  'var(--muted)';
 
-  // ── Task mode ────────────────────────────────────────────────────
-  if (isTaskMode) {
+  // -- Daily / periodic -----------------------------------------------
+  if (!isEvent) {
     return (
       <div className={s.form}>
         {/* Row 1: [type select] [name] [webReset time | monthDay] */}
@@ -177,10 +179,10 @@ export function InlineAddForm({
     );
   }
 
-  // ── Event mode ───────────────────────────────────────────────────
+  // -- Event ----------------------------------------------------------
   return (
     <div className={s.form}>
-      {/* Row 1: [color] [name] — full width */}
+      {/* Row 1: [color] [name] -- full width */}
       <div className={s.row}>
         {showColor && (
           <input
@@ -200,7 +202,7 @@ export function InlineAddForm({
         />
       </div>
 
-      {/* Row 2: Reset [date] [time] [⏱countdown] ─spacer─ [add] [cancel] */}
+      {/* Row 2: Reset [date] [time] [countdown] --spacer-- [add] [cancel] */}
       <div className={s.actionRow}>
         <span className={s.deadlineLbl}>{t('resetLbl')}</span>
         <input
@@ -218,7 +220,7 @@ export function InlineAddForm({
         />
         {date && deadlineMs !== null && (
           <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
-            {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, getCd())}`}
+            {deadlineExpired ? t('expired') : `${formatCountdown(deadlineMs, getCd())}`}
           </span>
         )}
         <div className={s.spacer} />
