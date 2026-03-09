@@ -6,7 +6,7 @@ import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow';
-import { InlineAddForm } from './InlineAddForm';
+import { DailyAddForm, PeriodicAddForm, EventAddForm } from './InlineAddForm';
 import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
@@ -17,7 +17,7 @@ const taskVariants = {
   exit:    { opacity: 0, height: 0,    transition: { duration: 0.18 } },
 };
 
-// Wraps an InlineAddForm in an animated motion.div for GameCard's addSlot.
+// Wraps an add-form component in an animated motion.div for GameCard's addSlot.
 // Passing `false` as `form` lets AnimatePresence animate the exit cleanly.
 const animatedForm = (key, form) => (
   <AnimatePresence initial={false}>
@@ -38,30 +38,26 @@ const bodyVariants = {
 const DAILY_TYPE_OPTS    = [...DAILY_TYPES];
 const PERIODIC_TYPE_OPTS = [...PERIOD_TYPES];
 
-// ── Edit form map: one InlineAddForm config per variant ───────────
+// ── Edit form map: one add-form component per variant ────────────
 const EDIT_FORM = {
   daily: ({ item, game, onSave, onCancel }) => (
-    <InlineAddForm
-      variant="daily"
+    <DailyAddForm
       typeOpts={DAILY_TYPE_OPTS}
       gameResetTime={game.resetTime}
       initialName={item.name}
       initialType={item.type}
       initialWebResetTime={item.webResetTime ?? ''}
-      initialMonthlyResetDay={item.monthlyResetDay ?? 1}
       submitLabel={t('save')}
       onSave={onSave}
       onCancel={onCancel}
     />
   ),
   periodic: ({ item, game, onSave, onCancel }) => (
-    <InlineAddForm
-      variant="periodic"
+    <PeriodicAddForm
       typeOpts={PERIODIC_TYPE_OPTS}
       gameResetTime={game.resetTime}
       initialName={item.name}
       initialType={item.type}
-      initialWebResetTime={item.webResetTime ?? ''}
       initialMonthlyResetDay={item.monthlyResetDay ?? 1}
       submitLabel={t('save')}
       onSave={onSave}
@@ -69,8 +65,7 @@ const EDIT_FORM = {
     />
   ),
   event: ({ item, game, onSave, onCancel }) => (
-    <InlineAddForm
-      variant="event"
+    <EventAddForm
       defaultTime={game.resetTime}
       initialName={item.name}
       initialDeadline={item.deadline || ''}
@@ -281,8 +276,7 @@ export function GameCard({
                     popLayout
                     addSlot={animatedForm('add-daily',
                       formState?.mode === 'addDaily' && (
-                        <InlineAddForm
-                          variant="daily"
+                        <DailyAddForm
                           typeOpts={DAILY_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
@@ -302,8 +296,7 @@ export function GameCard({
                     popLayout
                     addSlot={animatedForm('add-periodic',
                       formState?.mode === 'addPeriodic' && (
-                        <InlineAddForm
-                          variant="periodic"
+                        <PeriodicAddForm
                           typeOpts={PERIODIC_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
@@ -323,8 +316,7 @@ export function GameCard({
                     popLayout
                     addSlot={animatedForm('add-event',
                       formState?.mode === 'addEvent' && (
-                        <InlineAddForm
-                          variant="event"
+                        <EventAddForm
                           defaultTime={game.resetTime}
                           onAdd={(item) => { onAddItem?.(game.id, { ...item, type: 'event' }); setFormState(null); }}
                           onCancel={() => setFormState(null)}

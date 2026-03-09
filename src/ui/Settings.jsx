@@ -6,7 +6,7 @@ import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_T
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { CropModal } from './CropModal';
-import { InlineAddForm } from './InlineAddForm';
+import { DailyAddForm, PeriodicAddForm, EventAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
@@ -98,6 +98,13 @@ const ITEM_ROW = {
   event:    EventTaskRow,
 };
 
+/** Maps each variant name to its dedicated add form component. */
+const ADD_FORM = {
+  daily:    ({ game, typeOpts, onAdd, onCancel }) => <DailyAddForm    typeOpts={typeOpts} gameResetTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
+  periodic: ({ game, typeOpts, onAdd, onCancel }) => <PeriodicAddForm typeOpts={typeOpts} gameResetTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
+  event:    ({ game, onAdd, onCancel })            => <EventAddForm    defaultTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
+};
+
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
@@ -166,14 +173,7 @@ function GameItemSection({ game, items, variant, typeOpts, headerLabel, addKey, 
         );
       }}
       addSlot={addTo === addKey ? (
-        <InlineAddForm
-          variant={variant}
-          typeOpts={typeOpts}
-          gameResetTime={game.resetTime}
-          defaultTime={game.resetTime}
-          onAdd={(item) => { onAdd(item); onAddToChange(null); }}
-          onCancel={() => onAddToChange(null)}
-        />
+        ADD_FORM[variant]({ game, typeOpts, onAdd: (item) => { onAdd(item); onAddToChange(null); }, onCancel: () => onAddToChange(null) })
       ) : (
         <button onClick={() => onAddToChange(addKey)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{headerLabel}</button>
       )}
