@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
@@ -97,7 +97,6 @@ export function App() {
     return () => { cancelled = true; };
   }, [imgVer, games]);
 
-  const prevAllDoneRef = useRef({});
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 30_000);
@@ -196,21 +195,8 @@ export function App() {
     return dt.length > 0 && dt.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }, [checks, now, getDailyTasks]);
 
-  useEffect(() => {
-    if (!games) return;
-    const toExpand = [];
-    games.forEach((game) => {
-      const done = isAllDone(game);
-      if (prevAllDoneRef.current[game.id] === true && !done) toExpand.push(game.id);
-      prevAllDoneRef.current[game.id] = done;
-    });
-    if (toExpand.length) {
-      setCollapsed((prev) => { const next = new Set(prev); toExpand.forEach((id) => next.delete(id)); return next; });
-    }
-  }, [now, games, isAllDone]);
 
   const toggle = useCallback((taskId, game, isMaster = false) => {
-    let shouldCollapse = false;
     let sound = null;
     const applyUpdates = () => {
       flushSync(() => {
@@ -221,7 +207,8 @@ export function App() {
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
-            if (!allDone) { sound = 'allDone'; shouldCollapse = true; }
+            // Play sound only; accordion state is not changed automatically
+            if (!allDone) sound = 'allDone';
             else sound = 'check';
           } else {
             const task = allTasks.find((tk) => tk.id === taskId);
@@ -232,7 +219,8 @@ export function App() {
             if (!was) {
               const fanfare = DAILY_TYPES.has(task.type) &&
                 dailyTasks.every((tk) => { const k2 = checkKey(tk.id, getPeriodKey(tk, game, now)); return k2 === k ? true : !!prev[k2]; });
-              if (fanfare) { sound = 'allDone'; shouldCollapse = true; }
+              // Play fanfare sound only; accordion state is not changed automatically
+              if (fanfare) sound = 'allDone';
               else sound = 'check';
             }
           }
@@ -242,7 +230,6 @@ export function App() {
       });
       if (sound === 'allDone') playAllDoneSound();
       else if (sound === 'check') playCheckSound();
-      if (shouldCollapse) flushSync(() => setCollapsed((prev) => { const next = new Set(prev); next.add(game.id); return next; }));
     };
     if (document.startViewTransition) document.startViewTransition(applyUpdates);
     else applyUpdates();
