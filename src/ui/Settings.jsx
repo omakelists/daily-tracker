@@ -231,13 +231,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
       const activateAndReload = () => {
         // Signal App.jsx to show a "update complete" toast after the page reloads.
         try { localStorage.setItem('app-updated', '1'); } catch {}
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         setVerState('reloading');
+        // Register the controllerchange listener BEFORE posting SKIP_WAITING.
+        // If the listener were added after postMessage, a fast-responding SW could
+        // fire controllerchange before the listener is in place, causing reload() to
+        // never be called.
         navigator.serviceWorker.addEventListener(
           'controllerchange',
           () => window.location.reload(),
           { once: true },
         );
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
       };
 
       // Fast path: new SW is already waiting (App-level detection already ran).

@@ -36,7 +36,10 @@ self.addEventListener('fetch', (e) => {
 
   // version.json?check=1  →  always fetch from network (bypass cache) for update checks
   if (url.pathname.endsWith('/version.json') && url.searchParams.has('check')) {
-    e.respondWith(fetch(url.pathname).catch(() => new Response('{}', { status: 503 })));
+    e.respondWith(
+      fetch(url.pathname, { cache: 'no-store' })
+        .catch(() => new Response('{}', { status: 503 }))
+    );
     return;
   }
 

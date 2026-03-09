@@ -48,6 +48,8 @@ export default defineConfig({
       injectManifest: {
         // sw.js itself must not be listed in its own cache manifest.
         globIgnores: ['sw.js'],
+        // Extend the default pattern to include JSON files (e.g. version.json, locales).
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,json}'],
       },
 
       // Keep manifest.json managed by us (already in public/).
