@@ -100,5 +100,6 @@
   "verLatest": "最新",
   "verUpToDate": "最新バージョンです",
   "verUpdate": "アップデート",
-  "verUnavail": "バージョン情報を取得できません"
+  "verUnavail": "バージョン情報を取得できません",
+  "sortUncheckedFirst": "未チェックのゲームを先頭に配置"
 }

@@ -100,5 +100,6 @@
   "verLatest": "Última",
   "verUpToDate": "Actualizado",
   "verUpdate": "Actualizar",
-  "verUnavail": "No se pudo obtener información de versión"
+  "verUnavail": "No se pudo obtener información de versión",
+  "sortUncheckedFirst": "Mostrar juegos sin marcar primero"
 }

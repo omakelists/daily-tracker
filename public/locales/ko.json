@@ -100,5 +100,6 @@
   "verLatest": "최신",
   "verUpToDate": "최신 버전입니다",
   "verUpdate": "업데이트",
-  "verUnavail": "버전 정보를 가져올 수 없습니다"
+  "verUnavail": "버전 정보를 가져올 수 없습니다",
+  "sortUncheckedFirst": "미체크 게임을 맨 위에 표시"
 }

@@ -27,6 +27,14 @@ export function App() {
     } catch { return new Set(); }
   });
   const [updateInfo, setUpdateInfo] = useState(null);
+  const [sortUncheckedFirst, setSortUncheckedFirstState] = useState(() => {
+    try { const v = localStorage.getItem('dt:sortUncheckedFirst'); return v === null ? true : v === '1'; }
+    catch { return true; }
+  });
+  const setSortUncheckedFirst = (val) => {
+    setSortUncheckedFirstState(val);
+    try { localStorage.setItem('dt:sortUncheckedFirst', val ? '1' : '0'); } catch {}
+  };
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
   const [wcoEnabled, setWcoEnabledState] = useState(() => {
@@ -282,7 +290,10 @@ export function App() {
 
       <main className={s.main}>
         <AnimatePresence mode="popLayout" initial={false}>
-          {(games ?? []).map((game) => (
+          {(sortUncheckedFirst
+            ? [...(games ?? [])].sort((a, b) => (isAllDone(a) ? 1 : 0) - (isAllDone(b) ? 1 : 0))
+            : (games ?? [])
+          ).map((game) => (
             <GameCard
               key={`game-${game.id}`}
               game={game} checks={checks} now={now} onToggle={toggle}
@@ -304,7 +315,7 @@ export function App() {
       </main>
 
       <AnimatePresence>
-        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} />}
+        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} />}
       </AnimatePresence>
       <AnimatePresence>
         {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}

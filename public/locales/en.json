@@ -100,5 +100,6 @@
   "verLatest": "Latest",
   "verUpToDate": "Up to date",
   "verUpdate": "Update",
-  "verUnavail": "Could not fetch version info"
+  "verUnavail": "Could not fetch version info",
+  "sortUncheckedFirst": "Show unchecked games first"
 }

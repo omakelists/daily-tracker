@@ -100,5 +100,6 @@
   "verLatest": "最新",
   "verUpToDate": "已是最新版本",
   "verUpdate": "更新",
-  "verUnavail": "无法获取版本信息"
+  "verUnavail": "无法获取版本信息",
+  "sortUncheckedFirst": "将未完成游戏置顶"
 }

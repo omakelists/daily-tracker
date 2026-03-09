@@ -63,8 +63,28 @@
   margin: 6px 0 14px;
 }
 
-/* ─ Version panel ─ */
-.verPanel {
+/* ─ Preference row ─ */
+.prefRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 2px;
+  cursor: pointer;
+  user-select: none;
+}
+.prefCheck {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--link);
+  cursor: pointer;
+}
+.prefLabel {
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* ─ Version panel ─ */.verPanel {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 10px;

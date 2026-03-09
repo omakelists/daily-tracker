@@ -91,7 +91,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
   const [addTo,    setAddTo]    = useState(null);
@@ -445,6 +445,19 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
             <div className={s.imgSectionTitle}>{t('appBgImage')}</div>
             <ImageDropZone currentDataUrl={appBgThumb} onFile={(file) => openCrop('app-bg', file)} onRemove={removeAppBg} mode="large" />
           </div>
+
+          <div className={s.listSeparator} />
+
+          {/* Sort unchecked games first */}
+          <label className={s.prefRow}>
+            <input
+              type="checkbox"
+              checked={!!sortUncheckedFirst}
+              onChange={(e) => onSortUncheckedFirst(e.target.checked)}
+              className={s.prefCheck}
+            />
+            <span className={s.prefLabel}>{t('sortUncheckedFirst')}</span>
+          </label>
 
           <div className={s.listSeparator} />
 
