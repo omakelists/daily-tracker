@@ -131,10 +131,69 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
   const handleDoUpdate = async () => {
     if (!('serviceWorker' in navigator)) return;
-    const reg = await navigator.serviceWorker.ready;
-    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
-    onUpdate?.();
+    setVerState('updating');
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+
+      // Send SKIP_WAITING to the waiting SW, then reload when the new SW takes control.
+      const activateAndReload = () => {
+        // Signal App.jsx to show a "update complete" toast after the page reloads.
+        try { localStorage.setItem('app-updated', '1'); } catch {}
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        setVerState('reloading');
+        navigator.serviceWorker.addEventListener(
+          'controllerchange',
+          () => window.location.reload(),
+          { once: true },
+        );
+      };
+
+      // Fast path: new SW is already waiting (App-level detection already ran).
+      if (reg.waiting) {
+        activateAndReload();
+        return;
+      }
+
+      // Slow path: version.json showed a new build but the new SW hasn't been
+      // downloaded yet. Force a SW update check and wait for it to reach the
+      // 'installed' (waiting) state before activating.
+      await reg.update();
+
+      let settled = false;
+
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        // Timed out — preserve version numbers so the user can retry.
+        setVerState((prev) => ({
+          ...(typeof prev === 'object' && prev !== null ? prev : {}),
+          hasUpdate: true,
+          timedOut: true,
+        }));
+      }, 20_000);
+
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && !settled) {
+            settled = true;
+            clearTimeout(timeout);
+            activateAndReload();
+          }
+        });
+      }, { once: true });
+
+      // Race: another tab may have already advanced the SW to waiting.
+      if (reg.waiting && !settled) {
+        settled = true;
+        clearTimeout(timeout);
+        activateAndReload();
+      }
+    } catch {
+      setVerState('error');
+    }
   };
 
   const handleCropConfirm = async (dataUrl, opacity) => {
@@ -485,7 +544,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
               <button
                 className={`${shared.btn} ${shared.btnAdd}`}
                 onClick={handleCheckVersion}
-                disabled={verState === 'checking'}
+                disabled={verState === 'checking' || verState === 'updating' || verState === 'reloading'}
               >
                 {verState === 'checking' ? t('verChecking') : t('verCheck')}
               </button>
@@ -494,11 +553,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
               <div className={s.verPanelBody}>
                 {verState === 'error' ? (
                   <span className={s.verError}>{t('verUnavail')}</span>
+                ) : verState === 'updating' ? (
+                  <span className={s.verChecking}>⏳ {t('verUpdating')}</span>
+                ) : verState === 'reloading' ? (
+                  <span className={s.verChecking}>🔄 {t('verReloading')}</span>
                 ) : (
                   <>
                     <span className={s.verRow}><span className={s.verLbl}>{t('verCurrent')}</span><span className={s.verVal}>{verState.current}</span></span>
                     <span className={s.verRow}><span className={s.verLbl}>{t('verLatest')}</span><span className={s.verVal}>{verState.latest}</span></span>
-                    {verState.hasUpdate ? (
+                    {verState.timedOut ? (
+                      <span className={s.verError}>{t('verUpdateFailed')}</span>
+                    ) : verState.hasUpdate ? (
                       <button className={`${shared.btn} ${shared.btnConfirm} ${s.verUpdateBtn}`} onClick={handleDoUpdate}>{t('verUpdate')}</button>
                     ) : (
                       <span className={s.verUpToDate}>✓ {t('verUpToDate')}</span>

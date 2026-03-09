@@ -103,5 +103,9 @@
   "verUnavail": "バージョン情報を取得できません",
   "sortUncheckedFirst": "未チェックのゲームを先頭に配置",
   "autoDeleteExpired": "期限切れイベントを自動削除",
-  "autoDeleteDaysUnit": "日後"
+  "autoDeleteDaysUnit": "日後",
+  "verUpdating": "更新中…",
+  "verReloading": "再起動中…",
+  "verUpdated": "アップデートしました ✓",
+  "verUpdateFailed": "新しいバージョンを取得できませんでした"
 }

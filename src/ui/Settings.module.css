@@ -233,3 +233,4 @@
 .eventFormRow1  { display: flex; align-items: center; gap: 7px; }
 .eventFormRow2  { display: flex; align-items: center; gap: 7px; padding-left: 22px; /* align under name (past drag handle) */ }
 .eventFormSpacer { flex: 1; }
+.verChecking { color: var(--muted); font-size: 12px; }

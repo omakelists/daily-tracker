@@ -208,3 +208,24 @@
 .gameAddName  { flex: 1; min-width: 80px; font-weight: 700; }
 .gameAddLbl   { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .gameAddTime  { width: 84px; flex-shrink: 0; font-family: monospace; }
+
+/* ── Post-update toast ─────────────────────────────────────────── */
+.flashToast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--success, #2ea043);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  z-index: 9999;
+  white-space: nowrap;
+  animation: flashIn 0.22s ease-out, flashOut 0.3s ease-in 3.7s forwards;
+  pointer-events: none;
+}
+@keyframes flashIn  { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes flashOut { from { opacity: 1; } to { opacity: 0; } }

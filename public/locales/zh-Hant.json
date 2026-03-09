@@ -103,5 +103,9 @@
   "verUnavail": "無法取得版本資訊",
   "sortUncheckedFirst": "將未完成遊戲置頂",
   "autoDeleteExpired": "自動刪除過期事件（延遲）",
-  "autoDeleteDaysUnit": "天後"
+  "autoDeleteDaysUnit": "天後",
+  "verUpdating": "更新中…",
+  "verReloading": "重啟中…",
+  "verUpdated": "更新成功 ✓",
+  "verUpdateFailed": "無法取得新版本"
 }

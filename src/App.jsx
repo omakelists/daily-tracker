@@ -27,6 +27,7 @@ export function App() {
     } catch { return new Set(); }
   });
   const [updateInfo, setUpdateInfo] = useState(null);
+  const [flashMsg,   setFlashMsg]   = useState(null); // brief post-update toast
   const [sortUncheckedFirst, setSortUncheckedFirstState] = useState(() => {
     try { const v = localStorage.getItem('dt:sortUncheckedFirst'); return v === null ? true : v === '1'; }
     catch { return true; }
@@ -146,6 +147,17 @@ export function App() {
   useEffect(() => {
     if (games) imgPurgeOrphans(games.map((g) => g.id));
   }, [games]);
+
+  // ── Post-update toast ─────────────────────────────────────────
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('app-updated')) return;
+      localStorage.removeItem('app-updated');
+      setFlashMsg(t('verUpdated'));
+      const timer = setTimeout(() => setFlashMsg(null), 4000);
+      return () => clearTimeout(timer);
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── SW update detection ────────────────────────────────────────
   useEffect(() => {
@@ -287,6 +299,9 @@ export function App() {
     <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ""}`}>
       {appBg && <div className={s.appBgImg} style={{ backgroundImage: `url(${appBg})` }} />}
       {appBg && <div className={s.appBgOverlay} />}
+
+      {/* Post-update toast */}
+      {flashMsg && <div className={s.flashToast}>{flashMsg}</div>}
 
       {wcoVisible ? (
         <div className={s.wcoBar}>

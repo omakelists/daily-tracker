@@ -103,5 +103,9 @@
   "verUnavail": "Could not fetch version info",
   "sortUncheckedFirst": "Show unchecked games first",
   "autoDeleteExpired": "Auto-delete expired events after",
-  "autoDeleteDaysUnit": "day(s)"
+  "autoDeleteDaysUnit": "day(s)",
+  "verUpdating": "Updating…",
+  "verReloading": "Restarting…",
+  "verUpdated": "Updated successfully ✓",
+  "verUpdateFailed": "Could not fetch new version"
 }

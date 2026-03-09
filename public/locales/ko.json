@@ -103,5 +103,9 @@
   "verUnavail": "버전 정보를 가져올 수 없습니다",
   "sortUncheckedFirst": "미체크 게임을 맨 위에 표시",
   "autoDeleteExpired": "만료된 이벤트를 자동 삭제 (경과 후)",
-  "autoDeleteDaysUnit": "일"
+  "autoDeleteDaysUnit": "일",
+  "verUpdating": "업데이트 중…",
+  "verReloading": "재시작 중…",
+  "verUpdated": "업데이트 완료 ✓",
+  "verUpdateFailed": "새 버전을 가져올 수 없습니다"
 }

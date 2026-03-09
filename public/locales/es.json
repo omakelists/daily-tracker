@@ -103,5 +103,9 @@
   "verUnavail": "No se pudo obtener información de versión",
   "sortUncheckedFirst": "Mostrar juegos sin marcar primero",
   "autoDeleteExpired": "Eliminar eventos expirados automáticamente después de",
-  "autoDeleteDaysUnit": "día(s)"
+  "autoDeleteDaysUnit": "día(s)",
+  "verUpdating": "Actualizando…",
+  "verReloading": "Reiniciando…",
+  "verUpdated": "Actualizado correctamente ✓",
+  "verUpdateFailed": "No se pudo obtener la nueva versión"
 }
