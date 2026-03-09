@@ -103,6 +103,7 @@ function applyOrder(items, storedOrder) {
 export function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks, cd,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
+  showSectionHeaders = true,
   onAddItem, onDeleteItem, onToggleItem, onEditItem,
 }) {
   const [cbScope, animateCb] = useAnimate();
@@ -271,7 +272,7 @@ export function GameCard({
                 {/* Section 1: Daily / WebDaily */}
                 {showDailySection && (
                   <TaskSection
-                    header={<div className={s.divider}><span className={s.sepLabel}>— {t('types.daily')} —</span></div>}
+                    header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('types.daily')} —</span></div>}
                     items={visDaily}
                     wrapItem={wrapItem}
                     popLayout
@@ -291,7 +292,7 @@ export function GameCard({
                 {/* Section 2: Periodic tasks */}
                 {showPeriodSection && (
                   <TaskSection
-                    header={<div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>}
+                    header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>}
                     items={visPeriod}
                     wrapItem={wrapItem}
                     popLayout
@@ -311,7 +312,7 @@ export function GameCard({
                 {/* Section 3: Events */}
                 {showEventSection && (
                   <TaskSection
-                    header={<div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>}
+                    header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>}
                     items={visEvents}
                     wrapItem={wrapItem}
                     popLayout

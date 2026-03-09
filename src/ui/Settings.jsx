@@ -181,7 +181,7 @@ function GameItemSection({ game, items, variant, typeOpts, headerLabel, addKey, 
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst, showSectionHeaders, onShowSectionHeaders, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
   const [addTo,    setAddTo]    = useState(null);
@@ -497,6 +497,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           </div>
 
           <div className={s.listSeparator} />
+
+          {/* Show section headers */}
+          <label className={s.prefRow}>
+            <input
+              type="checkbox"
+              checked={!!showSectionHeaders}
+              onChange={(e) => onShowSectionHeaders(e.target.checked)}
+              className={s.prefCheck}
+            />
+            <span className={s.prefLabel}>{t('showSectionHeaders')}</span>
+          </label>
 
           {/* Sort unchecked games first */}
           <label className={s.prefRow}>

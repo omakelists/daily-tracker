@@ -101,6 +101,7 @@
   "verUpToDate": "Actualizado",
   "verUpdate": "Actualizar",
   "verUnavail": "No se pudo obtener información de versión",
+  "showSectionHeaders": "Mostrar encabezados de sección",
   "sortUncheckedFirst": "Mostrar juegos sin marcar primero",
   "autoDeleteExpired": "Eliminar eventos expirados automáticamente después de",
   "autoDeleteDaysUnit": "día(s)",

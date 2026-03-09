@@ -101,6 +101,7 @@
   "verUpToDate": "已是最新版本",
   "verUpdate": "更新",
   "verUnavail": "無法取得版本資訊",
+  "showSectionHeaders": "顯示分區標題",
   "sortUncheckedFirst": "將未完成遊戲置頂",
   "autoDeleteExpired": "自動刪除過期事件（延遲）",
   "autoDeleteDaysUnit": "天後",

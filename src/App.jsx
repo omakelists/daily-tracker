@@ -29,9 +29,10 @@ export function App() {
   });
   const [updateInfo, setUpdateInfo] = useState(null);
   const [flashMsg,   setFlashMsg]   = useState(null); // brief post-update toast
-  const [sortUncheckedFirst, setSortUncheckedFirst] = useLocalStoragePref('dt:sortUncheckedFirst', true,  BOOL_PREF);
-  const [autoDeleteExpired,  setAutoDeleteExpired]  = useLocalStoragePref('dt:autoDeleteExpired',  false, BOOL_PREF);
-  const [autoDeleteDays,     setAutoDeleteDays]     = useLocalStoragePref('dt:autoDeleteDays',     1,     INT_PREF);
+  const [sortUncheckedFirst,  setSortUncheckedFirst]  = useLocalStoragePref('dt:sortUncheckedFirst',  true,  BOOL_PREF);
+  const [showSectionHeaders,  setShowSectionHeaders]  = useLocalStoragePref('dt:showSectionHeaders',  true,  BOOL_PREF);
+  const [autoDeleteExpired,   setAutoDeleteExpired]   = useLocalStoragePref('dt:autoDeleteExpired',   false, BOOL_PREF);
+  const [autoDeleteDays,      setAutoDeleteDays]      = useLocalStoragePref('dt:autoDeleteDays',      1,     INT_PREF);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
   const [wcoVisible, setWcoVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
@@ -298,6 +299,7 @@ export function App() {
               collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
               bgDataUrl={gameBgs[game.id]?.dataUrl || null}
               bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}
+              showSectionHeaders={showSectionHeaders}
               onAddItem={addItem}
               onDeleteItem={deleteItem}
               onToggleItem={toggleItem}
@@ -309,7 +311,7 @@ export function App() {
       </main>
 
       <AnimatePresence>
-        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} autoDeleteExpired={autoDeleteExpired} onAutoDeleteExpired={setAutoDeleteExpired} autoDeleteDays={autoDeleteDays} onAutoDeleteDays={setAutoDeleteDays} />}
+        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} showSectionHeaders={showSectionHeaders} onShowSectionHeaders={setShowSectionHeaders} autoDeleteExpired={autoDeleteExpired} onAutoDeleteExpired={setAutoDeleteExpired} autoDeleteDays={autoDeleteDays} onAutoDeleteDays={setAutoDeleteDays} />}
       </AnimatePresence>
       <AnimatePresence>
         {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}
