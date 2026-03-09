@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { ensureContrast, utcToLocalHHMM } from '../constants';
+import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
@@ -34,8 +34,9 @@ const bodyVariants = {
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-const DAILY_TASK_TYPES  = ['daily', 'webdaily'];
-const PERIOD_TASK_TYPES = ['weekly', 'halfmonthly', 'monthly'];
+// Convert shared Sets to arrays for use as typeOpts in InlineAddForm / TypeSelect
+const DAILY_TASK_TYPES  = [...DAILY_TYPES];
+const PERIOD_TASK_TYPES = [...PERIOD_TYPES];
 
 function applyOrder(items, storedOrder) {
   const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));

@@ -1,6 +1,5 @@
 const GAMES_KEY  = 'dailytracker:games';
 const CHECKS_KEY = 'dailytracker:checks';
-const TODOS_KEY  = 'dailytracker:todos';
 
 export function loadGames() {
   try {
@@ -20,10 +19,4 @@ export function loadChecks() {
 export function saveChecks(c) {
   try { localStorage.setItem(CHECKS_KEY, JSON.stringify(c)); } catch {}
 }
-export function loadTodos() {
-  try { const v = localStorage.getItem(TODOS_KEY); return v ? JSON.parse(v) : []; }
-  catch { return []; }
-}
-export function saveTodos(t) {
-  try { localStorage.setItem(TODOS_KEY, JSON.stringify(t)); } catch {}
-}
+

@@ -42,11 +42,6 @@ export function useContextTrigger(onTrigger) {
     clearTimeout(timerRef.current);
   }, []);
 
-  // Suppress the native context menu that some mobile browsers show after long press
-  const handleTouchContextMenu = useCallback((e) => {
-    if (firedRef.current) e.preventDefault();
-  }, []);
-
   return {
     onContextMenu:  handleContextMenu,
     onTouchStart:   handleTouchStart,

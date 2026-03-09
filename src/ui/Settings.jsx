@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
@@ -105,12 +105,13 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   const [appBgThumb,   setAppBgThumb]   = useState(null);
   const [gameBgThumbs, setGameBgThumbs] = useState({});
 
-  useState(() => {
+  // Load image thumbnails on mount
+  useEffect(() => {
     imgGet('app-bg').then((v) => setAppBgThumb(v?.dataUrl ?? null));
     games.forEach((g) => imgGet(`game-${g.id}`).then((v) => {
       if (v) setGameBgThumbs((prev) => ({ ...prev, [g.id]: v.dataUrl }));
     }));
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openCrop = (target, file) => { setCropTarget(target); setCropFile(file); };
 
