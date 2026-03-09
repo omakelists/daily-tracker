@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
@@ -239,10 +240,28 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     reader.readAsText(file); e.target.value = '';
   };
 
-  const [dgFrom, setDgFrom] = useState(null);
-  const [dgOver, setDgOver] = useState(null);
-  const [dtDrag, setDtDrag] = useState(null);
-  const [evDrag, setEvDrag] = useState(null); // events D&D within Settings
+  // ── Drag-and-drop: games (flat list) ────────────────────────────
+  const gameDnd = useDragSort(useCallback((from, to) =>
+    setGames((g) => { const a = [...g]; const [it] = a.splice(from, 1); a.splice(to, 0, it); return a; }),
+  []));
+
+  // ── Drag-and-drop: tasks (scoped by game.id) ─────────────────────
+  const taskDnd = useScopedDragSort(useCallback((gid, from, to) =>
+    setGames((g) => g.map((gm) => {
+      if (gm.id !== gid) return gm;
+      const tasks = [...gm.tasks]; const [it] = tasks.splice(from, 1); tasks.splice(to, 0, it);
+      return { ...gm, tasks };
+    })),
+  []));
+
+  // ── Drag-and-drop: events (scoped by game.id) ─────────────────────
+  const evDnd = useScopedDragSort(useCallback((gid, from, to) =>
+    setGames((g) => g.map((gm) => {
+      if (gm.id !== gid) return gm;
+      const events = [...(gm.events ?? [])]; const [it] = events.splice(from, 1); events.splice(to, 0, it);
+      return { ...gm, events };
+    })),
+  []));
 
   const upGame  = (id, f, v) => setGames((g) => g.map((gm) => gm.id === id ? { ...gm, [f]: v } : gm));
   const delGame = (id, name) => showConfirm(t('deleteMsg', { name }), async () => {
@@ -263,40 +282,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   // Event operations (game.events[])
   const upEvent  = (gid, eid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).map((ev) => ev.id === eid ? { ...ev, [f]: v } : ev) } : gm));
   const delEvent = (gid, eid)       => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).filter((ev) => ev.id !== eid) } : gm));
-
-  const onGameDS  = (i) => (e) => { setDgFrom(i); setDgOver(i); e.dataTransfer.effectAllowed = 'move'; };
-  const onGameDO  = (i) => (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dgFrom != null) setDgOver(i); };
-  const onGameDrp = (i) => (e) => { e.preventDefault(); if (dgFrom == null || dgFrom === i) { setDgFrom(null); setDgOver(null); return; } setGames((g) => { const a = [...g], [it] = a.splice(dgFrom, 1); a.splice(i, 0, it); return a; }); setDgFrom(null); setDgOver(null); };
-  const onGameDE  = () => { setDgFrom(null); setDgOver(null); };
-
-  const onEvDS  = (gid, i) => (e) => { setEvDrag({ gid, from: i, over: i }); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); };
-  const onEvDO  = (gid, i) => (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; if (evDrag?.gid === gid) setEvDrag((p) => ({ ...p, over: i })); };
-  const onEvDrp = (gid, i) => (e) => {
-    e.preventDefault();
-    if (!evDrag || evDrag.gid !== gid || evDrag.from === i) { setEvDrag(null); return; }
-    setGames((g) => g.map((gm) => {
-      if (gm.id !== gid) return gm;
-      const evs = [...(gm.events ?? [])], [it] = evs.splice(evDrag.from, 1);
-      evs.splice(i, 0, it);
-      return { ...gm, events: evs };
-    }));
-    setEvDrag(null);
-  };
-  const onEvDE  = () => setEvDrag(null);
-  const evDrop  = (gid, i) => ({ borderTop: evDrag?.gid === gid && evDrag.over === i && evDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
-
-  const onTaskDS  = (gid, i) => (e) => { setDtDrag({ gid, from: i, over: i }); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); };
-  const onTaskDO  = (gid, i) => (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move'; if (dtDrag?.gid === gid) setDtDrag((p) => ({ ...p, over: i })); };
-  const onTaskDrp = (gid, i) => (e) => {
-    e.preventDefault(); e.stopPropagation();
-    if (!dtDrag || dtDrag.gid !== gid || dtDrag.from === i) { setDtDrag(null); return; }
-    const { from } = dtDrag;
-    setGames((g) => g.map((gm) => { if (gm.id !== gid) return gm; const tasks = [...gm.tasks], [it] = tasks.splice(from, 1); tasks.splice(i, 0, it); return { ...gm, tasks }; }));
-    setDtDrag(null);
-  };
-  const onTaskDE = () => setDtDrag(null);
-  const gameDrop = (i)      => ({ borderTop: dgFrom != null && dgOver === i && dgFrom !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
-  const taskDrop = (gid, i) => ({ borderTop: dtDrag?.gid === gid && dtDrag.over === i && dtDrag.from !== i ? '2px solid var(--link)' : '2px solid transparent', transition: 'border-color 0.12s' });
 
   return (
     <>
@@ -324,10 +309,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                 className={shared.clipContents}
               >
                 <div
-                  draggable
-                  onDragStart={onGameDS(gi)} onDragOver={onGameDO(gi)} onDrop={onGameDrp(gi)} onDragEnd={onGameDE}
+                  {...gameDnd.itemProps(gi)}
                   className={s.gameItem}
-                  style={{ ...gameDrop(gi), border: `1px solid ${game.color}44`, opacity: dgFrom === gi ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                  style={{ ...gameDnd.dropStyle(gi), border: `1px solid ${game.color}44`, opacity: gameDnd.isDragging(gi) ? 0.4 : 1, transition: 'opacity 0.15s' }}
                 >
                   <div className={s.gameHeader}>
                     {DragHandle}
@@ -351,7 +335,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                             const ti = game.tasks.indexOf(task);
                             return (
                               <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                                <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
+                                <div {...taskDnd.itemProps(game.id, ti)} className={s.taskFormRow} style={{ ...taskDnd.dropStyle(game.id, ti), opacity: taskDnd.isDragging(game.id, ti) ? 0.4 : 1 }}>
                                   {DragHandle}
                                   <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['daily','webdaily']} />
                                   <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
@@ -389,7 +373,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                             const ti = game.tasks.indexOf(task);
                             return (
                               <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                                <div draggable onDragStart={onTaskDS(game.id, ti)} onDragOver={onTaskDO(game.id, ti)} onDrop={onTaskDrp(game.id, ti)} onDragEnd={onTaskDE} className={s.taskFormRow} style={{ ...taskDrop(game.id, ti), opacity: dtDrag?.gid === game.id && dtDrag.from === ti ? 0.4 : 1 }}>
+                                <div {...taskDnd.itemProps(game.id, ti)} className={s.taskFormRow} style={{ ...taskDnd.dropStyle(game.id, ti), opacity: taskDnd.isDragging(game.id, ti) ? 0.4 : 1 }}>
                                   {DragHandle}
                                   <TypeSelect value={task.type} onChange={(e) => upTask(game.id, task.id, 'type', e.target.value)} typeOpts={['weekly','halfmonthly','monthly']} />
                                   <input value={task.name} onChange={(e) => upTask(game.id, task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
@@ -425,7 +409,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           items={evList}
                           wrapItem={(ev, ei) => (
                             <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-                              <div draggable onDragStart={onEvDS(game.id, ei)} onDragOver={onEvDO(game.id, ei)} onDrop={onEvDrp(game.id, ei)} onDragEnd={onEvDE} className={s.eventFormCard} style={{ ...evDrop(game.id, ei), opacity: evDrag?.gid === game.id && evDrag.from === ei ? 0.4 : 1 }}>
+                              <div {...evDnd.itemProps(game.id, ei)} className={s.eventFormCard} style={{ ...evDnd.dropStyle(game.id, ei), opacity: evDnd.isDragging(game.id, ei) ? 0.4 : 1 }}>
                                 <div className={s.eventFormRow1}>
                                   {DragHandle}
                                   <input value={ev.name} onChange={(e) => upEvent(game.id, ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
