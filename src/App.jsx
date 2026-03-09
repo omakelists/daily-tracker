@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES, uid } from './constants';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
+import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './util/useLocalStoragePref';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset, msUntilDeadline } from './util/helpers';
 import { imgGet, imgPurgeOrphans } from './util/imageStorage';
@@ -28,41 +29,12 @@ export function App() {
   });
   const [updateInfo, setUpdateInfo] = useState(null);
   const [flashMsg,   setFlashMsg]   = useState(null); // brief post-update toast
-  const [sortUncheckedFirst, setSortUncheckedFirstState] = useState(() => {
-    try { const v = localStorage.getItem('dt:sortUncheckedFirst'); return v === null ? true : v === '1'; }
-    catch { return true; }
-  });
-  const setSortUncheckedFirst = (val) => {
-    setSortUncheckedFirstState(val);
-    try { localStorage.setItem('dt:sortUncheckedFirst', val ? '1' : '0'); } catch {}
-  };
-  const [autoDeleteExpired, setAutoDeleteExpiredState] = useState(() => {
-    try { const v = localStorage.getItem('dt:autoDeleteExpired'); return v === '1'; }
-    catch { return false; }
-  });
-  const setAutoDeleteExpired = (val) => {
-    setAutoDeleteExpiredState(val);
-    try { localStorage.setItem('dt:autoDeleteExpired', val ? '1' : '0'); } catch {}
-  };
-  const [autoDeleteDays, setAutoDeleteDaysState] = useState(() => {
-    try { const v = localStorage.getItem('dt:autoDeleteDays'); return v !== null ? Math.max(0, parseInt(v, 10) || 0) : 1; }
-    catch { return 1; }
-  });
-  const setAutoDeleteDays = (val) => {
-    const n = Math.max(0, parseInt(val, 10) || 0);
-    setAutoDeleteDaysState(n);
-    try { localStorage.setItem('dt:autoDeleteDays', String(n)); } catch {}
-  };
+  const [sortUncheckedFirst, setSortUncheckedFirst] = useLocalStoragePref('dt:sortUncheckedFirst', true,  BOOL_PREF);
+  const [autoDeleteExpired,  setAutoDeleteExpired]  = useLocalStoragePref('dt:autoDeleteExpired',  false, BOOL_PREF);
+  const [autoDeleteDays,     setAutoDeleteDays]     = useLocalStoragePref('dt:autoDeleteDays',     1,     INT_PREF);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  const [wcoEnabled, setWcoEnabledState] = useState(() => {
-    try { const v = localStorage.getItem('dt:wcoEnabled'); return v === null ? true : v === '1'; }
-    catch { return true; }
-  });
-  const setWcoEnabled = (val) => {
-    setWcoEnabledState(val);
-    try { localStorage.setItem('dt:wcoEnabled', val ? '1' : '0'); } catch {}
-  };
+  const [wcoEnabled, setWcoEnabled] = useLocalStoragePref('dt:wcoEnabled', true, BOOL_PREF);
   const [wcoOsVisible, setWcoOsVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
   useEffect(() => {
     const wco = navigator.windowControlsOverlay;
