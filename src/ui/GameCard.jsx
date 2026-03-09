@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES } from '../constants';
+import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
@@ -51,7 +51,7 @@ function applyOrder(items, storedOrder) {
 export function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks, cd,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
-  events = [], onAddEvent, onAddTask, onDeleteEvent, onToggleEvent, onEditEvent, onEditTask,
+  onAddItem, onDeleteItem, onToggleItem, onEditItem,
 }) {
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
@@ -72,19 +72,21 @@ export function GameCard({
   }, []);
 
   // ── Item grouping ────────────────────────────────────────────────
-  const dailyItems  = game.tasks.filter((tk) => DAILY_TASK_TYPES.includes(tk.type));
-  const periodItems = game.tasks.filter((tk) => PERIOD_TASK_TYPES.includes(tk.type));
+  const allItems    = game.items ?? [];
+  const dailyItems  = allItems.filter((it) => DAILY_TASK_TYPES.includes(it.type));
+  const periodItems = allItems.filter((it) => PERIOD_TASK_TYPES.includes(it.type));
+  const eventItems  = allItems.filter((it) => EVENT_TYPES.has(it.type));
 
   const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
 
-  const sortedDaily  = applyOrder(dailyItems,  game.dailyOrder);
-  const sortedPeriod = applyOrder(periodItems, game.periodicOrder);
-  const sortedEvents = applyOrder(events,      game.eventOrder);
+  const sortedDaily  = applyOrder(dailyItems,  game.itemOrder);
+  const sortedPeriod = applyOrder(periodItems, game.itemOrder);
+  const sortedEvents = applyOrder(eventItems,  game.itemOrder);
 
   // Keep the item being edited visible even when collapsed
   const visDaily  = collapsed ? sortedDaily.filter((tk) => !isChecked(tk) || tk.id === editingId)  : sortedDaily;
   const visPeriod = collapsed ? sortedPeriod.filter((tk) => !isChecked(tk) || tk.id === editingId) : sortedPeriod;
-  const visEvents = collapsed ? sortedEvents.filter((ev) => !ev.done || ev.id === editingId)       : sortedEvents;
+  const visEvents = collapsed ? sortedEvents.filter((it) => !it.done || it.id === editingId)       : sortedEvents;
 
   const allTodayDone = dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
@@ -121,46 +123,41 @@ export function GameCard({
     onToggle(null, game, true);
   };
 
-  const wrapTask = (tk) => {
-    const isEditing = editingId === tk.id;
-    const typeGroup = DAILY_TASK_TYPES.includes(tk.type) ? 'daily' : 'periodic';
+  // Unified wrapper for all item types (tasks and events)
+  const wrapItem = (item) => {
+    const isEditing  = editingId === item.id;
+    const isEvent    = EVENT_TYPES.has(item.type);
+    const typeGroup  = DAILY_TASK_TYPES.includes(item.type) ? 'daily' : 'periodic';
     return (
-      <motion.div key={tk.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+      <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
         {isEditing ? (
-          <InlineAddForm
-            typeOpts={typeGroup === 'daily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
-            gameResetTime={game.resetTime}
-            initialName={tk.name}
-            initialType={tk.type}
-            initialWebResetTime={tk.webResetTime ?? ''}
-            initialMonthlyResetDay={tk.monthlyResetDay ?? 1}
-            submitLabel={t('save')}
-            onSave={(updates) => { onEditTask?.(game.id, tk.id, updates); closeEdit(); }}
-            onCancel={closeEdit}
-          />
+          isEvent ? (
+            <InlineAddForm
+              defaultTime={game.resetTime}
+              initialName={item.name}
+              initialDeadline={item.deadline || ''}
+              initialDeadlineTime={item.deadlineTime || ''}
+              submitLabel={t('save')}
+              onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }}
+              onCancel={closeEdit}
+            />
+          ) : (
+            <InlineAddForm
+              typeOpts={typeGroup === 'daily' ? DAILY_TASK_TYPES : PERIOD_TASK_TYPES}
+              gameResetTime={game.resetTime}
+              initialName={item.name}
+              initialType={item.type}
+              initialWebResetTime={item.webResetTime ?? ''}
+              initialMonthlyResetDay={item.monthlyResetDay ?? 1}
+              submitLabel={t('save')}
+              onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }}
+              onCancel={closeEdit}
+            />
+          )
+        ) : isEvent ? (
+          <TaskRow task={item} now={now} cd={cd} onToggle={(id) => onToggleItem?.(game.id, id)} onContextMenu={handleEventContextMenu} onDelete={(id) => onDeleteItem?.(game.id, id)} gameResetTime={game.resetTime} />
         ) : (
-          <TaskRow task={tk} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={handleTaskContextMenu} />
-        )}
-      </motion.div>
-    );
-  };
-
-  const wrapEvent = (ev) => {
-    const isEditing = editingId === ev.id;
-    return (
-      <motion.div key={ev.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {isEditing ? (
-          <InlineAddForm
-            defaultTime={game.resetTime}
-            initialName={ev.name}
-            initialDeadline={ev.deadline || ''}
-            initialDeadlineTime={ev.deadlineTime || ''}
-            submitLabel={t('save')}
-            onSave={(updates) => { onEditEvent(game.id, ev.id, updates); closeEdit(); }}
-            onCancel={closeEdit}
-          />
-        ) : (
-          <TaskRow task={ev} now={now} cd={cd} onToggle={(id) => onToggleEvent(game.id, id)} onContextMenu={handleEventContextMenu} onDelete={(id) => onDeleteEvent(game.id, id)} gameResetTime={game.resetTime} />
+          <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={handleTaskContextMenu} />
         )}
       </motion.div>
     );
@@ -182,7 +179,7 @@ export function GameCard({
           ? [
               { label: t('ctxEditEvent'),   icon: '✏️', onClick: () => setEditingId(ctxMenu.eventId) },
               { separator: true },
-              { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteEvent(game.id, ctxMenu.eventId) },
+              { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.eventId) },
             ]
           : []
     : [];
@@ -238,14 +235,14 @@ export function GameCard({
                 {showDailySection && (
                   <TaskSection
                     items={visDaily}
-                    wrapItem={wrapTask}
+                    wrapItem={wrapItem}
                     popLayout
                     addSlot={animatedForm('add-daily',
                       formState?.mode === 'addDaily' && (
                         <InlineAddForm
                           typeOpts={DAILY_TASK_TYPES}
                           gameResetTime={game.resetTime}
-                          onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                          onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
                         />
                       )
@@ -258,14 +255,14 @@ export function GameCard({
                   <TaskSection
                     header={<div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>}
                     items={visPeriod}
-                    wrapItem={wrapTask}
+                    wrapItem={wrapItem}
                     popLayout
                     addSlot={animatedForm('add-periodic',
                       formState?.mode === 'addPeriodic' && (
                         <InlineAddForm
                           typeOpts={PERIOD_TASK_TYPES}
                           gameResetTime={game.resetTime}
-                          onAdd={(task) => { onAddTask?.(game.id, task); setFormState(null); }}
+                          onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
                         />
                       )
@@ -278,13 +275,13 @@ export function GameCard({
                   <TaskSection
                     header={<div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>}
                     items={visEvents}
-                    wrapItem={wrapEvent}
+                    wrapItem={wrapItem}
                     popLayout
                     addSlot={animatedForm('add-event',
                       formState?.mode === 'addEvent' && (
                         <InlineAddForm
                           defaultTime={game.resetTime}
-                          onAdd={(item) => { onAddEvent(game.id, { ...item, type: 'event' }); setFormState(null); }}
+                          onAdd={(item) => { onAddItem?.(game.id, { ...item, type: 'event' }); setFormState(null); }}
                           onCancel={() => setFormState(null)}
                         />
                       )

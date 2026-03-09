@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
+import { uid, utcToLocalHHMM, localToUtcHHMM, EVENT_TYPES } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { CropModal } from './CropModal';
@@ -95,16 +95,16 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 // ── GameTaskSection ───────────────────────────────────────────────
 // Renders one editable task group (daily or periodic) inside a game card.
 // Used twice: once for daily/webdaily, once for weekly/halfmonthly/monthly.
-function GameTaskSection({ game, tasks, typeOpts, headerLabel, addKey, addTo, onAddToChange, taskDnd, onUpdate, onDelete, onAdd }) {
+function GameTaskSection({ game, tasks, typeOpts, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
   return (
     <TaskSection
       header={tasks.length > 0 && <div className={s.eventSep}>— {headerLabel} —</div>}
       items={tasks}
       wrapItem={(task) => {
-        const ti = game.tasks.indexOf(task);
+        const ti = (game.items ?? []).indexOf(task);
         return (
           <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-            <div {...taskDnd.itemProps(game.id, ti)} className={s.taskFormRow} style={{ ...taskDnd.dropStyle(game.id, ti), opacity: taskDnd.isDragging(game.id, ti) ? 0.4 : 1 }}>
+            <div {...itemDnd.itemProps(game.id, ti)} className={s.taskFormRow} style={{ ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 }}>
               {DragHandle}
               <TypeSelect value={task.type} onChange={(e) => onUpdate(task.id, 'type', e.target.value)} typeOpts={typeOpts} />
               <input value={task.name} onChange={(e) => onUpdate(task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
@@ -130,7 +130,7 @@ function GameTaskSection({ game, tasks, typeOpts, headerLabel, addKey, addTo, on
 
 // ── GameEventSection ──────────────────────────────────────────────
 // Renders the editable events list inside a game card.
-function GameEventSection({ game, events, addTo, onAddToChange, evDnd, onUpdate, onDelete, onAdd }) {
+function GameEventSection({ game, events, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
   const addKey = `event-${game.id}`;
   return (
     <TaskSection
@@ -138,7 +138,7 @@ function GameEventSection({ game, events, addTo, onAddToChange, evDnd, onUpdate,
       items={events}
       wrapItem={(ev, ei) => (
         <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-          <div {...evDnd.itemProps(game.id, ei)} className={s.eventFormCard} style={{ ...evDnd.dropStyle(game.id, ei), opacity: evDnd.isDragging(game.id, ei) ? 0.4 : 1 }}>
+          <div {...itemDnd.itemProps(game.id, (game.items ?? []).indexOf(ev))} className={s.eventFormCard} style={{ ...itemDnd.dropStyle(game.id, (game.items ?? []).indexOf(ev)), opacity: itemDnd.isDragging(game.id, (game.items ?? []).indexOf(ev)) ? 0.4 : 1 }}>
             <div className={s.eventFormRow1}>
               {DragHandle}
               <input value={ev.name} onChange={(e) => onUpdate(ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
@@ -307,7 +307,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
       try {
         const parsed = JSON.parse(ev.target.result), imported = parsed.games ?? parsed;
         if (!Array.isArray(imported)) throw new Error('invalid');
-        const fresh = imported.map((g) => ({ ...g, id: uid(), tasks: (g.tasks ?? []).map((tk) => ({ ...tk, id: uid() })) }));
+        const fresh = imported.map((g) => ({ ...g, id: uid(), items: (g.items ?? []).map((it) => ({ ...it, id: uid() })) }));
         showConfirm(t('importConfirm', { n: fresh.length }), () => setGames(fresh), t('loadBtn'));
       } catch { alert(t('importError')); }
     };
@@ -319,21 +319,12 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     setGames((g) => { const a = [...g]; const [it] = a.splice(from, 1); a.splice(to, 0, it); return a; }),
   []));
 
-  // ── Drag-and-drop: tasks (scoped by game.id) ─────────────────────
-  const taskDnd = useScopedDragSort(useCallback((gid, from, to) =>
+  // ── Drag-and-drop: items (tasks and events, scoped by game.id) ───
+  const itemDnd = useScopedDragSort(useCallback((gid, from, to) =>
     setGames((g) => g.map((gm) => {
       if (gm.id !== gid) return gm;
-      const tasks = [...gm.tasks]; const [it] = tasks.splice(from, 1); tasks.splice(to, 0, it);
-      return { ...gm, tasks };
-    })),
-  []));
-
-  // ── Drag-and-drop: events (scoped by game.id) ─────────────────────
-  const evDnd = useScopedDragSort(useCallback((gid, from, to) =>
-    setGames((g) => g.map((gm) => {
-      if (gm.id !== gid) return gm;
-      const events = [...(gm.events ?? [])]; const [it] = events.splice(from, 1); events.splice(to, 0, it);
-      return { ...gm, events };
+      const items = [...(gm.items ?? [])]; const [it] = items.splice(from, 1); items.splice(to, 0, it);
+      return { ...gm, items };
     })),
   []));
 
@@ -346,16 +337,13 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   });
   const addGame = () => {
     if (!newGame.name.trim()) return;
-    setGames((g) => [...g, { id: uid(), ...newGame, resetTime: localToUtcHHMM(newGame.resetTime), tasks: [] }]);
+    setGames((g) => [...g, { id: uid(), ...newGame, resetTime: localToUtcHHMM(newGame.resetTime), items: [] }]);
     setNewGame({ name: '', color: '#4a9eff', resetTime: '00:00' }); setShowNG(false);
   };
 
-  const upTask  = (gid, tid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.map((tk) => tk.id === tid ? { ...tk, [f]: v } : tk) } : gm));
-  const delTask = (gid, tid) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, tasks: gm.tasks.filter((tk) => tk.id !== tid) } : gm));
-
-  // Event operations (game.events[])
-  const upEvent  = (gid, eid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).map((ev) => ev.id === eid ? { ...ev, [f]: v } : ev) } : gm));
-  const delEvent = (gid, eid)       => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, events: (gm.events ?? []).filter((ev) => ev.id !== eid) } : gm));
+  // ── Unified item operations ──────────────────────────────────────
+  const upItem  = (gid, iid, f, v) => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, items: (gm.items ?? []).map((it) => it.id === iid ? { ...it, [f]: v } : it) } : gm));
+  const delItem = (gid, iid)       => setGames((g) => g.map((gm) => gm.id === gid ? { ...gm, items: (gm.items ?? []).filter((it) => it.id !== iid) } : gm));
 
   return (
     <>
@@ -401,43 +389,43 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     {/* ── Section 1: Daily / Web-daily ── */}
                     <GameTaskSection
                       game={game}
-                      tasks={game.tasks.filter((tk) => tk.type === 'daily' || tk.type === 'webdaily')}
+                      tasks={(game.items ?? []).filter((it) => it.type === 'daily' || it.type === 'webdaily')}
                       typeOpts={['daily', 'webdaily']}
                       headerLabel={t('types.daily')}
                       addKey={`daily-${game.id}`}
                       addTo={addTo}
                       onAddToChange={setAddTo}
-                      taskDnd={taskDnd}
-                      onUpdate={(tid, f, v) => upTask(game.id, tid, f, v)}
-                      onDelete={(tid) => delTask(game.id, tid)}
-                      onAdd={(task) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...task }] } : gm))}
+                      itemDnd={itemDnd}
+                      onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
+                      onDelete={(iid) => delItem(game.id, iid)}
+                      onAdd={(task) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), ...task }] } : gm))}
                     />
 
                     {/* ── Section 2: Periodic tasks ── */}
                     <GameTaskSection
                       game={game}
-                      tasks={game.tasks.filter((tk) => tk.type === 'weekly' || tk.type === 'halfmonthly' || tk.type === 'monthly')}
+                      tasks={(game.items ?? []).filter((it) => it.type === 'weekly' || it.type === 'halfmonthly' || it.type === 'monthly')}
                       typeOpts={['weekly', 'halfmonthly', 'monthly']}
                       headerLabel={t('periodic')}
                       addKey={`periodic-${game.id}`}
                       addTo={addTo}
                       onAddToChange={setAddTo}
-                      taskDnd={taskDnd}
-                      onUpdate={(tid, f, v) => upTask(game.id, tid, f, v)}
-                      onDelete={(tid) => delTask(game.id, tid)}
-                      onAdd={(task) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, tasks: [...gm.tasks, { id: uid(), ...task }] } : gm))}
+                      itemDnd={itemDnd}
+                      onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
+                      onDelete={(iid) => delItem(game.id, iid)}
+                      onAdd={(task) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), ...task }] } : gm))}
                     />
 
                     {/* ── Section 3: Events ── */}
                     <GameEventSection
                       game={game}
-                      events={game.events ?? []}
+                      events={(game.items ?? []).filter((it) => EVENT_TYPES.has(it.type))}
                       addTo={addTo}
                       onAddToChange={setAddTo}
-                      evDnd={evDnd}
-                      onUpdate={(eid, f, v) => upEvent(game.id, eid, f, v)}
-                      onDelete={(eid) => delEvent(game.id, eid)}
-                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, events: [...(gm.events ?? []), { ...item, type: 'event' }] } : gm))}
+                      itemDnd={itemDnd}
+                      onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
+                      onDelete={(iid) => delItem(game.id, iid)}
+                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { ...item, type: 'event' }] } : gm))}
                     />
                   </div>
                 </div>

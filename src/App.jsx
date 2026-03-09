@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
-import { DEFAULT_GAMES, DAILY_TYPES, uid } from './constants';
+import { DEFAULT_GAMES, DAILY_TYPES, EVENT_TYPES, uid } from './constants';
 import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
 import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './util/useLocalStoragePref';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
@@ -79,7 +79,8 @@ export function App() {
     if (!games) return;
     let minMs = Infinity;
     games.forEach((game) => {
-      const tasks = game.tasks.length ? game.tasks : [{ id: game.id + '_solo', type: 'daily' }];
+      const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
+      const tasks = taskItems.length ? taskItems : [{ id: game.id + '_solo', type: 'daily' }];
       tasks.forEach((task) => {
         const ms = msUntilTaskReset(task, game, now);
         if (ms > 0 && ms < minMs) minMs = ms;
@@ -102,12 +103,13 @@ export function App() {
     if (!autoDeleteExpired || !games) return;
     const thresholdMs = autoDeleteDays * 86_400_000;
     setGames((prev) => prev.map((g) => {
-      const filtered = (g.events ?? []).filter((ev) => {
-        if (!ev.deadline) return true;
-        const ms = msUntilDeadline(ev.deadline, now, ev.deadlineTime ?? null);
+      const filtered = (g.items ?? []).filter((item) => {
+        if (!EVENT_TYPES.has(item.type)) return true; // never auto-delete tasks
+        if (!item.deadline) return true;
+        const ms = msUntilDeadline(item.deadline, now, item.deadlineTime ?? null);
         return ms > -thresholdMs; // keep if not yet past threshold
       });
-      return filtered.length === (g.events ?? []).length ? g : { ...g, events: filtered };
+      return filtered.length === (g.items ?? []).length ? g : { ...g, items: filtered };
     }));
   }, [now, autoDeleteExpired, autoDeleteDays]);
 
@@ -158,7 +160,8 @@ export function App() {
   const soloId = (game) => `${game.id}_solo`;
 
   const getDailyTasks = useCallback((game) => {
-    const tasks = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
+    const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
+    const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
     return tasks.filter((tk) => DAILY_TYPES.has(tk.type));
   }, []);
 
@@ -175,7 +178,8 @@ export function App() {
         setChecks((prev) => {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
-          const allTasks   = game.tasks.length ? game.tasks : [{ id: soloId(game), type: 'daily' }];
+          const taskItems  = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
+          const allTasks   = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
@@ -219,35 +223,25 @@ export function App() {
 
   const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
-  const addEvent = useCallback((gameId, event) => {
-    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, events: [...(g.events ?? []), event] } : g));
+  // ── Unified item operations ──────────────────────────────────
+  const addItem = useCallback((gameId, item) => {
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, items: [...(g.items ?? []), { id: uid(), ...item }] } : g));
   }, []);
 
-  const addTask = useCallback((gameId, task) => {
-    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, tasks: [...g.tasks, { id: uid(), ...task }] } : g));
+  const deleteItem = useCallback((gameId, itemId) => {
+    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, items: (g.items ?? []).filter((it) => it.id !== itemId) } : g));
   }, []);
 
-  const deleteEvent = useCallback((gameId, eventId) => {
-    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, events: (g.events ?? []).filter((e) => e.id !== eventId) } : g));
-  }, []);
-
-  const toggleEvent = useCallback((gameId, eventId) => {
+  const toggleItem = useCallback((gameId, itemId) => {
     setGames((prev) => prev.map((g) => {
       if (g.id !== gameId) return g;
-      return { ...g, events: (g.events ?? []).map((e) => e.id === eventId ? { ...e, done: !e.done } : e) };
+      return { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, done: !it.done } : it) };
     }));
   }, []);
 
-  const editEvent = useCallback((gameId, eventId, updates) => {
+  const editItem = useCallback((gameId, itemId, updates) => {
     setGames((prev) => prev.map((g) => g.id === gameId
-      ? { ...g, events: (g.events ?? []).map((e) => e.id === eventId ? { ...e, ...updates } : e) }
-      : g
-    ));
-  }, []);
-
-  const editTask = useCallback((gameId, taskId, updates) => {
-    setGames((prev) => prev.map((g) => g.id === gameId
-      ? { ...g, tasks: g.tasks.map((tk) => tk.id === taskId ? { ...tk, ...updates } : tk) }
+      ? { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, ...updates } : it) }
       : g
     ));
   }, []);
@@ -306,13 +300,10 @@ export function App() {
               collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
               bgDataUrl={gameBgs[game.id]?.dataUrl || null}
               bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}
-              events={game.events ?? []}
-              onAddEvent={addEvent}
-              onAddTask={addTask}
-              onDeleteEvent={deleteEvent}
-              onToggleEvent={toggleEvent}
-              onEditEvent={editEvent}
-              onEditTask={editTask}
+              onAddItem={addItem}
+              onDeleteItem={deleteItem}
+              onToggleItem={toggleItem}
+              onEditItem={editItem}
             />
           ))}
         </AnimatePresence>
