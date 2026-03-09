@@ -34,16 +34,14 @@ export function App() {
   const [autoDeleteDays,     setAutoDeleteDays]     = useLocalStoragePref('dt:autoDeleteDays',     1,     INT_PREF);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  const [wcoEnabled, setWcoEnabled] = useLocalStoragePref('dt:wcoEnabled', true, BOOL_PREF);
-  const [wcoOsVisible, setWcoOsVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
+  const [wcoVisible, setWcoVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
   useEffect(() => {
     const wco = navigator.windowControlsOverlay;
     if (!wco) return;
-    const handler = () => setWcoOsVisible(wco.visible);
+    const handler = () => setWcoVisible(wco.visible);
     wco.addEventListener('geometrychange', handler);
     return () => wco.removeEventListener('geometrychange', handler);
   }, []);
-  const wcoVisible = wcoEnabled && wcoOsVisible;
 
   // ── Image states ──────────────────────────────────────────────
   const [appBg,   setAppBg]   = useState(null);
