@@ -86,12 +86,11 @@ export function DailyAddForm({
 }
 
 // ── PeriodicAddForm ───────────────────────────────────────────────
-// Props: typeOpts, gameResetTime,
+// Props: typeOpts,
 //        initialName, initialType, initialMonthlyResetDay,
 //        onAdd(task) / onSave(task), onCancel, submitLabel
 export function PeriodicAddForm({
   typeOpts,
-  gameResetTime,
   initialName = '',
   initialType,
   initialMonthlyResetDay,

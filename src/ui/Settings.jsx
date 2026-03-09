@@ -101,7 +101,7 @@ const ITEM_ROW = {
 /** Maps each variant name to its dedicated add form component. */
 const ADD_FORM = {
   daily:    ({ game, typeOpts, onAdd, onCancel }) => <DailyAddForm    typeOpts={typeOpts} gameResetTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
-  periodic: ({ game, typeOpts, onAdd, onCancel }) => <PeriodicAddForm typeOpts={typeOpts} gameResetTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
+  periodic: ({ game, typeOpts, onAdd, onCancel }) => <PeriodicAddForm typeOpts={typeOpts} onAdd={onAdd} onCancel={onCancel} />,
   event:    ({ game, onAdd, onCancel })            => <EventAddForm    defaultTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
 };
 
@@ -150,7 +150,6 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 // The corresponding row component is resolved via ITEM_ROW — no if/else needed here.
 function GameItemSection({ game, items, variant, typeOpts, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
   const TaskRowComponent = ITEM_ROW[variant];
-  const isEvent      = variant === 'event';
 
   return (
     <TaskSection
