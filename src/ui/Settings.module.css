@@ -214,8 +214,13 @@
 .typeSelect    { width: 104px; }
 
 /* ── Task / form rows ────────────────────────────────────────────── */
-.taskFormRow    { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
-.addTaskFormRow { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+.taskFormRow     { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.addTaskFormRow  { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+/* 2-row card (events): outer wrapper */
+.taskFormCard    { margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px; }
+.taskFormRow1    { display: flex; align-items: center; gap: 7px; }
+.taskFormRow2    { display: flex; align-items: center; gap: 7px; padding-left: 22px; /* align past drag handle */ }
+
 .eventSep {
   font-size: 11px;
   color: var(--muted);
@@ -223,14 +228,8 @@
   padding: 6px 0 4px;
   user-select: none;
 }
-.eventFormRow { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
 
 /* Date input */
 .inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
 
-/* ── Event card: 2-row layout ────────────────────────────────────── */
-.eventFormCard  { margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px; }
-.eventFormRow1  { display: flex; align-items: center; gap: 7px; }
-.eventFormRow2  { display: flex; align-items: center; gap: 7px; padding-left: 22px; /* align under name (past drag handle) */ }
-.eventFormSpacer { flex: 1; }
 .verChecking { color: var(--muted); font-size: 12px; }

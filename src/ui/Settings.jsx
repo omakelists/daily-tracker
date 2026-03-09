@@ -92,74 +92,57 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 
-// ── GameTaskSection ───────────────────────────────────────────────
-// Renders one editable task group (daily or periodic) inside a game card.
-// Used twice: once for daily/webdaily, once for weekly/halfmonthly/monthly.
-function GameTaskSection({ game, tasks, typeOpts, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
+// ── GameItemSection ───────────────────────────────────────────────
+// Renders one editable item group inside a game card.
+// Handles daily/periodic tasks (isEvent=false) and events (isEvent=true).
+// Header is shown whenever items exist OR the add-form is open (unified for all types).
+function GameItemSection({ game, items, isEvent = false, typeOpts, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
   return (
     <TaskSection
-      header={tasks.length > 0 && <div className={s.eventSep}>— {headerLabel} —</div>}
-      items={tasks}
-      wrapItem={(task) => {
-        const ti = (game.items ?? []).indexOf(task);
+      header={(items.length > 0 || addTo === addKey) && <div className={s.eventSep}>— {headerLabel} —</div>}
+      items={items}
+      wrapItem={(item) => {
+        const ti = (game.items ?? []).indexOf(item);
+        const dndProps = itemDnd.itemProps(game.id, ti);
+        const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
         return (
-          <motion.div key={task.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-            <div {...itemDnd.itemProps(game.id, ti)} className={s.taskFormRow} style={{ ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 }}>
-              {DragHandle}
-              <TypeSelect value={task.type} onChange={(e) => onUpdate(task.id, 'type', e.target.value)} typeOpts={typeOpts} />
-              <input value={task.name} onChange={(e) => onUpdate(task.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${task.type}`)} />
-              <TaskExtraFields task={task} onChange={(f, v) => onUpdate(task.id, f, v)} />
-              <button onClick={() => onDelete(task.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-            </div>
+          <motion.div key={item.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+            {isEvent ? (
+              <div {...dndProps} className={s.taskFormCard} style={dndStyle}>
+                <div className={s.taskFormRow1}>
+                  {DragHandle}
+                  <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
+                  <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                </div>
+                <div className={s.taskFormRow2}>
+                  <span className={s.extraLbl}>{t('resetLbl')}</span>
+                  <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+                  <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
+                </div>
+              </div>
+            ) : (
+              <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
+                {DragHandle}
+                <TypeSelect value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} typeOpts={typeOpts} />
+                <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
+                <TaskExtraFields task={item} onChange={(f, v) => onUpdate(item.id, f, v)} />
+                <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+              </div>
+            )}
           </motion.div>
         );
       }}
       addSlot={addTo === addKey ? (
         <InlineAddForm
-          typeOpts={typeOpts}
-          gameResetTime={game.resetTime}
-          onAdd={(task) => { onAdd(task); onAddToChange(null); }}
-          onCancel={() => onAddToChange(null)}
-        />
-      ) : (
-        <button onClick={() => onAddToChange(addKey)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{headerLabel}</button>
-      )}
-    />
-  );
-}
-
-// ── GameEventSection ──────────────────────────────────────────────
-// Renders the editable events list inside a game card.
-function GameEventSection({ game, events, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
-  const addKey = `event-${game.id}`;
-  return (
-    <TaskSection
-      header={(events.length > 0 || addTo === addKey) && <div className={s.eventSep}>— {t('events')} —</div>}
-      items={events}
-      wrapItem={(ev, ei) => (
-        <motion.div key={ev.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-          <div {...itemDnd.itemProps(game.id, (game.items ?? []).indexOf(ev))} className={s.eventFormCard} style={{ ...itemDnd.dropStyle(game.id, (game.items ?? []).indexOf(ev)), opacity: itemDnd.isDragging(game.id, (game.items ?? []).indexOf(ev)) ? 0.4 : 1 }}>
-            <div className={s.eventFormRow1}>
-              {DragHandle}
-              <input value={ev.name} onChange={(e) => onUpdate(ev.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
-              <button onClick={() => onDelete(ev.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-            </div>
-            <div className={s.eventFormRow2}>
-              <span className={s.extraLbl}>{t('resetLbl')}</span>
-              <input type="date" value={ev.deadline ?? ''} onChange={(e) => onUpdate(ev.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-              <input type="time" value={ev.deadlineTime ? utcToLocalHHMM(ev.deadlineTime) : ''} onChange={(e) => onUpdate(ev.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!ev.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: ev.deadline ? 1 : 0.35 }} />
-            </div>
-          </div>
-        </motion.div>
-      )}
-      addSlot={addTo === addKey ? (
-        <InlineAddForm
-          defaultTime={game.resetTime}
+          {...(isEvent
+            ? { defaultTime: game.resetTime }
+            : { typeOpts, gameResetTime: game.resetTime }
+          )}
           onAdd={(item) => { onAdd(item); onAddToChange(null); }}
           onCancel={() => onAddToChange(null)}
         />
       ) : (
-        <button onClick={() => onAddToChange(addKey)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('events')}</button>
+        <button onClick={() => onAddToChange(addKey)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{headerLabel}</button>
       )}
     />
   );
@@ -387,9 +370,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
                   <div className={s.gameBody}>
                     {/* ── Section 1: Daily / Web-daily ── */}
-                    <GameTaskSection
+                    <GameItemSection
                       game={game}
-                      tasks={(game.items ?? []).filter((it) => it.type === 'daily' || it.type === 'webdaily')}
+                      items={(game.items ?? []).filter((it) => it.type === 'daily' || it.type === 'webdaily')}
                       typeOpts={['daily', 'webdaily']}
                       headerLabel={t('types.daily')}
                       addKey={`daily-${game.id}`}
@@ -402,9 +385,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     />
 
                     {/* ── Section 2: Periodic tasks ── */}
-                    <GameTaskSection
+                    <GameItemSection
                       game={game}
-                      tasks={(game.items ?? []).filter((it) => it.type === 'weekly' || it.type === 'halfmonthly' || it.type === 'monthly')}
+                      items={(game.items ?? []).filter((it) => it.type === 'weekly' || it.type === 'halfmonthly' || it.type === 'monthly')}
                       typeOpts={['weekly', 'halfmonthly', 'monthly']}
                       headerLabel={t('periodic')}
                       addKey={`periodic-${game.id}`}
@@ -417,9 +400,12 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     />
 
                     {/* ── Section 3: Events ── */}
-                    <GameEventSection
+                    <GameItemSection
+                      isEvent
                       game={game}
-                      events={(game.items ?? []).filter((it) => EVENT_TYPES.has(it.type))}
+                      items={(game.items ?? []).filter((it) => EVENT_TYPES.has(it.type))}
+                      headerLabel={t('events')}
+                      addKey={`event-${game.id}`}
                       addTo={addTo}
                       onAddToChange={setAddTo}
                       itemDnd={itemDnd}
