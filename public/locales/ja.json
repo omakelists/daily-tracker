@@ -36,6 +36,16 @@
     "m": "分"
   },
   "everyDay": "毎月{day}日",
+  "everyWeek": "毎週{day}曜",
+  "dayNamesFull": [
+    "日",
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土"
+  ],
   "dayNames": [
     "日",
     "月",

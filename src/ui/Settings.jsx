@@ -68,6 +68,14 @@ function PeriodicTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
           <span className={s.extraLbl}>{t('dayUnit')}</span>
         </>
       )}
+      {item.type === 'weekly' && (
+        <>
+          <span className={s.extraLbl}>{t('resetDay')}</span>
+          <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
+            {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
+          </select>
+        </>
+      )}
       <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
     </div>
   );

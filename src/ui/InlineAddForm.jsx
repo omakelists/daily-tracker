@@ -87,19 +87,21 @@ export function DailyAddForm({
 
 // ── PeriodicAddForm ───────────────────────────────────────────────
 // Props: typeOpts,
-//        initialName, initialType, initialMonthlyResetDay,
+//        initialName, initialType, initialMonthlyResetDay, initialWeeklyResetDay,
 //        onAdd(task) / onSave(task), onCancel, submitLabel
 export function PeriodicAddForm({
   typeOpts,
   initialName = '',
   initialType,
   initialMonthlyResetDay,
+  initialWeeklyResetDay,
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const [type,     setType]     = useState(initialType ?? typeOpts[0]);
-  const [name,     setName]     = useState(initialName);
-  const [monthDay, setMonthDay] = useState(initialMonthlyResetDay ?? 1);
+  const [type,       setType]     = useState(initialType ?? typeOpts[0]);
+  const [name,       setName]     = useState(initialName);
+  const [monthDay,   setMonthDay] = useState(initialMonthlyResetDay ?? 1);
+  const [weeklyDow,  setWeeklyDow] = useState(initialWeeklyResetDay ?? 1); // 0=Sun..6=Sat
 
   const inputRef = useRef(null);
   // Use setTimeout to allow AnimatePresence to finish mounting before focusing
@@ -109,6 +111,7 @@ export function PeriodicAddForm({
     if (!name.trim()) return;
     const task = { type, name: name.trim() };
     if (type === 'monthly') task.monthlyResetDay = Number(monthDay);
+    if (type === 'weekly')  task.weeklyResetDay  = Number(weeklyDow);
     if (onSave) onSave(task); else onAdd(task);
   };
 
@@ -132,6 +135,14 @@ export function PeriodicAddForm({
             <span className={s.deadlineLbl}>{t('resetLbl')}</span>
             <input type="number" value={monthDay} min={1} max={31} onChange={(e) => setMonthDay(e.target.value)} className={`${shared.inputCls} ${s.dayInput}`} />
             <span className={s.deadlineLbl}>{t('dayUnit')}</span>
+          </>
+        )}
+        {type === 'weekly' && (
+          <>
+            <span className={s.deadlineLbl}>{t('resetLbl')}</span>
+            <select value={weeklyDow} onChange={(e) => setWeeklyDow(Number(e.target.value))} className={`${shared.inputCls} ${s.typeSelect}`}>
+              {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
+            </select>
           </>
         )}
       </div>

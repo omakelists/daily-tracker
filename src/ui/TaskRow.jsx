@@ -56,9 +56,13 @@ export function TaskRow({
   const showPrev    = !isEvent && DAILY_TYPES.has(task.type);
   const taskMs      = !isEvent ? msUntilTaskReset(task, game, now) : 0;
   const taskH       = taskMs / 3600000;
-  const taskCdColor = taskH < 3 ? 'var(--cd-urgent)' : taskH < 6 ? 'var(--cd-warn)' : 'var(--muted)';
+  // Weekly resets on a day boundary, so use wider urgency windows (24h / 48h).
+  // Other periodic/daily types reset within the day, so use narrow windows (3h / 6h).
+  const taskCdColor = task.type === 'weekly'
+    ? (taskH < 24 ? 'var(--cd-urgent)' : taskH < 48 ? 'var(--cd-warn)' : 'var(--muted)')
+    : (taskH < 3  ? 'var(--cd-urgent)' : taskH < 6  ? 'var(--cd-warn)' : 'var(--muted)');
   const showTaskCD  = !isEvent && (
-    task.type === 'monthly' || task.type === 'halfmonthly' ||
+    task.type === 'weekly' || task.type === 'monthly' || task.type === 'halfmonthly' ||
     (task.type === 'webdaily' && task.webResetTime && task.webResetTime !== game.resetTime)
   );
   const localWebReset = !isEvent && task.webResetTime ? utcToLocalHHMM(task.webResetTime) : null;
@@ -123,6 +127,7 @@ export function TaskRow({
           <>
             {showTaskCD && !isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
             {task.type === 'webdaily' && localWebReset && localWebReset !== utcToLocalHHMM(game.resetTime) && <span className={s.resetLbl}>{localWebReset}</span>}
+            {task.type === 'weekly'  && <span className={s.resetLbl} style={{ color: 'var(--dim)' }}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
             {task.type === 'monthly' && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
           </>
         )

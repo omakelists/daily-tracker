@@ -36,6 +36,16 @@
     "m": "m"
   },
   "everyDay": "Day {day}/mo",
+  "everyWeek": "Every {day}",
+  "dayNamesFull": [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+  ],
   "dayNames": [
     "Su",
     "Mo",

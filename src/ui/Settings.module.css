@@ -233,3 +233,4 @@
 .inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
 
 .verChecking { color: var(--muted); font-size: 12px; }
+.inputDow      { width: 108px; }

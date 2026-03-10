@@ -36,6 +36,16 @@
     "m": "m"
   },
   "everyDay": "Día {day}/mes",
+  "everyWeek": "Cada {day}",
+  "dayNamesFull": [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado"
+  ],
   "dayNames": [
     "D",
     "L",

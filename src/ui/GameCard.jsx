@@ -55,10 +55,10 @@ const EDIT_FORM = {
   periodic: ({ item, game, onSave, onCancel }) => (
     <PeriodicAddForm
       typeOpts={PERIODIC_TYPE_OPTS}
-      gameResetTime={game.resetTime}
       initialName={item.name}
       initialType={item.type}
       initialMonthlyResetDay={item.monthlyResetDay ?? 1}
+      initialWeeklyResetDay={item.weeklyResetDay ?? 1}
       submitLabel={t('save')}
       onSave={onSave}
       onCancel={onCancel}
