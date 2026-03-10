@@ -323,7 +323,8 @@ export function GameCard({
                 {/* Section 1: Daily / WebDaily */}
                 {showDailySection && (
                   <TaskSection
-                    header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('types.daily')} —</span></div>}
+                    // [DAILY SECTION HEADER HIDDEN] Uncomment to restore:
+                    // header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('types.daily')} —</span></div>}
                     items={visDaily}
                     wrapItem={wrapItem}
                     popLayout
