@@ -1,7 +1,7 @@
 import { useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
 import { DAILY_TYPES, EVENT_TYPES, utcToLocalHHMM } from '../constants';
-import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, fmtDeadlineDate, checkKey, playCheckSound } from '../util/helpers';
+import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey, playCheckSound } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
 import s from './TaskRow.module.css';
@@ -38,11 +38,7 @@ export function TaskRow({
   const deadlineMs    = isEvent && task.deadline ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null;
   const isExpired     = deadlineMs !== null && deadlineMs <= 0;
   const isDone        = isEvent ? !!task.done : false;
-  const eventH        = deadlineMs !== null ? deadlineMs / 3600000 : Infinity;
-  const eventCdColor  = isExpired      ? 'var(--danger)'
-                      : eventH < 24    ? 'var(--cd-urgent)'
-                      : eventH < 48    ? 'var(--cd-warn)'
-                      :                  'var(--muted)';
+  const eventCdColor  = cdColor(deadlineMs ?? Infinity, 24, 48);
   const dateColor     = isExpired ? 'var(--danger)' : 'var(--dim)';
   const hasTime            = isEvent && !!task.deadlineTime;
   const timeIsSameAsReset  = hasTime && gameResetTime && task.deadlineTime === gameResetTime;
@@ -54,12 +50,10 @@ export function TaskRow({
   const prevChecked = !isEvent && !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
   const showPrev    = !isEvent && DAILY_TYPES.has(task.type);
   const taskMs      = !isEvent ? msUntilTaskReset(task, game, now) : 0;
-  const taskH       = taskMs / 3600000;
-  // Weekly resets on a day boundary, so use wider urgency windows (24h / 48h).
-  // Other periodic/daily types reset within the day, so use narrow windows (3h / 6h).
-  const taskCdColor = task.type === 'weekly'
-    ? (taskH < 24 ? 'var(--cd-urgent)' : taskH < 48 ? 'var(--cd-warn)' : 'var(--muted)')
-    : (taskH < 3  ? 'var(--cd-urgent)' : taskH < 6  ? 'var(--cd-warn)' : 'var(--muted)');
+  // Weekly resets on a day boundary → wider urgency windows (24h / 48h).
+  // Other types reset within the day → narrow windows (3h / 6h).
+  const [urgentH, warnH] = task.type === 'weekly' ? [24, 48] : [3, 6];
+  const taskCdColor      = cdColor(taskMs, urgentH, warnH);
   // Show countdown for all task types; hide only when checked (handled at render site).
   const showTaskCD  = !isEvent;
   // Use task-level resetTime if set, otherwise fall back to game resetTime.

@@ -157,6 +157,20 @@ export function formatCountdown(ms, cd) {
   return `${m}${cd.m}`;
 }
 
+/**
+ * Returns a CSS color variable for a countdown based on remaining milliseconds.
+ * @param {number}  ms       - Remaining milliseconds (negative = expired).
+ * @param {number}  urgentH  - Hours threshold below which color is cd-urgent.
+ * @param {number}  warnH    - Hours threshold below which color is cd-warn.
+ */
+export function cdColor(ms, urgentH, warnH) {
+  if (ms <= 0)                    return 'var(--danger)';
+  const h = ms / 3600000;
+  if (h < urgentH)                return 'var(--cd-urgent)';
+  if (h < warnH)                  return 'var(--cd-warn)';
+  return 'var(--muted)';
+}
+
 export const checkKey = (id, pk) => `${id}__${pk}`;
 
 /** ms until the deadline.
