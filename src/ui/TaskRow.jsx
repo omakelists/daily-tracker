@@ -50,9 +50,11 @@ export function TaskRow({
   const prevChecked = !isEvent && !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
   const showPrev    = !isEvent && DAILY_TYPES.has(task.type);
   const taskMs      = !isEvent ? msUntilTaskReset(task, game, now) : 0;
-  // Weekly resets on a day boundary → wider urgency windows (24h / 48h).
-  // Other types reset within the day → narrow windows (3h / 6h).
-  const [urgentH, warnH] = task.type === 'weekly' ? [24, 48] : [3, 6];
+  // Urgency windows scale with the reset period length.
+  const [urgentH, warnH] = task.type === 'weekly'      ? [24,  48]
+                         : task.type === 'monthly'      ? [72, 168]  // 3d / 7d
+                         : task.type === 'halfmonthly'  ? [48, 120]  // 2d / 5d
+                         :                               [3,   6];   // daily
   const taskCdColor      = cdColor(taskMs, urgentH, warnH);
   // Show countdown for all task types; hide only when checked (handled at render site).
   const showTaskCD  = !isEvent;
