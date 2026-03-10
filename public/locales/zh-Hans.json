@@ -36,6 +36,8 @@
   },
   "everyDay": "每月{day}日",
   "everyWeek": "每周{day}",
+  "everyHalfMonth": "{a}・{b}日",
+  "halfMonthSuffix": "・{b}日",
   "dayNamesFull": [
     "周日",
     "周一",

@@ -121,8 +121,9 @@ export function TaskRow({
           <>
             {showTaskCD && !isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
             {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
-            {task.type === 'weekly'  && <span className={s.resetLbl} style={{ color: 'var(--dim)' }}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
-            {task.type === 'monthly' && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
+            {task.type === 'weekly'      && <span className={s.resetLbl} style={{ color: 'var(--dim)' }}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
+            {task.type === 'monthly'     && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
+            {task.type === 'halfmonthly' && <span className={s.resetLbl}>{t('everyHalfMonth', { a: task.halfMonthlyStartDay ?? 1, b: (task.halfMonthlyStartDay ?? 1) + 15 })}</span>}
           </>
         )
       }

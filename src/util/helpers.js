@@ -71,13 +71,18 @@ export function getPrevMonthPeriodKey(k) {
   return `M-${p.getUTCFullYear()}-${String(p.getUTCMonth()+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
 }
 
-export const dateToHalfMonthKey = (dk) =>
-  'H-' + dk.slice(0, 7) + '-' + (parseInt(dk.slice(8)) >= 16 ? 'B' : 'A');
+export const dateToHalfMonthKey = (dk, startDay = 1) => {
+  const day = parseInt(dk.slice(8));
+  const b   = startDay + 15;
+  // Day is in period B when: day >= b, OR (b > 28 and day < startDay)
+  const inB = b <= 28 ? day >= b : (day >= b || day < startDay);
+  return 'H-' + dk.slice(0, 7) + '-' + (inB ? 'B' : 'A');
+};
 
-export function prevHalfMonthKey(k) {
+export function prevHalfMonthKey(k, startDay = 1) {
   const [, y, mo, half] = k.match(/H-(\d+)-(\d+)-([AB])/);
   if (half === 'B') return `H-${y}-${mo}-A`;
-  const p = new Date(Date.UTC(parseInt(y), parseInt(mo) - 2, 1));
+  const p = new Date(Date.UTC(parseInt(y), parseInt(mo) - 2, startDay));
   return `H-${p.getUTCFullYear()}-${String(p.getUTCMonth()+1).padStart(2,'0')}-B`;
 }
 
@@ -88,7 +93,7 @@ export function getPeriodKey(task, game, now) {
   const dk = getGameDateKey(now, getTaskRT(task, game));
   if (task.type === 'weekly')      return dateToWeekKey(dk, task.weeklyResetDay ?? 1);
   if (task.type === 'monthly')     return getMonthPeriodKey(dk, task.monthlyResetDay || 1);
-  if (task.type === 'halfmonthly') return dateToHalfMonthKey(dk);
+  if (task.type === 'halfmonthly') return dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1);
   return dk;
 }
 
@@ -97,7 +102,7 @@ export function getPrevPeriodKey(task, game, now) {
   const dk = getGameDateKey(now, rt);
   if (task.type === 'weekly')      return dateToWeekKey(shiftDate(dk, -7), task.weeklyResetDay ?? 1);
   if (task.type === 'monthly')     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay || 1));
-  if (task.type === 'halfmonthly') return prevHalfMonthKey(dateToHalfMonthKey(dk));
+  if (task.type === 'halfmonthly') return prevHalfMonthKey(dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1), task.halfMonthlyStartDay ?? 1);
   return getPrevGameDateKey(now, rt);
 }
 
@@ -121,21 +126,29 @@ export function msUntilNextMonth(now, rtUTC, rd) {
   return tgt - now;
 }
 
-export function msUntilNextHalfMonth(now, rtUTC) {
+export function msUntilNextHalfMonth(now, rtUTC, startDay = 1) {
   const r      = parseHHMM(rtUTC);
+  const b      = startDay + 15;              // second reset day in the month
   const utcDay = now.getUTCDate();
   const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
-  let tgt;
-  if      (utcDay < 1  || (utcDay === 1  && utcMin < r)) tgt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     1,  Math.floor(r/60), r%60));
-  else if (utcDay < 16 || (utcDay === 16 && utcMin < r)) tgt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     16, Math.floor(r/60), r%60));
-  else                                                    tgt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1,  Math.floor(r/60), r%60));
-  return tgt - now;
+  const rh = Math.floor(r / 60), rm = r % 60;
+  // Candidate reset dates in order: startDay this month → b this month → startDay next month
+  // When b > 28 it may fall outside the month; use next month's startDay as the wrap target.
+  const candidates = [
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     startDay, rh, rm)),
+    b <= 28
+      ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),     b,        rh, rm))
+      : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, startDay, rh, rm)),
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, startDay, rh, rm)),
+  ];
+  const tgt = candidates.find((c) => c > now);
+  return (tgt ?? candidates[2]) - now;
 }
 
 export function msUntilTaskReset(task, game, now) {
   const rt = getTaskRT(task, game);
   if (task.type === 'monthly')     return msUntilNextMonth(now, rt, task.monthlyResetDay || 1);
-  if (task.type === 'halfmonthly') return msUntilNextHalfMonth(now, rt);
+  if (task.type === 'halfmonthly') return msUntilNextHalfMonth(now, rt, task.halfMonthlyStartDay ?? 1);
   if (task.type === 'weekly') {
     const rd    = task.weeklyResetDay ?? 1; // 0=Sun ... 6=Sat
     const rtMin = parseHHMM(rt);

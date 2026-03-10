@@ -36,6 +36,8 @@
   },
   "everyDay": "Día {day}/mes",
   "everyWeek": "Cada {day}",
+  "everyHalfMonth": "Días {a} y {b}",
+  "halfMonthSuffix": "y {b}",
   "dayNamesFull": [
     "Domingo",
     "Lunes",

@@ -84,6 +84,7 @@ export function DailyAddForm({
 // ── PeriodicAddForm ───────────────────────────────────────────────
 // Props: typeOpts,
 //        initialName, initialType, initialMonthlyResetDay, initialWeeklyResetDay,
+//        initialHalfMonthlyStartDay,
 //        onAdd(task) / onSave(task), onCancel, submitLabel
 export function PeriodicAddForm({
   typeOpts,
@@ -91,13 +92,15 @@ export function PeriodicAddForm({
   initialType,
   initialMonthlyResetDay,
   initialWeeklyResetDay,
+  initialHalfMonthlyStartDay,
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const [type,       setType]     = useState(initialType ?? typeOpts[0]);
-  const [name,       setName]     = useState(initialName);
-  const [monthDay,   setMonthDay] = useState(initialMonthlyResetDay ?? 1);
-  const [weeklyDow,  setWeeklyDow] = useState(initialWeeklyResetDay ?? 1); // 0=Sun..6=Sat
+  const [type,           setType]           = useState(initialType ?? typeOpts[0]);
+  const [name,           setName]           = useState(initialName);
+  const [monthDay,       setMonthDay]       = useState(initialMonthlyResetDay ?? 1);
+  const [weeklyDow,      setWeeklyDow]      = useState(initialWeeklyResetDay ?? 1); // 0=Sun..6=Sat
+  const [halfStartDay,   setHalfStartDay]   = useState(initialHalfMonthlyStartDay ?? 1);
 
   const inputRef = useRef(null);
   // Use setTimeout to allow AnimatePresence to finish mounting before focusing
@@ -107,7 +110,8 @@ export function PeriodicAddForm({
     if (!name.trim()) return;
     const task = { type, name: name.trim() };
     if (type === 'monthly') task.monthlyResetDay = Number(monthDay);
-    if (type === 'weekly')  task.weeklyResetDay  = Number(weeklyDow);
+    if (type === 'weekly')      task.weeklyResetDay        = Number(weeklyDow);
+    if (type === 'halfmonthly') task.halfMonthlyStartDay   = Number(halfStartDay);
     if (onSave) onSave(task); else onAdd(task);
   };
 
@@ -139,6 +143,13 @@ export function PeriodicAddForm({
             <select value={weeklyDow} onChange={(e) => setWeeklyDow(Number(e.target.value))} className={`${shared.inputCls} ${s.typeSelect}`}>
               {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
             </select>
+          </>
+        )}
+        {type === 'halfmonthly' && (
+          <>
+            <span className={s.deadlineLbl}>{t('resetLbl')}</span>
+            <input type="number" value={halfStartDay} min={1} max={15} onChange={(e) => setHalfStartDay(Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.dayInput}`} />
+            <span className={s.deadlineLbl}>{t('halfMonthSuffix', { b: Number(halfStartDay) + 15 })}</span>
           </>
         )}
       </div>

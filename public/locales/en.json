@@ -36,6 +36,8 @@
   },
   "everyDay": "Day {day}/mo",
   "everyWeek": "Every {day}",
+  "everyHalfMonth": "Day {a} & {b}",
+  "halfMonthSuffix": "& {b}",
   "dayNamesFull": [
     "Sunday",
     "Monday",

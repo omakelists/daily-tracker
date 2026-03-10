@@ -36,6 +36,8 @@
   },
   "everyDay": "매월 {day}일",
   "everyWeek": "매주 {day}",
+  "everyHalfMonth": "{a}・{b}일",
+  "halfMonthSuffix": "・{b}일",
   "dayNamesFull": [
     "일요일",
     "월요일",

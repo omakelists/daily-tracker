@@ -72,6 +72,13 @@ function PeriodicTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
           </select>
         </>
       )}
+      {item.type === 'halfmonthly' && (
+        <>
+          <span className={s.extraLbl}>{t('resetDay')}</span>
+          <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
+          <span className={s.extraLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
+        </>
+      )}
       <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
     </div>
   );

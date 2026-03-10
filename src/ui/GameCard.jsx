@@ -59,6 +59,7 @@ const EDIT_FORM = {
       initialType={item.type}
       initialMonthlyResetDay={item.monthlyResetDay ?? 1}
       initialWeeklyResetDay={item.weeklyResetDay ?? 1}
+      initialHalfMonthlyStartDay={item.halfMonthlyStartDay ?? 1}
       submitLabel={t('save')}
       onSave={onSave}
       onCancel={onCancel}
