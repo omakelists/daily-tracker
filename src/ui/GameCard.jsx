@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
 import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES } from '../constants';
-import { getPeriodKey, getPrevPeriodKey, msUntilReset, formatCountdown, checkKey } from '../util/helpers';
+import { getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow';
@@ -142,7 +142,29 @@ export function GameCard({
   const visPeriod = collapsed ? sortedPeriod.filter((tk) => !isChecked(tk) || tk.id === editingId) : sortedPeriod;
   const visEvents = collapsed ? sortedEvents.filter((it) => !it.done || it.id === editingId)       : sortedEvents;
 
-  const allTodayDone = dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+  // allTodayDone rules (when allItems.length > 0):
+  //   - daily tasks exist → all unchecked tasks with < 24h remaining are checked (≥1 such task must exist)
+  //   - no daily tasks    → every item (task/event) is checked/done
+  const allTodayDone = (() => {
+    if (allItems.length === 0) {
+      // Solo mode: driven by virtual solo task via dailyTasks
+      return dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    }
+    if (dailyItems.length > 0) {
+      // Has daily tasks: checked when all tasks due within 24h are checked
+      const DAY = 24 * 3600000;
+      const urgentTasks = allItems.filter((it) => {
+        if (EVENT_TYPES.has(it.type)) return false;
+        const m = msUntilTaskReset(it, game, now);
+        return m > 0 && m < DAY;
+      });
+      return urgentTasks.length > 0 && urgentTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    }
+    // No daily tasks: checked when every item is checked/done
+    const allTasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    const allEventsDone = allItems.filter((it) => EVENT_TYPES.has(it.type)).every((it) => !!it.done);
+    return allTasksDone && allEventsDone;
+  })();
   const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
   const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
   const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
@@ -158,8 +180,29 @@ export function GameCard({
   const showBody = showDailySection || showPeriodSection || showEventSection;
 
   const ms      = msUntilReset(now, game.resetTime);
-  const h       = ms / 3600000;
-  const cdColor = h < 3 ? 'var(--cd-urgent)' : h < 6 ? 'var(--cd-warn)' : 'var(--muted)';
+
+  // When items exist: show nearest unchecked task deadline within 24h (null if none).
+  // When no items (solo mode): show game reset countdown unless master is checked.
+  const urgentMs = (() => {
+    if (allItems.length === 0) return null;
+    const DAY = 24 * 3600000;
+    let min = Infinity;
+    for (const it of allItems) {
+      if (EVENT_TYPES.has(it.type)) {
+        if (it.done || !it.deadline) continue;
+        const m = msUntilDeadline(it.deadline, now, it.deadlineTime);
+        if (m > 0 && m < DAY) min = Math.min(min, m);
+      } else {
+        if (!!checks[checkKey(it.id, getPeriodKey(it, game, now))]) continue;
+        const m = msUntilTaskReset(it, game, now);
+        if (m > 0 && m < DAY) min = Math.min(min, m);
+      }
+    }
+    return min < Infinity ? min : null;
+  })();
+  // Solo mode (no items): display game reset cd when unchecked; items mode: display urgentMs only.
+  const displayMs     = allItems.length === 0 ? (allTodayDone ? null : ms) : urgentMs;
+  const headerCdColor = cdColor(displayMs ?? 0, 3, 6);
   const visColor = ensureContrast(game.color);
 
   const headerBg = bgDataUrl
@@ -170,6 +213,9 @@ export function GameCard({
     if (document.startViewTransition) document.startViewTransition(() => onToggleCollapse(game.id));
     else onToggleCollapse(game.id);
   }, [game.id, onToggleCollapse]);
+
+  // Master checkbox acts as daily substitute only when the game has no items at all.
+  const isMasterClickable = allItems.length === 0;
 
   const handleMasterClick = (e) => {
     e.stopPropagation();
@@ -238,14 +284,18 @@ export function GameCard({
           <Row
             bg={headerBg}
             borderBottom={showBody ? '1px solid rgba(255,255,255,0.055)' : 'none'}
-            onClick={dailyItems.length > 0 ? handleToggleCollapse : undefined}
-            className={dailyItems.length > 0 ? s.cardClickable : undefined}
-            preSlot={dailyItems.length > 0 ? (
+            onClick={allItems.length > 0 ? handleToggleCollapse : undefined}
+            className={allItems.length > 0 ? s.cardClickable : undefined}
+            preSlot={allItems.length > 0 ? (
               <motion.span className={s.accordionBtn} animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.22 }}>▼</motion.span>
             ) : null}
             barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
             checkbox={
-              <button ref={cbScope} onClick={handleMasterClick} className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ''}`}>
+              <button
+                ref={cbScope}
+                onClick={isMasterClickable ? handleMasterClick : undefined}
+                className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ''}${!isMasterClickable ? ` ${shared.cbReadOnly}` : ''}`}
+              >
                 {allTodayDone ? '✓' : ''}
               </button>
             }
@@ -256,7 +306,7 @@ export function GameCard({
             }
             meta={
               <>
-                {!allTodayDone && <span className={s.countdown} style={{ color: cdColor }}>⏱{formatCountdown(ms, cd)}</span>}
+                {displayMs !== null && <span className={s.countdown} style={{ color: headerCdColor }}>⏱{formatCountdown(displayMs, cd)}</span>}
                 <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
               </>
             }

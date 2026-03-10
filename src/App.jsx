@@ -159,14 +159,29 @@ export function App() {
   const soloId = (game) => `${game.id}_solo`;
 
   const getDailyTasks = useCallback((game) => {
-    const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
-    const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
-    return tasks.filter((tk) => DAILY_TYPES.has(tk.type));
+    const dailyItems = (game.items ?? []).filter((it) => DAILY_TYPES.has(it.type));
+    // If no daily items exist, use a virtual solo task so the master checkbox is functional.
+    return dailyItems.length ? dailyItems : [{ id: soloId(game), type: 'daily' }];
   }, []);
 
   const isAllDone = useCallback((game) => {
-    const dt = getDailyTasks(game);
-    return dt.length > 0 && dt.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    const allItems   = game.items ?? [];
+    const dailyItems = allItems.filter((it) => DAILY_TYPES.has(it.type));
+    if (allItems.length === 0) {
+      const dt = getDailyTasks(game);
+      return dt.length > 0 && dt.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    }
+    if (dailyItems.length > 0) {
+      const DAY = 24 * 3600000;
+      const urgent = allItems.filter((it) => {
+        if (EVENT_TYPES.has(it.type)) return false;
+        return msUntilTaskReset(it, game, now) < DAY;
+      });
+      return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    }
+    const tasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    const eventsDone = allItems.filter((it) => EVENT_TYPES.has(it.type)).every((it) => !!it.done);
+    return tasksDone && eventsDone;
   }, [checks, now, getDailyTasks]);
 
 
@@ -192,8 +207,21 @@ export function App() {
             const was = !!prev[k];
             next[k]   = !was;
             if (!was) {
-              const fanfare = DAILY_TYPES.has(task.type) &&
-                dailyTasks.every((tk) => { const k2 = checkKey(tk.id, getPeriodKey(tk, game, now)); return k2 === k ? true : !!prev[k2]; });
+              // Fanfare when the master checkbox transitions to done after this check.
+              // Reuse isAllDone logic evaluated against `next` (the updated checks map).
+              const gameAllItems   = game.items ?? [];
+              const gameDailyItems = gameAllItems.filter((it) => DAILY_TYPES.has(it.type));
+              let fanfare = false;
+              if (gameAllItems.length === 0) {
+                fanfare = dailyTasks.every((tk) => !!next[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+              } else if (gameDailyItems.length > 0) {
+                const DAY = 24 * 3600000;
+                const urgent = gameAllItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) < DAY);
+                fanfare = urgent.length > 0 && urgent.every((tk) => !!next[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+              } else {
+                fanfare = gameAllItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!next[checkKey(tk.id, getPeriodKey(tk, game, now))])
+                       && gameAllItems.filter((it) =>  EVENT_TYPES.has(it.type)).every((it) => !!it.done);
+              }
               // Play fanfare sound only; accordion state is not changed automatically
               if (fanfare) sound = 'allDone';
               else sound = 'check';

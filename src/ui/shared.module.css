@@ -69,6 +69,14 @@
 }
 .cbGame    { border-radius: 7px; font-size: 13px; border-color: rgba(255, 255, 255, 0.3); }
 .cbChecked { background: var(--checked-bg) !important; border-color: var(--checked-br) !important; }
+/* Read-only game checkbox: shown when the game has daily subtasks (state is derived) */
+.cbReadOnly {
+  cursor: default !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-style: solid !important;
+  pointer-events: none;
+}
 
 /* ── Type badges ─────────────────────────────────────────────────── */
 .badge {
