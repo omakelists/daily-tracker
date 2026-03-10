@@ -78,8 +78,10 @@ export function App() {
     if (!games) return;
     let minMs = Infinity;
     games.forEach((game) => {
+      // Use all task items (daily + periodic) so periodic resets also trigger a re-render.
+      // Fall back to a virtual solo task only when the game has no task items at all.
       const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
-      const tasks = taskItems.length ? taskItems : [{ id: game.id + '_solo', type: 'daily' }];
+      const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
       tasks.forEach((task) => {
         const ms = msUntilTaskReset(task, game, now);
         if (ms > 0 && ms < minMs) minMs = ms;
