@@ -13,20 +13,6 @@ function addDaysToDate(dateStr, n) {
   return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
 }
 
-// ── Shared action buttons row ─────────────────────────────────────
-// Used by DailyAddForm and PeriodicAddForm.
-function TaskFormActions({ onSubmit, onCancel, submitLabel, disabled }) {
-  return (
-    <div className={s.quickRow}>
-      <div className={s.spacer} />
-      <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={onSubmit} disabled={disabled}>
-        {submitLabel ?? t('add')}
-      </button>
-      <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
-    </div>
-  );
-}
-
 // ── DailyAddForm ──────────────────────────────────────────────────
 // Props: typeOpts, gameResetTime,
 //        initialName, initialType, initialResetTime,
@@ -64,7 +50,7 @@ export function DailyAddForm({
 
   return (
     <div className={s.form}>
-      {/* Row 1: [type select] [name] [reset time] */}
+      {/* Row 1: [type select] [name] */}
       <div className={s.row}>
         {typeOpts.length > 1 && (
           <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
@@ -72,11 +58,17 @@ export function DailyAddForm({
           </select>
         )}
         <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t(`types.${type}`)} className={`${shared.inputCls} ${s.nameInput}`} />
+      </div>
+      {/* Row 2: [resetLbl] [time] --spacer-- [add/save] [cancel] */}
+      <div className={s.actionRow}>
         <span className={s.deadlineLbl}>{t('resetLbl')}</span>
         <input type="time" value={taskReset} onChange={(e) => setTaskReset(e.target.value)} className={`${shared.inputCls} ${s.timeInput}`} />
+        <div className={s.spacer} />
+        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit} disabled={!name.trim()}>
+          {submitLabel ?? t('add')}
+        </button>
+        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
       </div>
-      {/* Row 2: action buttons */}
-      <TaskFormActions onSubmit={handleSubmit} onCancel={onCancel} submitLabel={submitLabel} disabled={!name.trim()} />
     </div>
   );
 }
@@ -122,7 +114,7 @@ export function PeriodicAddForm({
 
   return (
     <div className={s.form}>
-      {/* Row 1: [type select] [name] [monthlyResetDay] */}
+      {/* Row 1: [type select] [name] */}
       <div className={s.row}>
         {typeOpts.length > 1 && (
           <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
@@ -130,31 +122,33 @@ export function PeriodicAddForm({
           </select>
         )}
         <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t(`types.${type}`)} className={`${shared.inputCls} ${s.nameInput}`} />
+      </div>
+      {/* Row 2: [resetLbl] [type-specific controls] --spacer-- [add/save] [cancel] */}
+      <div className={s.actionRow}>
+        <span className={s.deadlineLbl}>{t('resetLbl')}</span>
         {type === 'monthly' && (
           <>
-            <span className={s.deadlineLbl}>{t('resetLbl')}</span>
             <input type="number" value={monthDay} min={1} max={31} onChange={(e) => setMonthDay(e.target.value)} className={`${shared.inputCls} ${s.dayInput}`} />
             <span className={s.deadlineLbl}>{t('dayUnit')}</span>
           </>
         )}
         {type === 'weekly' && (
-          <>
-            <span className={s.deadlineLbl}>{t('resetLbl')}</span>
-            <select value={weeklyDow} onChange={(e) => setWeeklyDow(Number(e.target.value))} className={`${shared.inputCls} ${s.typeSelect}`}>
-              {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
-            </select>
-          </>
+          <select value={weeklyDow} onChange={(e) => setWeeklyDow(Number(e.target.value))} className={`${shared.inputCls} ${s.typeSelect}`}>
+            {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
+          </select>
         )}
         {type === 'halfmonthly' && (
           <>
-            <span className={s.deadlineLbl}>{t('resetLbl')}</span>
             <input type="number" value={halfStartDay} min={1} max={15} onChange={(e) => setHalfStartDay(Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.dayInput}`} />
             <span className={s.deadlineLbl}>{t('halfMonthSuffix', { b: Number(halfStartDay) + 15 })}</span>
           </>
         )}
+        <div className={s.spacer} />
+        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit} disabled={!name.trim()}>
+          {submitLabel ?? t('add')}
+        </button>
+        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
       </div>
-      {/* Row 2: action buttons */}
-      <TaskFormActions onSubmit={handleSubmit} onCancel={onCancel} submitLabel={submitLabel} disabled={!name.trim()} />
     </div>
   );
 }
