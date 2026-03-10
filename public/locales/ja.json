@@ -25,7 +25,6 @@
   "types": {
     "daily": "デイリー",
     "weekly": "ウィークリー",
-    "webdaily": "Webデイリー",
     "monthly": "マンスリー",
     "halfmonthly": "ハーフマンス",
     "event": "イベント"

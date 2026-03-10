@@ -6,14 +6,25 @@ const CHECKS_KEY = 'dailytracker:checks';
  * Safe to call on already-migrated data (detected by presence of `items`).
  */
 function migrateGame(g) {
-  if (g.items) return g;
-  const { tasks, events, dailyOrder, periodicOrder, eventOrder, ...rest } = g;
+  // Phase 1: legacy { tasks, events } → { items }
+  if (!g.items) {
+    const { tasks, events, dailyOrder, periodicOrder, eventOrder, ...rest } = g;
+    g = {
+      ...rest,
+      items: [
+        ...(tasks  ?? []),
+        ...(events ?? []).map((ev) => ({ ...ev, type: ev.type ?? 'event' })),
+      ],
+    };
+  }
+  // Phase 2: webdaily → daily
+  // Phase 3: webResetTime → resetTime (task-level reset time unified with game field name)
   return {
-    ...rest,
-    items: [
-      ...(tasks  ?? []),
-      ...(events ?? []).map((ev) => ({ ...ev, type: ev.type ?? 'event' })),
-    ],
+    ...g,
+    items: g.items.map((it) => {
+      const { webResetTime, ...rest } = it.type === 'webdaily' ? { ...it, type: 'daily' } : it;
+      return webResetTime !== undefined ? { ...rest, resetTime: webResetTime } : rest;
+    }),
   };
 }
 

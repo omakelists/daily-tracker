@@ -10,7 +10,6 @@ import shared from './shared.module.css';
 const BADGE_MAP = {
   daily:       shared.badgeDaily,
   weekly:      shared.badgeWeekly,
-  webdaily:    shared.badgeWebdaily,
   monthly:     shared.badgeMonthly,
   halfmonthly: shared.badgeHalfmonthly,
   event:       shared.badgeEvent,
@@ -20,7 +19,7 @@ const BADGE_MAP = {
 /**
  * Unified row component for both tasks and events/todos.
  *
- * Task mode  (type: daily | weekly | webdaily | monthly | halfmonthly):
+ * Task mode  (type: daily | weekly | monthly | halfmonthly):
  *   Required: task, game, checks, now, onToggle(taskId, game), cd
  *
  * Event mode (type: event | todo):
@@ -63,7 +62,8 @@ export function TaskRow({
     : (taskH < 3  ? 'var(--cd-urgent)' : taskH < 6  ? 'var(--cd-warn)' : 'var(--muted)');
   // Show countdown for all task types; hide only when checked (handled at render site).
   const showTaskCD  = !isEvent;
-  const localWebReset = !isEvent && task.webResetTime ? utcToLocalHHMM(task.webResetTime) : null;
+  // Use task-level resetTime if set, otherwise fall back to game resetTime.
+  const localResetTime = !isEvent ? utcToLocalHHMM(task.resetTime || game?.resetTime) : null;
 
   // ── Shared ───────────────────────────────────────────────────────
   const dimmed     = isEvent ? (isDone || isExpired) : isChecked;
@@ -124,8 +124,7 @@ export function TaskRow({
         ) : (
           <>
             {showTaskCD && !isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
-            {task.type === 'daily'   && <span className={s.resetLbl}>{utcToLocalHHMM(game.resetTime)}</span>}
-            {task.type === 'webdaily' && localWebReset && <span className={s.resetLbl}>{localWebReset}</span>}
+            {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
             {task.type === 'weekly'  && <span className={s.resetLbl} style={{ color: 'var(--dim)' }}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
             {task.type === 'monthly' && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
           </>

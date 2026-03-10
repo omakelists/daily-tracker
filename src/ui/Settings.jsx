@@ -36,19 +36,15 @@ function TypeSelect({ value, onChange, typeOpts }) {
 
 // ── Per-variant row components ────────────────────────────────────
 
-/** Row for daily / webdaily tasks. Renders a time input only for webdaily. */
+/** Row for daily tasks. Always renders a reset time input. */
 function DailyTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
   return (
     <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
       {DragHandle}
       <TypeSelect value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} typeOpts={DAILY_TYPE_OPTS} />
       <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
-      {item.type === 'webdaily' && (
-        <>
-          <span className={s.extraLbl}>{t('resetLbl')}</span>
-          <input type="time" value={utcToLocalHHMM(item.webResetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'webResetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
-        </>
-      )}
+      <span className={s.extraLbl}>{t('resetLbl')}</span>
+      <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
       <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
     </div>
   );
@@ -417,7 +413,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     <GameItemSection
                       game={game}
                       variant="daily"
-                      items={(game.items ?? []).filter((it) => it.type === 'daily' || it.type === 'webdaily')}
+                      items={(game.items ?? []).filter((it) => it.type === 'daily')}
                       typeOpts={DAILY_TYPE_OPTS}
                       headerLabel={t('types.daily')}
                       addKey={`daily-${game.id}`}

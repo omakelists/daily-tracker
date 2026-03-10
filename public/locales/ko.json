@@ -25,7 +25,6 @@
   "types": {
     "daily": "데일리",
     "weekly": "위클리",
-    "webdaily": "Web 데일리",
     "monthly": "먼슬리",
     "halfmonthly": "반월",
     "event": "이벤트"

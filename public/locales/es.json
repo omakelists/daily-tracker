@@ -25,7 +25,6 @@
   "types": {
     "daily": "Diario",
     "weekly": "Semanal",
-    "webdaily": "Web Diario",
     "monthly": "Mensual",
     "halfmonthly": "Quincenal",
     "event": "Evento"

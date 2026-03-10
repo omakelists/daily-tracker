@@ -81,8 +81,8 @@ export function prevHalfMonthKey(k) {
   return `H-${p.getUTCFullYear()}-${String(p.getUTCMonth()+1).padStart(2,'0')}-B`;
 }
 
-export const getTaskRT = (task, game) =>
-  task.type === 'webdaily' ? (task.webResetTime || game.resetTime) : game.resetTime;
+// Task-level resetTime takes precedence over game resetTime.
+export const getTaskRT = (task, game) => task.resetTime || game.resetTime;
 
 export function getPeriodKey(task, game, now) {
   const dk = getGameDateKey(now, getTaskRT(task, game));

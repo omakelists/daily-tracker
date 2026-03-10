@@ -26,7 +26,6 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
 
   --type-daily:        #58a6ff;
   --type-weekly:       #bc8cff;
-  --type-webdaily:     #3fb950;
   --type-monthly:      #ff7b72;
   --type-halfmonthly:  #ffa657;
 

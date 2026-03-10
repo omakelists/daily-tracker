@@ -83,7 +83,6 @@
 }
 .badgeDaily       { color: var(--type-daily);        background: rgba(0, 0, 0, 0.4); border-color: #3a6ea8; }
 .badgeWeekly      { color: var(--type-weekly);       background: rgba(0, 0, 0, 0.4); border-color: #7a5aaa; }
-.badgeWebdaily    { color: var(--type-webdaily);     background: rgba(0, 0, 0, 0.4); border-color: #2a7a35; }
 .badgeMonthly     { color: var(--type-monthly);      background: rgba(0, 0, 0, 0.4); border-color: #a8453f; }
 .badgeHalfmonthly { color: var(--type-halfmonthly);  background: rgba(0, 0, 0, 0.4); border-color: #a86030; }
 .badgeEvent       { color: var(--warn);              background: rgba(0, 0, 0, 0.4); border-color: #7a6020; }

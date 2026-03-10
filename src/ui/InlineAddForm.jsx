@@ -29,21 +29,21 @@ function TaskFormActions({ onSubmit, onCancel, submitLabel, disabled }) {
 
 // ── DailyAddForm ──────────────────────────────────────────────────
 // Props: typeOpts, gameResetTime,
-//        initialName, initialType, initialWebResetTime,
+//        initialName, initialType, initialResetTime,
 //        onAdd(task) / onSave(task), onCancel, submitLabel
 export function DailyAddForm({
   typeOpts,
   gameResetTime,
   initialName = '',
   initialType,
-  initialWebResetTime,
+  initialResetTime,
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
   const [type,     setType]     = useState(initialType ?? typeOpts[0]);
   const [name,     setName]     = useState(initialName);
-  const [webReset, setWebReset] = useState(
-    initialWebResetTime ? utcToLocalHHMM(initialWebResetTime) : utcToLocalHHMM(gameResetTime ?? '00:00')
+  const [taskReset, setTaskReset] = useState(
+    initialResetTime ? utcToLocalHHMM(initialResetTime) : utcToLocalHHMM(gameResetTime ?? '00:00')
   );
 
   const inputRef = useRef(null);
@@ -53,7 +53,7 @@ export function DailyAddForm({
   const handleSubmit = () => {
     if (!name.trim()) return;
     const task = { type, name: name.trim() };
-    if (type === 'webdaily') task.webResetTime = localToUtcHHMM(webReset);
+    if (taskReset) task.resetTime = localToUtcHHMM(taskReset);
     if (onSave) onSave(task); else onAdd(task);
   };
 
@@ -64,7 +64,7 @@ export function DailyAddForm({
 
   return (
     <div className={s.form}>
-      {/* Row 1: [type select] [name] [webReset time] */}
+      {/* Row 1: [type select] [name] [reset time] */}
       <div className={s.row}>
         {typeOpts.length > 1 && (
           <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
@@ -72,12 +72,8 @@ export function DailyAddForm({
           </select>
         )}
         <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t(`types.${type}`)} className={`${shared.inputCls} ${s.nameInput}`} />
-        {type === 'webdaily' && (
-          <>
-            <span className={s.deadlineLbl}>{t('resetLbl')}</span>
-            <input type="time" value={webReset} onChange={(e) => setWebReset(e.target.value)} className={`${shared.inputCls} ${s.timeInput}`} />
-          </>
-        )}
+        <span className={s.deadlineLbl}>{t('resetLbl')}</span>
+        <input type="time" value={taskReset} onChange={(e) => setTaskReset(e.target.value)} className={`${shared.inputCls} ${s.timeInput}`} />
       </div>
       {/* Row 2: action buttons */}
       <TaskFormActions onSubmit={handleSubmit} onCancel={onCancel} submitLabel={submitLabel} disabled={!name.trim()} />

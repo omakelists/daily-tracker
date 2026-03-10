@@ -25,7 +25,6 @@
   "types": {
     "daily": "每日",
     "weekly": "每周",
-    "webdaily": "Web 每日",
     "monthly": "每月",
     "halfmonthly": "半月",
     "event": "活动"

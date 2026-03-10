@@ -25,7 +25,6 @@
   "types": {
     "daily": "Daily",
     "weekly": "Weekly",
-    "webdaily": "Web Daily",
     "monthly": "Monthly",
     "halfmonthly": "Half-Monthly",
     "event": "Event"

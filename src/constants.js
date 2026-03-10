@@ -1,6 +1,6 @@
 // ── Task classification ────────────────────────────────────────────
 // TYPE_COLORS removed — use CSS classes .type-badge-{type} from style.css
-export const DAILY_TYPES  = new Set(['daily', 'webdaily']);
+export const DAILY_TYPES  = new Set(['daily']);
 export const PERIOD_TYPES = new Set(['weekly', 'monthly', 'halfmonthly']);
 export const EVENT_TYPES  = new Set(['event', 'todo']);
 
@@ -61,7 +61,7 @@ export const DEFAULT_GAMES = [
     resetTime: '20:00',
     items: [
       { id: 't1',  name: '',                    type: 'daily' },
-      { id: 't2',  name: 'HoYoLAB',             type: 'webdaily',    webResetTime: '16:00' },
+      { id: 't2',  name: 'HoYoLAB',             type: 'daily',    resetTime: '16:00' },
       { id: 't3',  name: 'Weekly Boss',          type: 'weekly' },
       { id: 't4',  name: 'Serenitea Pot',        type: 'weekly' },
       { id: 't5',  name: 'Imaginarium Theater',  type: 'monthly',    monthlyResetDay: 1 },
@@ -73,7 +73,7 @@ export const DEFAULT_GAMES = [
     resetTime: '20:00',
     items: [
       { id: 't7',  name: '',               type: 'daily' },
-      { id: 't8',  name: 'HoYoLAB',       type: 'webdaily', webResetTime: '16:00' },
+      { id: 't8',  name: 'HoYoLAB',       type: 'daily', resetTime: '16:00' },
       { id: 't9',  name: 'Deadly Assault', type: 'weekly' },
       { id: 't10', name: 'Hollow Zero',    type: 'weekly' },
     ],
@@ -83,7 +83,7 @@ export const DEFAULT_GAMES = [
     resetTime: '20:00',
     items: [
       { id: 't11', name: '',       type: 'daily' },
-      { id: 't12', name: 'SKPORT', type: 'webdaily', webResetTime: '16:00' },
+      { id: 't12', name: 'SKPORT', type: 'daily', resetTime: '16:00' },
     ],
   },
 ];
