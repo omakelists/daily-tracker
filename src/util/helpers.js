@@ -1,4 +1,4 @@
-import { fmtDate } from '../constants';
+import { fmtDate, DAILY_TYPES, EVENT_TYPES } from '../constants';
 
 export const parseHHMM = (s) => { const [h, m] = (s || '00:00').split(':').map(Number); return h * 60 + m; };
 
@@ -185,6 +185,38 @@ export function cdColor(ms, urgentH, warnH) {
 }
 
 export const checkKey = (id, pk) => `${id}__${pk}`;
+
+/**
+ * Pure function: returns true when the game's master checkbox should show as checked.
+ * This is the single source of truth used by App (sort / fanfare) and GameCard (display).
+ *
+ * Rules:
+ *   - No items (solo mode)  → virtual solo task is checked
+ *   - Has daily tasks       → all tasks due within 24h are checked (≥1 must exist)
+ *   - No daily tasks        → every task is checked AND every event is done
+ *
+ * @param {object} game
+ * @param {object} checks   - flat checks map { key: bool }
+ * @param {Date}   now
+ * @param {string} soloId   - virtual task id when game has no items (e.g. `${game.id}_solo`)
+ */
+export function calcAllDone(game, checks, now, soloId) {
+  const allItems   = game.items ?? [];
+  const dailyItems = allItems.filter((it) => DAILY_TYPES.has(it.type));
+
+  if (allItems.length === 0) {
+    const solo = { id: soloId, type: 'daily' };
+    return !!checks[checkKey(solo.id, getPeriodKey(solo, game, now))];
+  }
+  if (dailyItems.length > 0) {
+    const DAY    = 24 * 3600000;
+    const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) < DAY);
+    return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+  }
+  const tasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+  const eventsDone = allItems.filter((it) =>  EVENT_TYPES.has(it.type)).every((it) => !!it.done);
+  return tasksDone && eventsDone;
+}
 
 /** ms until the deadline.
  *  dateStr  = 'YYYY-MM-DD'

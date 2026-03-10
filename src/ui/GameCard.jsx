@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
 import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES } from '../constants';
-import { getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey } from '../util/helpers';
+import { getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow';
@@ -142,29 +142,7 @@ export function GameCard({
   const visPeriod = collapsed ? sortedPeriod.filter((tk) => !isChecked(tk) || tk.id === editingId) : sortedPeriod;
   const visEvents = collapsed ? sortedEvents.filter((it) => !it.done || it.id === editingId)       : sortedEvents;
 
-  // allTodayDone rules (when allItems.length > 0):
-  //   - daily tasks exist → all unchecked tasks with < 24h remaining are checked (≥1 such task must exist)
-  //   - no daily tasks    → every item (task/event) is checked/done
-  const allTodayDone = (() => {
-    if (allItems.length === 0) {
-      // Solo mode: driven by virtual solo task via dailyTasks
-      return dailyTasks.length > 0 && dailyTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
-    }
-    if (dailyItems.length > 0) {
-      // Has daily tasks: checked when all tasks due within 24h are checked
-      const DAY = 24 * 3600000;
-      const urgentTasks = allItems.filter((it) => {
-        if (EVENT_TYPES.has(it.type)) return false;
-        const m = msUntilTaskReset(it, game, now);
-        return m > 0 && m < DAY;
-      });
-      return urgentTasks.length > 0 && urgentTasks.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
-    }
-    // No daily tasks: checked when every item is checked/done
-    const allTasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
-    const allEventsDone = allItems.filter((it) => EVENT_TYPES.has(it.type)).every((it) => !!it.done);
-    return allTasksDone && allEventsDone;
-  })();
+  const allTodayDone = calcAllDone(game, checks, now, `${game.id}_solo`);
   const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
   const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
   const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
