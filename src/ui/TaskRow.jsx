@@ -56,8 +56,6 @@ export function TaskRow({
                          : task.type === 'halfmonthly'  ? [48, 120]  // 2d / 5d
                          :                               [3,   6];   // daily
   const taskCdColor      = cdColor(taskMs, urgentH, warnH);
-  // Show countdown for all task types; hide only when checked (handled at render site).
-  const showTaskCD  = !isEvent;
   // Use task-level resetTime if set, otherwise fall back to game resetTime.
   const localResetTime = !isEvent ? utcToLocalHHMM(task.resetTime || game?.resetTime) : null;
 
@@ -112,14 +110,14 @@ export function TaskRow({
       }
       meta={
         isEvent ? (
-          deadlineMs !== null ? (
+          deadlineMs !== null && !isDone ? (
             <span className={s.countdown} style={{ color: eventCdColor }}>
               {isExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
             </span>
           ) : null
         ) : (
           <>
-            {showTaskCD && !isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
+            {!isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
             {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
             {task.type === 'weekly'      && <span className={s.resetLbl} style={{ color: 'var(--dim)' }}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
             {task.type === 'monthly'     && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
