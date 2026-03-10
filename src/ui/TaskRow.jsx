@@ -61,10 +61,8 @@ export function TaskRow({
   const taskCdColor = task.type === 'weekly'
     ? (taskH < 24 ? 'var(--cd-urgent)' : taskH < 48 ? 'var(--cd-warn)' : 'var(--muted)')
     : (taskH < 3  ? 'var(--cd-urgent)' : taskH < 6  ? 'var(--cd-warn)' : 'var(--muted)');
-  const showTaskCD  = !isEvent && (
-    task.type === 'weekly' || task.type === 'monthly' || task.type === 'halfmonthly' ||
-    (task.type === 'webdaily' && task.webResetTime && task.webResetTime !== game.resetTime)
-  );
+  // Show countdown for all task types; hide only when checked (handled at render site).
+  const showTaskCD  = !isEvent;
   const localWebReset = !isEvent && task.webResetTime ? utcToLocalHHMM(task.webResetTime) : null;
 
   // ── Shared ───────────────────────────────────────────────────────
@@ -126,7 +124,8 @@ export function TaskRow({
         ) : (
           <>
             {showTaskCD && !isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
-            {task.type === 'webdaily' && localWebReset && localWebReset !== utcToLocalHHMM(game.resetTime) && <span className={s.resetLbl}>{localWebReset}</span>}
+            {task.type === 'daily'   && <span className={s.resetLbl}>{utcToLocalHHMM(game.resetTime)}</span>}
+            {task.type === 'webdaily' && localWebReset && <span className={s.resetLbl}>{localWebReset}</span>}
             {task.type === 'weekly'  && <span className={s.resetLbl} style={{ color: 'var(--dim)' }}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
             {task.type === 'monthly' && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
           </>
