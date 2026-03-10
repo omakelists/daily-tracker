@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES } from '../constants';
+import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
@@ -34,10 +34,6 @@ const bodyVariants = {
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-// Derive type option arrays from constants Sets (aligned with Settings.jsx)
-const DAILY_TYPE_OPTS    = [...DAILY_TYPES];
-const PERIODIC_TYPE_OPTS = [...PERIOD_TYPES];
-
 // ── Edit form map: one add-form component per variant ────────────
 const EDIT_FORM = {
   daily: ({ item, game, onSave, onCancel }) => (
@@ -54,7 +50,7 @@ const EDIT_FORM = {
   ),
   periodic: ({ item, game, onSave, onCancel }) => (
     <PeriodicAddForm
-      typeOpts={PERIODIC_TYPE_OPTS}
+      typeOpts={PERIOD_TYPE_OPTS}
       initialName={item.name}
       initialType={item.type}
       initialMonthlyResetDay={item.monthlyResetDay ?? 1}
@@ -80,10 +76,8 @@ const EDIT_FORM = {
 
 // ── View row map: one TaskRow config per variant ──────────────────
 const VIEW_ROW = {
-  daily: ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
-    <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={onContextMenu} />
-  ),
-  periodic: ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
+  // daily and periodic share identical props — unified as 'task'
+  task:  ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
     <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={onContextMenu} />
   ),
   event: ({ item, game, now, cd, onToggleItem, onDeleteItem, onContextMenu }) => (
@@ -204,8 +198,9 @@ export function GameCard({
   // Unified wrapper for all item types — variant resolves which map entry to use
   const wrapItem = (item) => {
     const isEditing = editingId === item.id;
-    const variant   = EVENT_TYPES.has(item.type) ? 'event'
-                    : DAILY_TYPES.has(item.type)  ? 'daily' : 'periodic';
+    const variant   = EVENT_TYPES.has(item.type) ? 'event' : 'task';
+    const editVariant = EVENT_TYPES.has(item.type) ? 'event'
+                      : DAILY_TYPES.has(item.type) ? 'daily' : 'periodic';
     const sharedProps = {
       item,
       game,
@@ -221,7 +216,7 @@ export function GameCard({
     };
     return (
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {isEditing ? EDIT_FORM[variant](sharedProps) : VIEW_ROW[variant](sharedProps)}
+        {isEditing ? EDIT_FORM[editVariant](sharedProps) : VIEW_ROW[variant](sharedProps)}
       </motion.div>
     );
   };
@@ -329,7 +324,7 @@ export function GameCard({
                     addSlot={animatedForm('add-periodic',
                       formState?.mode === 'addPeriodic' && (
                         <PeriodicAddForm
-                          typeOpts={PERIODIC_TYPE_OPTS}
+                          typeOpts={PERIOD_TYPE_OPTS}
                           gameResetTime={game.resetTime}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}

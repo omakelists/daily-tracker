@@ -92,7 +92,7 @@ export const getTaskRT = (task, game) => task.resetTime || game.resetTime;
 export function getPeriodKey(task, game, now) {
   const dk = getGameDateKey(now, getTaskRT(task, game));
   if (task.type === 'weekly')      return dateToWeekKey(dk, task.weeklyResetDay ?? 1);
-  if (task.type === 'monthly')     return getMonthPeriodKey(dk, task.monthlyResetDay || 1);
+  if (task.type === 'monthly')     return getMonthPeriodKey(dk, task.monthlyResetDay ?? 1);
   if (task.type === 'halfmonthly') return dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1);
   return dk;
 }
@@ -101,7 +101,7 @@ export function getPrevPeriodKey(task, game, now) {
   const rt = getTaskRT(task, game);
   const dk = getGameDateKey(now, rt);
   if (task.type === 'weekly')      return dateToWeekKey(shiftDate(dk, -7), task.weeklyResetDay ?? 1);
-  if (task.type === 'monthly')     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay || 1));
+  if (task.type === 'monthly')     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay ?? 1));
   if (task.type === 'halfmonthly') return prevHalfMonthKey(dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1), task.halfMonthlyStartDay ?? 1);
   return getPrevGameDateKey(now, rt);
 }
@@ -145,21 +145,22 @@ export function msUntilNextHalfMonth(now, rtUTC, startDay = 1) {
   return (tgt ?? candidates[2]) - now;
 }
 
+export function msUntilNextWeek(now, rtUTC, rd = 1) {
+  const rtMin = parseHHMM(rtUTC);
+  const dow   = now.getUTCDay();
+  const tgt   = new Date(now);
+  tgt.setUTCHours(Math.floor(rtMin / 60), rtMin % 60, 0, 0);
+  if (dow === rd && now < tgt) return tgt - now;
+  const days = (rd - dow + 7) % 7 || 7;
+  tgt.setUTCDate(tgt.getUTCDate() + days);
+  return tgt - now;
+}
+
 export function msUntilTaskReset(task, game, now) {
   const rt = getTaskRT(task, game);
-  if (task.type === 'monthly')     return msUntilNextMonth(now, rt, task.monthlyResetDay || 1);
+  if (task.type === 'monthly')     return msUntilNextMonth(now, rt, task.monthlyResetDay ?? 1);
   if (task.type === 'halfmonthly') return msUntilNextHalfMonth(now, rt, task.halfMonthlyStartDay ?? 1);
-  if (task.type === 'weekly') {
-    const rd    = task.weeklyResetDay ?? 1; // 0=Sun ... 6=Sat
-    const rtMin = parseHHMM(rt);
-    const dow   = now.getUTCDay();
-    const tgt   = new Date(now);
-    tgt.setUTCHours(Math.floor(rtMin/60), rtMin%60, 0, 0);
-    if (dow === rd && now < tgt) return tgt - now;
-    const days = (rd - dow + 7) % 7 || 7;
-    tgt.setUTCDate(tgt.getUTCDate() + days);
-    return tgt - now;
-  }
+  if (task.type === 'weekly') return msUntilNextWeek(now, rt, task.weeklyResetDay ?? 1);
   return msUntilReset(now, rt);
 }
 
@@ -210,7 +211,7 @@ export function calcAllDone(game, checks, now, soloId) {
   }
   if (dailyItems.length > 0) {
     const DAY    = 24 * 3600000;
-    const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) < DAY);
+    const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) > 0 && msUntilTaskReset(it, game, now) < DAY);
     return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }
   const tasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);

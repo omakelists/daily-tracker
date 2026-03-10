@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES } from '../constants';
+import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { CropModal } from './CropModal';
@@ -10,8 +10,6 @@ import { DailyAddForm, PeriodicAddForm, EventAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
-const DAILY_TYPE_OPTS    = [...DAILY_TYPES];
-const PERIODIC_TYPE_OPTS = [...PERIOD_TYPES];
 const DragHandle = <span className={s.dragHandle}>⠿</span>;
 
 // Shared item variants for game/task rows
@@ -55,7 +53,7 @@ function PeriodicTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
   return (
     <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
       {DragHandle}
-      <TypeSelect value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} typeOpts={PERIODIC_TYPE_OPTS} />
+      <TypeSelect value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} typeOpts={PERIOD_TYPE_OPTS} />
       <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
       {item.type === 'monthly' && (
         <>
@@ -437,7 +435,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       game={game}
                       variant="periodic"
                       items={(game.items ?? []).filter((it) => it.type === 'weekly' || it.type === 'halfmonthly' || it.type === 'monthly')}
-                      typeOpts={PERIODIC_TYPE_OPTS}
+                      typeOpts={PERIOD_TYPE_OPTS}
                       headerLabel={t('periodic')}
                       addKey={`periodic-${game.id}`}
                       addTo={addTo}
