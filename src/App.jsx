@@ -69,25 +69,21 @@ export function App() {
   }, [imgVer, games]);
 
 
+  // Unified clock: fires at whichever comes first — the next task reset or 30s fallback.
+  // This replaces a separate setInterval(30s) + setTimeout(nextReset) pair.
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (!games) return;
-    let minMs = Infinity;
-    games.forEach((game) => {
-      // Use all task items (daily + periodic) so periodic resets also trigger a re-render.
-      // Fall back to a virtual solo task only when the game has no task items at all.
-      const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
-      const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
-      tasks.forEach((task) => {
-        const ms = msUntilTaskReset(task, game, now);
-        if (ms > 0 && ms < minMs) minMs = ms;
+    let minMs = 30_000;
+    if (games) {
+      games.forEach((game) => {
+        // Cover all task types (daily + periodic); fall back to solo when game has no tasks.
+        const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
+        const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
+        tasks.forEach((task) => {
+          const ms = msUntilTaskReset(task, game, now);
+          if (ms > 0 && ms < minMs) minMs = ms;
+        });
       });
-    });
-    if (!isFinite(minMs)) return;
+    }
     const id = setTimeout(() => setNow(new Date()), minMs + 200);
     return () => clearTimeout(id);
   }, [now, games]);
