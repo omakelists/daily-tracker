@@ -80,8 +80,8 @@ const VIEW_ROW = {
   task:  ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
     <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={onContextMenu} />
   ),
-  event: ({ item, game, now, cd, onToggleItem, onDeleteItem, onContextMenu }) => (
-    <TaskRow task={item} now={now} cd={cd} onToggle={(id) => onToggleItem?.(game.id, id)} onContextMenu={onContextMenu} onDelete={(id) => onDeleteItem?.(game.id, id)} gameResetTime={game.resetTime} />
+  event: ({ item, game, checks, now, cd, onToggle, onDeleteItem, onContextMenu }) => (
+    <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={onContextMenu} onDelete={(id) => onDeleteItem?.(game.id, id)} />
   ),
 };
 
@@ -99,7 +99,7 @@ export function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks, cd,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
   showSectionHeaders = true,
-  onAddItem, onDeleteItem, onToggleItem, onEditItem,
+  onAddItem, onDeleteItem, onEditItem,
 }) {
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
@@ -134,7 +134,7 @@ export function GameCard({
   // Keep the item being edited visible even when collapsed
   const visDaily  = collapsed ? sortedDaily.filter((tk) => !isChecked(tk) || tk.id === editingId)  : sortedDaily;
   const visPeriod = collapsed ? sortedPeriod.filter((tk) => !isChecked(tk) || tk.id === editingId) : sortedPeriod;
-  const visEvents = collapsed ? sortedEvents.filter((it) => !it.done || it.id === editingId)       : sortedEvents;
+  const visEvents = collapsed ? sortedEvents.filter((it) => !isChecked(it) || it.id === editingId) : sortedEvents;
 
   const allTodayDone = calcAllDone(game, checks, now, `${game.id}_solo`);
   const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
@@ -160,7 +160,7 @@ export function GameCard({
     let min = Infinity;
     for (const it of allItems) {
       if (EVENT_TYPES.has(it.type)) {
-        if (it.done || !it.deadline) continue;
+        if (isChecked(it) || !it.deadline) continue;
         const m = msUntilDeadline(it.deadline, now, it.deadlineTime);
         if (m > 0 && m < DAY_MS) min = Math.min(min, m);
       } else {
@@ -207,7 +207,6 @@ export function GameCard({
       now,
       cd,
       onToggle,
-      onToggleItem,
       onDeleteItem,
       onContextMenu: variant === 'event' ? handleEventContextMenu : handleTaskContextMenu,
       onSave:   (updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); },

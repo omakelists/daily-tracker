@@ -27,7 +27,8 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "halfmonthly": "Half-Monthly",
-    "event": "Event"
+    "event": "Event",
+    "todo": "To-do"
   },
   "cd": {
     "d": "d",

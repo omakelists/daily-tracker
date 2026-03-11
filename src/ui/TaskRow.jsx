@@ -1,7 +1,7 @@
 import { useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
 import { DAILY_TYPES, EVENT_TYPES, utcToLocalHHMM } from '../constants';
-import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey, playCheckSound } from '../util/helpers';
+import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
 import s from './TaskRow.module.css';
@@ -34,51 +34,43 @@ export function TaskRow({
   const [cbScope, animateCb] = useAnimate();
   const isEvent = EVENT_TYPES.has(task.type);
 
-  // ── Event mode logic ─────────────────────────────────────────────
-  const deadlineMs    = isEvent && task.deadline ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null;
-  const isExpired     = deadlineMs !== null && deadlineMs <= 0;
-  const isDone        = isEvent ? !!task.done : false;
-  const eventCdColor  = cdColor(deadlineMs ?? Infinity, 24, 48);
-  const dateColor     = isExpired ? 'var(--danger)' : 'var(--dim)';
-  const hasTime            = isEvent && !!task.deadlineTime;
-  const timeIsSameAsReset  = hasTime && gameResetTime && task.deadlineTime === gameResetTime;
-  const showTime           = hasTime && !timeIsSameAsReset;
-  const localDeadlineTime  = showTime ? utcToLocalHHMM(task.deadlineTime) : null;
+  // ── Checked state (unified: all types use checks map) ────────────
+  const isChecked   = !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
+  const prevChecked = !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
+  const showPrev    = DAILY_TYPES.has(task.type);
 
-  // ── Task mode logic ──────────────────────────────────────────────
-  const isChecked   = !isEvent && !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
-  const prevChecked = !isEvent && !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
-  const showPrev    = !isEvent && DAILY_TYPES.has(task.type);
-  const taskMs      = !isEvent ? msUntilTaskReset(task, game, now) : 0;
-  // Urgency windows scale with the reset period length.
+  // ── Event-specific ───────────────────────────────────────────────
+  const deadlineMs = isEvent && task.deadline
+    ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null;
+  const isExpired  = deadlineMs !== null && deadlineMs <= 0;
+  const eventCdColor      = cdColor(deadlineMs ?? Infinity, 24, 48);
+  const dateColor         = isExpired ? 'var(--danger)' : 'var(--dim)';
+  const hasTime           = isEvent && !!task.deadlineTime;
+  const timeIsSameAsReset = hasTime && gameResetTime && task.deadlineTime === gameResetTime;
+  const showTime          = hasTime && !timeIsSameAsReset;
+  const localDeadlineTime = showTime ? utcToLocalHHMM(task.deadlineTime) : null;
+
+  // ── Task-specific ────────────────────────────────────────────────
+  const taskMs = !isEvent ? msUntilTaskReset(task, game, now) : 0;
   const [urgentH, warnH] = task.type === 'weekly'      ? [24,  48]
-                         : task.type === 'monthly'      ? [72, 168]  // 3d / 7d
-                         : task.type === 'halfmonthly'  ? [48, 120]  // 2d / 5d
-                         :                               [3,   6];   // daily
-  const taskCdColor      = cdColor(taskMs, urgentH, warnH);
-  // Use task-level resetTime if set, otherwise fall back to game resetTime.
+                         : task.type === 'monthly'      ? [72, 168]
+                         : task.type === 'halfmonthly'  ? [48, 120]
+                         :                               [3,   6];
+  const taskCdColor    = cdColor(taskMs, urgentH, warnH);
   const localResetTime = !isEvent ? utcToLocalHHMM(task.resetTime || game?.resetTime) : null;
 
   // ── Shared ───────────────────────────────────────────────────────
-  const dimmed     = isEvent ? (isDone || isExpired) : isChecked;
-  const showDelete = isEvent && (isDone || isExpired) && onDelete;
+  const dimmed     = isChecked || isExpired;
+  const showDelete = isEvent && dimmed && onDelete;
 
   const handleClick = (e) => {
-    if (isEvent) e.stopPropagation();
     animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
-    if (isEvent) {
-      if (!isDone) playCheckSound();
-      onToggle?.(task.id);
-    } else {
-      onToggle(task.id, game);
-    }
+    onToggle(task.id, game);
   };
 
   const trigger = useContextTrigger((x, y) => onContextMenu?.(task.id, x, y));
 
-  const badgeLabel = isEvent
-    ? (task.type === 'todo' ? t('todoName') : t('events'))
-    : t(`types.${task.type}`);
+  const badgeLabel = t(`types.${task.type}`);
 
   const row = (
     <Row
@@ -110,7 +102,7 @@ export function TaskRow({
       }
       meta={
         isEvent ? (
-          deadlineMs !== null && !isDone ? (
+          deadlineMs !== null && !isChecked ? (
             <span className={s.countdown} style={{ color: eventCdColor }}>
               {isExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
             </span>
@@ -148,8 +140,8 @@ export function TaskRow({
     />
   );
 
-  // Wrap with context-menu trigger whenever a handler is provided (both task and event modes)
-  if (isEvent || onContextMenu) {
+  // Wrap with context-menu trigger whenever a handler is provided
+  if (onContextMenu) {
     return <div {...trigger} style={{ userSelect: 'none' }}>{row}</div>;
   }
   return row;

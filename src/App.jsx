@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES, EVENT_TYPES, uid } from './constants';
-import { loadGames, saveGames, loadChecks, saveChecks } from './util/storage';
+import { loadAll, saveGames, saveChecks } from './util/storage';
 import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './util/useLocalStoragePref';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset, msUntilDeadline, calcAllDone } from './util/helpers';
@@ -89,8 +89,9 @@ export function App() {
   }, [now, games]);
 
   useEffect(() => {
-    setGames(loadGames() ?? DEFAULT_GAMES);
-    setChecks(loadChecks());
+    const { games: loaded, checks: loadedChecks } = loadAll();
+    setGames(loaded ?? DEFAULT_GAMES);
+    setChecks(loadedChecks);
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
@@ -172,8 +173,8 @@ export function App() {
         setChecks((prev) => {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
-          const taskItems  = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
-          const allTasks   = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
+          const allItems   = game.items ?? [];
+          const allTasks   = allItems.length ? allItems : [{ id: soloId(game), type: 'daily' }];
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
@@ -226,14 +227,7 @@ export function App() {
     setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, items: (g.items ?? []).filter((it) => it.id !== itemId) } : g));
   }, []);
 
-  const toggleItem = useCallback((gameId, itemId) => {
-    setGames((prev) => prev.map((g) => {
-      if (g.id !== gameId) return g;
-      return { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, done: !it.done } : it) };
-    }));
-  }, []);
-
-  const editItem = useCallback((gameId, itemId, updates) => {
+const editItem = useCallback((gameId, itemId, updates) => {
     setGames((prev) => prev.map((g) => g.id === gameId
       ? { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, ...updates } : it) }
       : g
@@ -297,7 +291,6 @@ export function App() {
               showSectionHeaders={showSectionHeaders}
               onAddItem={addItem}
               onDeleteItem={deleteItem}
-              onToggleItem={toggleItem}
               onEditItem={editItem}
             />
           ))}

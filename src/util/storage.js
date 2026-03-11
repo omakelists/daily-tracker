@@ -1,3 +1,5 @@
+import { EVENT_TYPES } from '../constants';
+
 const GAMES_KEY  = 'dailytracker:games';
 const CHECKS_KEY = 'dailytracker:checks';
 
@@ -49,3 +51,36 @@ export function saveChecks(c) {
   try { localStorage.setItem(CHECKS_KEY, JSON.stringify(c)); } catch {}
 }
 
+/**
+ * Load both games and checks, performing Phase-4 migration:
+ * event item.done → checks[id__done] = true.
+ * Use this instead of calling loadGames() + loadChecks() separately.
+ */
+export function loadAll() {
+  let checks = loadChecks();
+  let games  = null;
+  try {
+    const v = localStorage.getItem(GAMES_KEY);
+    if (!v) return { games: null, checks };
+    const raw = JSON.parse(v);
+    if (!Array.isArray(raw)) return { games: null, checks };
+
+    let migrated = false;
+    games = raw.map(migrateGame).map((g) => {
+      const items = (g.items ?? []).map((it) => {
+        // Phase 4: move item.done (event) into checks map
+        if (EVENT_TYPES.has(it.type) && 'done' in it) {
+          if (it.done) checks[`${it.id}__done`] = true;
+          const { done, ...rest } = it;
+          migrated = true;
+          return rest;
+        }
+        return it;
+      });
+      return { ...g, items };
+    });
+
+    if (migrated) { saveGames(games); saveChecks(checks); }
+  } catch { return { games: null, checks }; }
+  return { games, checks };
+}

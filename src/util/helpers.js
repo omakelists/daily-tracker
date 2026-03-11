@@ -90,6 +90,7 @@ export function prevHalfMonthKey(k, startDay = 1) {
 export const getTaskRT = (task, game) => task.resetTime || game.resetTime;
 
 export function getPeriodKey(task, game, now) {
+  if (EVENT_TYPES.has(task.type)) return 'done'; // events never reset
   const dk = getGameDateKey(now, getTaskRT(task, game));
   if (task.type === 'weekly')      return dateToWeekKey(dk, task.weeklyResetDay ?? 1);
   if (task.type === 'monthly')     return getMonthPeriodKey(dk, task.monthlyResetDay ?? 1);
@@ -98,6 +99,7 @@ export function getPeriodKey(task, game, now) {
 }
 
 export function getPrevPeriodKey(task, game, now) {
+  if (EVENT_TYPES.has(task.type)) return 'done'; // events have no previous period
   const rt = getTaskRT(task, game);
   const dk = getGameDateKey(now, rt);
   if (task.type === 'weekly')      return dateToWeekKey(shiftDate(dk, -7), task.weeklyResetDay ?? 1);
@@ -213,9 +215,8 @@ export function calcAllDone(game, checks, now, soloId) {
     const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) > 0 && msUntilTaskReset(it, game, now) < DAY_MS);
     return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }
-  const tasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
-  const eventsDone = allItems.filter((it) =>  EVENT_TYPES.has(it.type)).every((it) => !!it.done);
-  return tasksDone && eventsDone;
+  // No daily tasks: every item (task and event) is checked
+  return allItems.every((it) => !!checks[checkKey(it.id, getPeriodKey(it, game, now))]);
 }
 
 /** ms until the deadline.
