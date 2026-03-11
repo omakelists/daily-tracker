@@ -12,6 +12,9 @@ export const PERIOD_TYPE_OPTS = [...new Set(['weekly', 'monthly', 'halfmonthly']
 let _idCtr = Date.now();
 export const uid = () => 'i' + (_idCtr++).toString(36);
 
+// ── Time constants ────────────────────────────────────────────────
+export const DAY_MS = 24 * 3600_000;  // milliseconds in one day
+
 // ── UTC date helpers ───────────────────────────────────────────────
 /** Format a Date as YYYY-MM-DD using UTC fields. */
 export const fmtDate = (d) =>

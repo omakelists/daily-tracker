@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
-import { msUntilDeadline, formatCountdown } from '../util/helpers';
+import { msUntilDeadline, formatCountdown, cdColor } from '../util/helpers';
 import s from './InlineAddForm.module.css';
 import shared from './shared.module.css';
 
@@ -128,7 +128,7 @@ export function PeriodicAddForm({
         <span className={s.deadlineLbl}>{t('resetLbl')}</span>
         {type === 'monthly' && (
           <>
-            <input type="number" value={monthDay} min={1} max={31} onChange={(e) => setMonthDay(e.target.value)} className={`${shared.inputCls} ${s.dayInput}`} />
+            <input type="number" value={monthDay} min={1} max={28} onChange={(e) => setMonthDay(Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.dayInput}`} />
             <span className={s.deadlineLbl}>{t('dayUnit')}</span>
           </>
         )}
@@ -173,7 +173,8 @@ export function EventAddForm({
   const showColor = initialColor !== undefined;
 
   const inputRef = useRef(null);
-  useEffect(() => { inputRef.current?.focus(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Use setTimeout to allow AnimatePresence to finish mounting before focusing
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 0); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-apply defaultTime on first date selection
   const handleDateChange = (val) => {
@@ -202,11 +203,7 @@ export function EventAddForm({
   const timeUtcForCd    = (date && time) ? localToUtcHHMM(time) : undefined;
   const deadlineMs      = date ? msUntilDeadline(date, new Date(), timeUtcForCd) : null;
   const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
-  const dh              = deadlineMs != null ? deadlineMs / 3600000 : Infinity;
-  const deadlineColor   = deadlineExpired ? 'var(--danger)'
-                        : dh < 24        ? 'var(--cd-urgent)'
-                        : dh < 48        ? 'var(--cd-warn)'
-                        :                  'var(--muted)';
+  const deadlineColor   = cdColor(deadlineMs ?? Infinity, 24, 48);
 
   return (
     <div className={s.form}>

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
+import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS, DAY_MS } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
@@ -157,17 +157,16 @@ export function GameCard({
   // When no items (solo mode): show game reset countdown unless master is checked.
   const urgentMs = (() => {
     if (allItems.length === 0) return null;
-    const DAY = 24 * 3600000;
     let min = Infinity;
     for (const it of allItems) {
       if (EVENT_TYPES.has(it.type)) {
         if (it.done || !it.deadline) continue;
         const m = msUntilDeadline(it.deadline, now, it.deadlineTime);
-        if (m > 0 && m < DAY) min = Math.min(min, m);
+        if (m > 0 && m < DAY_MS) min = Math.min(min, m);
       } else {
         if (!!checks[checkKey(it.id, getPeriodKey(it, game, now))]) continue;
         const m = msUntilTaskReset(it, game, now);
-        if (m > 0 && m < DAY) min = Math.min(min, m);
+        if (m > 0 && m < DAY_MS) min = Math.min(min, m);
       }
     }
     return min < Infinity ? min : null;

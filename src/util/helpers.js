@@ -1,4 +1,4 @@
-import { fmtDate, DAILY_TYPES, EVENT_TYPES } from '../constants';
+import { fmtDate, DAILY_TYPES, EVENT_TYPES, DAY_MS } from '../constants';
 
 export const parseHHMM = (s) => { const [h, m] = (s || '00:00').split(':').map(Number); return h * 60 + m; };
 
@@ -55,8 +55,8 @@ export function dateToWeekKey(dk, rd = 1) {
   return 'W' + fmtDate(d);
 }
 
-export function getMonthPeriodKey(dk, rd) {
-  const r  = rd || 1;
+export function getMonthPeriodKey(dk, rd = 1) {
+  const r  = rd;
   const day = parseInt(dk.slice(8));
   const y   = parseInt(dk.slice(0, 4));
   const mo  = parseInt(dk.slice(5, 7));
@@ -115,9 +115,9 @@ export function msUntilReset(now, rtUTC) {
   return d * 60 * 1000;
 }
 
-export function msUntilNextMonth(now, rtUTC, rd) {
+export function msUntilNextMonth(now, rtUTC, rd = 1) {
   const r   = parseHHMM(rtUTC);
-  const day = rd || 1;
+  const day = rd;
   const utcDay = now.getUTCDate();
   const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
   const tgt = (utcDay < day || (utcDay === day && utcMin < r))
@@ -210,8 +210,7 @@ export function calcAllDone(game, checks, now, soloId) {
     return !!checks[checkKey(solo.id, getPeriodKey(solo, game, now))];
   }
   if (dailyItems.length > 0) {
-    const DAY    = 24 * 3600000;
-    const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) > 0 && msUntilTaskReset(it, game, now) < DAY);
+    const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) > 0 && msUntilTaskReset(it, game, now) < DAY_MS);
     return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }
   const tasksDone  = allItems.filter((it) => !EVENT_TYPES.has(it.type)).every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
