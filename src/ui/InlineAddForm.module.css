@@ -7,21 +7,46 @@
   gap: 6px;
 }
 
-/* ─ Row 1: name only ─ */
-.row {
+/* ─ Main row: [name input] + [reset controls] side by side when wide enough.
+ * flex-wrap lets resetGroup/eventControlGroup fall to its own line when narrow.
+ * btnRow always occupies a full line below via width:100%.
+ */
+.mainRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
+  flex-wrap: wrap;
 }
 
-.nameInput  { flex: 1; min-width: 0; }
+/* Name input stretches to fill available space; min-width controls wrap timing. */
+.nameInput { flex: 1; min-width: 10rem; }
 
-/* ─ Row 2: date + actions ─ */
-.actionRow {
+/* Reset label + controls: pushed right via margin-left:auto, never compressed. */
+.resetGroup {
   display: flex;
   align-items: center;
   gap: 5px;
-  flex-wrap: wrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Event-only wrapper: stacks resetGroup and quickRow vertically so quick buttons
+ * always appear directly below the date/time controls. */
+.eventControlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Buttons always occupy a dedicated line, right-aligned. */
+.btnRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
 }
 
 .dateInput {
@@ -87,7 +112,7 @@
 .timeLabel  { opacity: 0.85; font-size: 10px; }
 .cdLabel    { opacity: 0.9; }
 
-.spacer { flex: 1; }
+
 
 /* ─ Task mode extras ─ */
 .typeSelect { width: 108px; flex-shrink: 0; }

@@ -144,12 +144,13 @@ const TYPE_PICK_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
 // ── GameItemList ──────────────────────────────────────────────────
 // Renders all items of a game in a unified list with a single "+ Task" button.
 // Clicking the button pops a ContextMenu to pick a type; selecting opens InlineAddForm.
-function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDelete, onAdd }) {
+function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
   const allItems  = game.items ?? [];
   const btnRef    = useRef(null);
+  const [addType,    setAddType]    = useState(undefined); // undefined=hidden, string=form open
   const [pickerPos, setPickerPos] = useState(null); // {x, y} when picker is open
 
-  const handleAdd = (item) => { onAdd(item); onAddTypeChange(undefined); };
+  const handleAdd = (item) => { onAdd(item); setAddType(undefined); };
 
   const openPicker = () => {
     const r = btnRef.current?.getBoundingClientRect();
@@ -160,7 +161,7 @@ function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDel
 
   const pickerItems = TYPE_PICK_OPTS.map((ty) => ({
     label: t(`types.${ty}`),
-    onClick: () => { closePicker(); onAddTypeChange(ty); },
+    onClick: () => { closePicker(); setAddType(ty); },
   }));
 
   return (
@@ -179,7 +180,7 @@ function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDel
         }}
         addSlot={
           addType
-            ? <InlineAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => onAddTypeChange(undefined)} />
+            ? <InlineAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => setAddType(undefined)} />
             : <button ref={btnRef} onClick={openPicker} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('addTask')}</button>
         }
       />
@@ -194,7 +195,6 @@ function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDel
 export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst, showSectionHeaders, onShowSectionHeaders, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
-  const [addType,  setAddType]  = useState(undefined); // undefined=hidden, string=form open
   const importRef = useRef(null);
 
   // Version panel state
@@ -417,12 +417,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   <div className={s.gameBody}>
                     <GameItemList
                       game={game}
-                      addType={addType}
-                      onAddTypeChange={setAddType}
                       itemDnd={itemDnd}
                       onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
                       onDelete={(iid) => delItem(game.id, iid)}
-                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), type: item.type ?? addType, ...item }] } : gm))}
+                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), type: item.type, ...item }] } : gm))}
                     />
                   </div>
                 </div>
