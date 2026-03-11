@@ -46,7 +46,7 @@
 }
 .addGameBtn:hover { border-color: var(--link); color: var(--link); }
 
-.dragHandle { font-size: 14px; color: #484f58; cursor: grab; line-height: 1; padding-right: 2px; flex-shrink: 0; }
+.dragHandle { font-size: 14px; color: #484f58; cursor: grab; line-height: 1; padding-right: 2px; flex-shrink: 0; display: flex; align-items: center; }
 .dragHandle:active { cursor: grabbing; }
 
 /* ── Image section ───────────────────────────────────────────────── */
@@ -219,12 +219,13 @@
 
 /*
  * Outer row: DragHandle (left) and ✕ (right) are direct children here.
- * No flex-wrap — they never move off this row and stay vertically centered
- * even when taskFormInner grows to two lines.
+ * align-items:stretch lets them fill the full height when taskFormInner
+ * grows to two lines. Each anchor uses align-self:stretch + flex centering
+ * to stay vertically centered within their own stretched height.
  */
 .taskFormRow {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 7px;
   margin-bottom: 6px;
 }
@@ -259,6 +260,13 @@
   align-items: center;
   gap: 7px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Anchors inside taskFormRow that must stretch to match 2-line height. */
+.taskFormAnchor {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 

@@ -42,7 +42,7 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
     <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
       {/* Left anchors — never wrap, stay vertically centered across all lines */}
       {DragHandle}
-      <span className={`${shared.badge} ${BADGE_MAP[item.type]}`}><span className={shared.badgeText}>{t(`types.${item.type}`)}</span></span>
+      <span className={`${s.taskFormAnchor} ${shared.badge} ${BADGE_MAP[item.type]}`}><span className={shared.badgeText}>{t(`types.${item.type}`)}</span></span>
 
       {/* Wrappable inner area: name input + reset group */}
       <div className={s.taskFormInner}>
@@ -93,8 +93,8 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
         )}
       </div>
 
-      {/* Right anchor — never wraps */}
-      <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+      {/* Right anchor — stretches to match 2-line height */}
+      <button onClick={() => onDelete(item.id)} className={`${s.taskFormAnchor} ${shared.btn} ${shared.btnDanger}`}>✕</button>
     </div>
   );
 }

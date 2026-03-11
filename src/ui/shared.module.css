@@ -13,7 +13,7 @@
 /* ── Row layout ──────────────────────────────────────────────────── */
 .row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   padding: 10px var(--row-pr) 10px var(--row-pl);
 }
 .preSlot {
@@ -48,6 +48,8 @@
 .right {
   flex-shrink: 0;
   margin-left: 6px;
+  display: flex;
+  align-items: center;
 }
 
 /* ── Checkbox ────────────────────────────────────────────────────── */
