@@ -5,6 +5,7 @@ import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
+import { ContextMenu } from './ContextMenu';
 import { CropModal } from './CropModal';
 import { InlineAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
@@ -107,12 +108,7 @@ const ITEM_ROW = {
   event:    EventTaskRow,
 };
 
-/** Maps each variant name to its dedicated add form component. */
-const ADD_FORM = {
-  daily:    ({ game, onAdd, onCancel }) => <InlineAddForm type="daily"    game={game} onAdd={onAdd} onCancel={onCancel} />,
-  periodic: ({ game, onAdd, onCancel }) => <InlineAddForm type="weekly"   game={game} onAdd={onAdd} onCancel={onCancel} />,
-  event:    ({ game, onAdd, onCancel }) => <InlineAddForm type="event"    game={game} onAdd={onAdd} onCancel={onCancel} />,
-};
+
 
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   const [over, setOver] = useState(false);
@@ -153,39 +149,62 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 
-// ── GameItemSection ───────────────────────────────────────────────
-// Renders one editable item group inside a game card.
-// `variant` must be one of: 'daily' | 'periodic' | 'event'.
-// The corresponding row component is resolved via ITEM_ROW — no if/else needed here.
-function GameItemSection({ game, items, variant, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
-  const TaskRowComponent = ITEM_ROW[variant];
+// ── TYPE_PICK_OPTS: type picker options ───────────────────────────
+const TYPE_PICK_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
+
+// ── GameItemList ──────────────────────────────────────────────────
+// Renders all items of a game in a unified list with a single "+ Task" button.
+// Clicking the button pops a ContextMenu to pick a type; selecting opens InlineAddForm.
+function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDelete, onAdd }) {
+  const allItems  = game.items ?? [];
+  const btnRef    = useRef(null);
+  const [pickerPos, setPickerPos] = useState(null); // {x, y} when picker is open
+
+  const getRowComponent = (item) => {
+    if (EVENT_TYPES.has(item.type)) return ITEM_ROW.event;
+    if (DAILY_TYPES.has(item.type)) return ITEM_ROW.daily;
+    return ITEM_ROW.periodic;
+  };
+
+  const handleAdd = (item) => { onAdd(item); onAddTypeChange(undefined); };
+
+  const openPicker = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setPickerPos({ x: r.left, y: r.bottom + 4 });
+  };
+
+  const closePicker = () => setPickerPos(null);
+
+  const pickerItems = TYPE_PICK_OPTS.map((ty) => ({
+    label: t(`types.${ty}`),
+    onClick: () => { closePicker(); onAddTypeChange(ty); },
+  }));
 
   return (
-    <TaskSection
-      header={(items.length > 0 || addTo === addKey) && <div className={s.eventSep}>— {headerLabel} —</div>}
-      items={items}
-      wrapItem={(item) => {
-        const ti       = (game.items ?? []).indexOf(item);
-        const dndProps = itemDnd.itemProps(game.id, ti);
-        const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
-        return (
-          <motion.div key={item.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-            <TaskRowComponent
-              item={item}
-              dndProps={dndProps}
-              dndStyle={dndStyle}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-            />
-          </motion.div>
-        );
-      }}
-      addSlot={addTo === addKey ? (
-        ADD_FORM[variant]({ game, onAdd: (item) => { onAdd(item); onAddToChange(null); }, onCancel: () => onAddToChange(null) })
-      ) : (
-        <button onClick={() => onAddToChange(addKey)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{headerLabel}</button>
-      )}
-    />
+    <>
+      <TaskSection
+        items={allItems}
+        wrapItem={(item) => {
+          const RowComponent = getRowComponent(item);
+          const ti       = allItems.indexOf(item);
+          const dndProps = itemDnd.itemProps(game.id, ti);
+          const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
+          return (
+            <motion.div key={item.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+              <RowComponent item={item} dndProps={dndProps} dndStyle={dndStyle} onUpdate={onUpdate} onDelete={onDelete} />
+            </motion.div>
+          );
+        }}
+        addSlot={
+          addType
+            ? <InlineAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => onAddTypeChange(undefined)} />
+            : <button ref={btnRef} onClick={openPicker} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('addTask')}</button>
+        }
+      />
+      <AnimatePresence>
+        {pickerPos && <ContextMenu key="type-picker" x={pickerPos.x} y={pickerPos.y} items={pickerItems} onClose={closePicker} />}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -193,7 +212,7 @@ function GameItemSection({ game, items, variant, headerLabel, addKey, addTo, onA
 export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst, showSectionHeaders, onShowSectionHeaders, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
-  const [addTo,    setAddTo]    = useState(null);
+  const [addType,  setAddType]  = useState(undefined); // undefined=hidden, string=form open
   const importRef = useRef(null);
 
   // Version panel state
@@ -414,49 +433,14 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   </div>
 
                   <div className={s.gameBody}>
-                    {/* ── Section 1: Daily / Web-daily ── */}
-                    <GameItemSection
+                    <GameItemList
                       game={game}
-                      variant="daily"
-                      items={(game.items ?? []).filter((it) => it.type === 'daily')}
-                      headerLabel={t('types.daily')}
-                      addKey={`daily-${game.id}`}
-                      addTo={addTo}
-                      onAddToChange={setAddTo}
+                      addType={addType}
+                      onAddTypeChange={setAddType}
                       itemDnd={itemDnd}
                       onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
                       onDelete={(iid) => delItem(game.id, iid)}
-                      onAdd={(task) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), ...task }] } : gm))}
-                    />
-
-                    {/* ── Section 2: Periodic tasks ── */}
-                    <GameItemSection
-                      game={game}
-                      variant="periodic"
-                      items={(game.items ?? []).filter((it) => it.type === 'weekly' || it.type === 'halfmonthly' || it.type === 'monthly')}
-                      headerLabel={t('periodic')}
-                      addKey={`periodic-${game.id}`}
-                      addTo={addTo}
-                      onAddToChange={setAddTo}
-                      itemDnd={itemDnd}
-                      onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
-                      onDelete={(iid) => delItem(game.id, iid)}
-                      onAdd={(task) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), ...task }] } : gm))}
-                    />
-
-                    {/* ── Section 3: Events ── */}
-                    <GameItemSection
-                      game={game}
-                      variant="event"
-                      items={(game.items ?? []).filter((it) => EVENT_TYPES.has(it.type))}
-                      headerLabel={t('events')}
-                      addKey={`event-${game.id}`}
-                      addTo={addTo}
-                      onAddToChange={setAddTo}
-                      itemDnd={itemDnd}
-                      onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
-                      onDelete={(iid) => delItem(game.id, iid)}
-                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { ...item, type: 'event' }] } : gm))}
+                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), type: item.type ?? addType, ...item }] } : gm))}
                     />
                   </div>
                 </div>

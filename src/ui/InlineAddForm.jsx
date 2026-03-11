@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
+import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, EVENT_TYPES } from '../constants';
 import { msUntilDeadline, formatCountdown, cdColor } from '../util/helpers';
 import s from './InlineAddForm.module.css';
 import shared from './shared.module.css';
@@ -22,8 +22,7 @@ function DailyAddForm({
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const typeOpts    = DAILY_TYPE_OPTS;
-  const [type,      setType]      = useState(item?.type ?? typeOpts[0]);
+  const type        = item?.type ?? 'daily';
   const [name,      setName]      = useState(item?.name ?? '');
   const [taskReset, setTaskReset] = useState(
     utcToLocalHHMM(item?.resetTime ?? game?.resetTime ?? '00:00')
@@ -47,13 +46,8 @@ function DailyAddForm({
 
   return (
     <div className={s.form}>
-      {/* Row 1: [type select] [name] */}
+      {/* Row 1: [name] */}
       <div className={s.row}>
-        {typeOpts.length > 1 && (
-          <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
-            {typeOpts.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
-          </select>
-        )}
         <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t(`types.${type}`)} className={`${shared.inputCls} ${s.nameInput}`} />
       </div>
       {/* Row 2: [resetLbl] [time] --spacer-- [add/save] [cancel] */}
@@ -79,8 +73,7 @@ function PeriodicAddForm({
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const typeOpts = PERIOD_TYPE_OPTS;
-  const [type,         setType]         = useState(item?.type ?? typeOpts[0]);
+  const type           = item?.type ?? 'weekly';
   const [name,         setName]         = useState(item?.name ?? '');
   const [monthDay,     setMonthDay]     = useState(item?.monthlyResetDay ?? 1);
   const [weeklyDow,    setWeeklyDow]    = useState(item?.weeklyResetDay ?? 1);
@@ -106,13 +99,8 @@ function PeriodicAddForm({
 
   return (
     <div className={s.form}>
-      {/* Row 1: [type select] [name] */}
+      {/* Row 1: [name] */}
       <div className={s.row}>
-        {typeOpts.length > 1 && (
-          <select value={type} onChange={(e) => setType(e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
-            {typeOpts.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
-          </select>
-        )}
         <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKeyDown} placeholder={t(`types.${type}`)} className={`${shared.inputCls} ${s.nameInput}`} />
       </div>
       {/* Row 2: [resetLbl] [type-specific controls] --spacer-- [add/save] [cancel] */}
