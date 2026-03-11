@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, forwardRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
 import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAY_MS } from '../constants';
@@ -44,12 +44,14 @@ function applyOrder(items, storedOrder) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-export function GameCard({
+// forwardRef is required because AnimatePresence with mode="popLayout"
+// attaches a ref to the direct child to measure it during exit animation.
+export const GameCard = forwardRef(function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks, cd,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
   showSectionHeaders = true,
   onAddItem, onDeleteItem, onEditItem,
-}) {
+}, ref) {
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
   const [formState, setFormState] = useState(null); // modes: addDaily | addWeekly | addHalfmonthly | addMonthly | addEvent
@@ -174,6 +176,7 @@ export function GameCard({
 
   return (
     <div
+      ref={ref}
       className={`${s.card}${allDone && !bgDataUrl ? ` ${s.cardDone}` : ''}`}
       style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}
       data-game-card="true"
@@ -295,4 +298,4 @@ export function GameCard({
       </AnimatePresence>
     </div>
   );
-}
+});
