@@ -9,7 +9,7 @@
   "delete": "削除",
   "cancel": "キャンセル",
   "add": "追加",
-  "addTask": "+ タスク追加",
+  "addTask": "タスク追加",
   "addGame": "+ ゲームを追加",
   "webReset": "リセット",
   "resetDay": "リセット日",
@@ -27,7 +27,8 @@
     "weekly": "ウィークリー",
     "monthly": "マンスリー",
     "halfmonthly": "ハーフマンス",
-    "event": "イベント"
+    "event": "イベント",
+    "todo": "TODO"
   },
   "cd": {
     "d": "日",

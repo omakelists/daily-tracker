@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
+import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { ContextMenu } from './ContextMenu';
@@ -25,88 +25,67 @@ const taskItemVariants = {
   exit:    { opacity: 0, height: 0,      transition: { duration: 0.13 } },
 };
 
-function TypeSelect({ value, onChange, typeOpts }) {
-  return (
-    <select value={value} onChange={onChange} className={`${shared.inputCls} ${s.typeSelect}`}>
-      {typeOpts.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
+// All available item types for the unified type selector
+const ALL_TYPE_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
+
+/** Unified settings row for all item types. Branches internally on item.type. */
+function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
+  const typeSelect = (
+    <select value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
+      {ALL_TYPE_OPTS.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
     </select>
   );
-}
-
-// ── Per-variant row components ────────────────────────────────────
-
-/** Row for daily tasks. Always renders a reset time input. */
-function DailyTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
-  return (
-    <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
-      {DragHandle}
-      <TypeSelect value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} typeOpts={DAILY_TYPE_OPTS} />
-      <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
-      <span className={s.extraLbl}>{t('resetLbl')}</span>
-      <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
-      <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-    </div>
+  const nameInput = (
+    <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
   );
-}
+  const deleteBtn = (
+    <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+  );
 
-/** Row for periodic tasks (weekly / halfmonthly / monthly). Renders a reset-day input only for monthly. */
-function PeriodicTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
+  // Event: card with two rows
+  if (item.type === 'event') {
+    return (
+      <div {...dndProps} className={s.taskFormCard} style={dndStyle}>
+        <div className={s.taskFormRow1}>
+          {DragHandle}{typeSelect}{nameInput}{deleteBtn}
+        </div>
+        <div className={s.taskFormRow2}>
+          <span className={s.extraLbl}>{t('resetLbl')}</span>
+          <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+          <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Non-event: single flat flex row, ✕ always last
   return (
     <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
-      {DragHandle}
-      <TypeSelect value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} typeOpts={PERIOD_TYPE_OPTS} />
-      <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
-      {item.type === 'monthly' && (
-        <>
-          <span className={s.extraLbl}>{t('resetDay')}</span>
-          <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-          <span className={s.extraLbl}>{t('dayUnit')}</span>
-        </>
+      {DragHandle}{typeSelect}{nameInput}
+      {item.type === 'daily' && (
+        <><span className={s.extraLbl}>{t('resetLbl')}</span>
+        <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} /></>
       )}
       {item.type === 'weekly' && (
-        <>
-          <span className={s.extraLbl}>{t('resetDay')}</span>
-          <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
-            {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
-          </select>
-        </>
+        <><span className={s.extraLbl}>{t('resetDay')}</span>
+        <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
+          {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
+        </select></>
+      )}
+      {item.type === 'monthly' && (
+        <><span className={s.extraLbl}>{t('resetDay')}</span>
+        <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
+        <span className={s.extraLbl}>{t('dayUnit')}</span></>
       )}
       {item.type === 'halfmonthly' && (
-        <>
-          <span className={s.extraLbl}>{t('resetDay')}</span>
-          <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-          <span className={s.extraLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
-        </>
+        <><span className={s.extraLbl}>{t('resetDay')}</span>
+        <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
+        <span className={s.extraLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span></>
       )}
-      <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+      {deleteBtn}
     </div>
   );
 }
-
-/** Card for events / todos. Renders a deadline date + optional time. */
-function EventTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
-  return (
-    <div {...dndProps} className={s.taskFormCard} style={dndStyle}>
-      <div className={s.taskFormRow1}>
-        {DragHandle}
-        <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('scheduleLabel')} />
-        <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-      </div>
-      <div className={s.taskFormRow2}>
-        <span className={s.extraLbl}>{t('resetLbl')}</span>
-        <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-        <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
-      </div>
-    </div>
-  );
-}
-
-/** Maps each variant name to its dedicated row component. */
-const ITEM_ROW = {
-  daily:    DailyTaskRow,
-  periodic: PeriodicTaskRow,
-  event:    EventTaskRow,
-};
 
 
 
@@ -160,12 +139,6 @@ function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDel
   const btnRef    = useRef(null);
   const [pickerPos, setPickerPos] = useState(null); // {x, y} when picker is open
 
-  const getRowComponent = (item) => {
-    if (EVENT_TYPES.has(item.type)) return ITEM_ROW.event;
-    if (DAILY_TYPES.has(item.type)) return ITEM_ROW.daily;
-    return ITEM_ROW.periodic;
-  };
-
   const handleAdd = (item) => { onAdd(item); onAddTypeChange(undefined); };
 
   const openPicker = () => {
@@ -185,13 +158,12 @@ function GameItemList({ game, addType, onAddTypeChange, itemDnd, onUpdate, onDel
       <TaskSection
         items={allItems}
         wrapItem={(item) => {
-          const RowComponent = getRowComponent(item);
           const ti       = allItems.indexOf(item);
           const dndProps = itemDnd.itemProps(game.id, ti);
           const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
           return (
             <motion.div key={item.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-              <RowComponent item={item} dndProps={dndProps} dndStyle={dndStyle} onUpdate={onUpdate} onDelete={onDelete} />
+              <ItemTaskRow item={item} dndProps={dndProps} dndStyle={dndStyle} onUpdate={onUpdate} onDelete={onDelete} />
             </motion.div>
           );
         }}
