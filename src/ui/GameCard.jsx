@@ -74,16 +74,10 @@ const EDIT_FORM = {
   ),
 };
 
-// ── View row map: one TaskRow config per variant ──────────────────
-const VIEW_ROW = {
-  // daily and periodic share identical props — unified as 'task'
-  task:  ({ item, game, checks, now, cd, onToggle, onContextMenu }) => (
-    <TaskRow task={item} game={game} checks={checks} now={now} onToggle={onToggle} cd={cd} onContextMenu={onContextMenu} />
-  ),
-  event: ({ item, game, checks, now, cd, onToggle, onDeleteItem, onContextMenu }) => (
-    <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={onContextMenu} onDelete={(id) => onDeleteItem?.(game.id, id)} />
-  ),
-};
+// ── View row: unified for all item types ─────────────────────────
+const VIEW_ROW = ({ item, game, checks, now, cd, onToggle, onDeleteItem, onContextMenu }) => (
+  <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={onContextMenu} onDelete={onDeleteItem ? (id) => onDeleteItem(game.id, id) : undefined} />
+);
 
 function applyOrder(items, storedOrder) {
   const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
@@ -112,11 +106,8 @@ export function GameCard({
   const headerTrigger = useContextTrigger(
     useCallback((x, y) => setCtxMenu({ x, y, target: 'header' }), [])
   );
-  const handleEventContextMenu = useCallback((id, x, y) => {
-    setCtxMenu({ x, y, target: 'event', eventId: id });
-  }, []);
-  const handleTaskContextMenu = useCallback((id, x, y) => {
-    setCtxMenu({ x, y, target: 'task', taskId: id });
+  const handleItemContextMenu = useCallback((id, x, y) => {
+    setCtxMenu({ x, y, target: 'item', itemId: id });
   }, []);
 
   // ── Item grouping ────────────────────────────────────────────────
@@ -196,10 +187,9 @@ export function GameCard({
 
   // Unified wrapper for all item types — variant resolves which map entry to use
   const wrapItem = (item) => {
-    const isEditing = editingId === item.id;
-    const variant   = EVENT_TYPES.has(item.type) ? 'event' : 'task';
-    const editVariant = EVENT_TYPES.has(item.type) ? 'event'
-                      : DAILY_TYPES.has(item.type) ? 'daily' : 'periodic';
+    const isEditing   = editingId === item.id;
+    const isEvent     = EVENT_TYPES.has(item.type);
+    const editVariant = isEvent ? 'event' : DAILY_TYPES.has(item.type) ? 'daily' : 'periodic';
     const sharedProps = {
       item,
       game,
@@ -208,13 +198,13 @@ export function GameCard({
       cd,
       onToggle,
       onDeleteItem,
-      onContextMenu: variant === 'event' ? handleEventContextMenu : handleTaskContextMenu,
+      onContextMenu: handleItemContextMenu,
       onSave:   (updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); },
       onCancel: closeEdit,
     };
     return (
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {isEditing ? EDIT_FORM[editVariant](sharedProps) : VIEW_ROW[variant](sharedProps)}
+        {isEditing ? EDIT_FORM[editVariant](sharedProps) : VIEW_ROW(sharedProps)}
       </motion.div>
     );
   };
@@ -227,17 +217,18 @@ export function GameCard({
           { label: t('ctxAddPeriodic'), icon: '➕', onClick: () => setFormState({ mode: 'addPeriodic' }) },
           { label: t('ctxAddEvent'),    icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
         ]
-      : ctxMenu.target === 'task'
+      : ctxMenu.target === 'item'
         ? [
-            { label: t('ctxEditTask'), icon: '✏️', onClick: () => setEditingId(ctxMenu.taskId) },
+            {
+              label: t(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type) ? 'ctxEditEvent' : 'ctxEditTask'),
+              icon: '✏️',
+              onClick: () => setEditingId(ctxMenu.itemId)
+            },
+            ...(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type)
+              ? [{ separator: true }, { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.itemId) }]
+              : []),
           ]
-        : ctxMenu.target === 'event'
-          ? [
-              { label: t('ctxEditEvent'),   icon: '✏️', onClick: () => setEditingId(ctxMenu.eventId) },
-              { separator: true },
-              { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.eventId) },
-            ]
-          : []
+        : []
     : [];
 
   return (
