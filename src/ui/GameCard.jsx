@@ -57,7 +57,7 @@ export function GameCard({
 }) {
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
-  const [formState, setFormState] = useState(null); // add-only modes: addDaily | addPeriodic | addEvent
+  const [formState, setFormState] = useState(null); // modes: addDaily | addWeekly | addHalfmonthly | addMonthly | addEvent
   const [editingId, setEditingId] = useState(null); // id of the task/event currently being edited inline
 
   const closeCtx    = useCallback(() => setCtxMenu(null), []);
@@ -98,7 +98,7 @@ export function GameCard({
 
   // Each section is visible if it has items OR its add-form is active
   const showDailySection  = hasVisDaily  || formState?.mode === 'addDaily';
-  const showPeriodSection = hasVisPeriod || formState?.mode === 'addPeriodic';
+  const showPeriodSection = hasVisPeriod || formState?.mode === 'addWeekly' || formState?.mode === 'addHalfmonthly' || formState?.mode === 'addMonthly';
   const showEventSection  = hasVisEvents || formState?.mode === 'addEvent';
   const showBody = showDailySection || showPeriodSection || showEventSection;
 
@@ -173,9 +173,11 @@ export function GameCard({
   const ctxItems = ctxMenu
     ? ctxMenu.target === 'header'
       ? [
-          { label: t('ctxAddDaily'),    icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
-          { label: t('ctxAddPeriodic'), icon: '➕', onClick: () => setFormState({ mode: 'addPeriodic' }) },
-          { label: t('ctxAddEvent'),    icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
+          { label: t('ctxAddDaily'),       icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
+          { label: t('types.weekly'),       icon: '➕', onClick: () => setFormState({ mode: 'addWeekly' }) },
+          { label: t('types.halfmonthly'),  icon: '➕', onClick: () => setFormState({ mode: 'addHalfmonthly' }) },
+          { label: t('types.monthly'),      icon: '➕', onClick: () => setFormState({ mode: 'addMonthly' }) },
+          { label: t('ctxAddEvent'),        icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
         ]
       : ctxMenu.target === 'item'
         ? [
@@ -267,9 +269,9 @@ export function GameCard({
                     wrapItem={wrapItem}
                     popLayout
                     addSlot={animatedForm('add-periodic',
-                      formState?.mode === 'addPeriodic' && (
+                      (formState?.mode === 'addWeekly' || formState?.mode === 'addHalfmonthly' || formState?.mode === 'addMonthly') && (
                         <InlineAddForm
-                          type="weekly"
+                          type={formState.mode === 'addWeekly' ? 'weekly' : formState.mode === 'addHalfmonthly' ? 'halfmonthly' : 'monthly'}
                           game={game}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
