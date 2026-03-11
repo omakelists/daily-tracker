@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
+import {uid, utcToLocalHHMM, localToUtcHHMM, BADGE_MAP} from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { ContextMenu } from './ContextMenu';
@@ -30,64 +30,42 @@ const ALL_TYPE_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
 
 /** Unified settings row for all item types. Branches internally on item.type. */
 function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
-  const typeSelect = (
-    <select value={item.type} onChange={(e) => onUpdate(item.id, 'type', e.target.value)} className={`${shared.inputCls} ${s.typeSelect}`}>
-      {ALL_TYPE_OPTS.map((ty) => <option key={ty} value={ty}>{t(`types.${ty}`)}</option>)}
-    </select>
-  );
-  const nameInput = (
-    <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
-  );
-  const deleteBtn = (
-    <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-  );
-
-  // Event: card with two rows
-  if (item.type === 'event') {
-    return (
-      <div {...dndProps} className={s.taskFormCard} style={dndStyle}>
-        <div className={s.taskFormRow1}>
-          {DragHandle}{typeSelect}{nameInput}{deleteBtn}
-        </div>
-        <div className={s.taskFormRow2}>
-          <span className={s.extraLbl}>{t('resetLbl')}</span>
-          <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-          <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
-        </div>
-      </div>
-    );
-  }
-
   // Non-event: single flat flex row, ✕ always last
   return (
     <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
-      {DragHandle}{typeSelect}{nameInput}
+      {DragHandle}
+      <span className={`${shared.badge} ${BADGE_MAP[item.type]}`}>{t(`types.${item.type}`)}</span>
+      <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t(`types.${item.type}`)} />
+
       {item.type === 'daily' && (
         <><span className={s.extraLbl}>{t('resetLbl')}</span>
         <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} /></>
       )}
       {item.type === 'weekly' && (
-        <><span className={s.extraLbl}>{t('resetDay')}</span>
+        <><span className={s.extraLbl}>{t('resetLbl')}</span>
         <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
           {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
         </select></>
       )}
       {item.type === 'monthly' && (
-        <><span className={s.extraLbl}>{t('resetDay')}</span>
+        <><span className={s.extraLbl}>{t('resetLbl')}</span>
         <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
         <span className={s.extraLbl}>{t('dayUnit')}</span></>
       )}
       {item.type === 'halfmonthly' && (
-        <><span className={s.extraLbl}>{t('resetDay')}</span>
+        <><span className={s.extraLbl}>{t('resetLbl')}</span>
         <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
         <span className={s.extraLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span></>
       )}
-      {deleteBtn}
+      {item.type === 'event' && (
+        <><span className={s.extraLbl}>{t('resetLbl')}</span>
+        <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+        <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} /></>
+      )}
+      <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
     </div>
   );
 }
-
-
 
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   const [over, setOver] = useState(false);

@@ -1,3 +1,5 @@
+import shared from './ui/shared.module.css';
+
 // ── Task classification ────────────────────────────────────────────
 // TYPE_COLORS removed — use CSS classes .type-badge-{type} from style.css
 export const DAILY_TYPES  = new Set(['daily']);
@@ -7,6 +9,15 @@ export const EVENT_TYPES  = new Set(['event', 'todo']);
 // Pre-built arrays for type select options (derived from Sets above)
 export const DAILY_TYPE_OPTS  = [...new Set(['daily'])];
 export const PERIOD_TYPE_OPTS = [...new Set(['weekly', 'monthly', 'halfmonthly'])];
+
+export const BADGE_MAP = {
+  daily:       shared.badgeDaily,
+  weekly:      shared.badgeWeekly,
+  monthly:     shared.badgeMonthly,
+  halfmonthly: shared.badgeHalfmonthly,
+  event:       shared.badgeEvent,
+  todo:        shared.badgeTodo,
+};
 
 // ── Unique ID generator ────────────────────────────────────────────
 let _idCtr = Date.now();

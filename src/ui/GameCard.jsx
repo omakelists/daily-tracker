@@ -34,11 +34,6 @@ const bodyVariants = {
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-// ── View row: unified for all item types ─────────────────────────
-const VIEW_ROW = ({ item, game, checks, now, cd, onToggle, onDeleteItem, onContextMenu }) => (
-  <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={onContextMenu} onDelete={onDeleteItem ? (id) => onDeleteItem(game.id, id) : undefined} />
-);
-
 function applyOrder(items, storedOrder) {
   const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
   const unordered  = items.filter((x) => !orderedIds.includes(x.id));
@@ -110,15 +105,15 @@ export function GameCard({
     if (allItems.length === 0) return null;
     let min = Infinity;
     for (const it of allItems) {
+      if (isChecked(it)) continue;
+      let m;
       if (EVENT_TYPES.has(it.type)) {
-        if (isChecked(it) || !it.deadline) continue;
-        const m = msUntilDeadline(it.deadline, now, it.deadlineTime);
-        if (m > 0 && m < DAY_MS) min = Math.min(min, m);
+        if (!it.deadline) continue;
+        m = msUntilDeadline(it.deadline, now, it.deadlineTime);
       } else {
-        if (!!checks[checkKey(it.id, getPeriodKey(it, game, now))]) continue;
-        const m = msUntilTaskReset(it, game, now);
-        if (m > 0 && m < DAY_MS) min = Math.min(min, m);
+        m = msUntilTaskReset(it, game, now);
       }
+      if (m > 0 && m < DAY_MS) min = Math.min(min, m);
     }
     return min < Infinity ? min : null;
   })();
@@ -148,23 +143,11 @@ export function GameCard({
   // Unified wrapper for all item types — variant resolves which map entry to use
   const wrapItem = (item) => {
     const isEditing = editingId === item.id;
-    const sharedProps = {
-      item,
-      game,
-      checks,
-      now,
-      cd,
-      onToggle,
-      onDeleteItem,
-      onContextMenu: handleItemContextMenu,
-      onSave:   (updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); },
-      onCancel: closeEdit,
-    };
     return (
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
         {isEditing
-          ? <InlineAddForm  game={game} item={item} onSave={sharedProps.onSave} onCancel={sharedProps.onCancel} />
-          : VIEW_ROW(sharedProps)}
+          ? <InlineAddForm  game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
+          : <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? (id) => onDeleteItem(game.id, id) : undefined} />}
       </motion.div>
     );
   };

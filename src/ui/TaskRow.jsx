@@ -1,20 +1,11 @@
 import { useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { DAILY_TYPES, EVENT_TYPES, utcToLocalHHMM } from '../constants';
+import {BADGE_MAP, DAILY_TYPES, EVENT_TYPES, utcToLocalHHMM} from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
 import s from './TaskRow.module.css';
 import shared from './shared.module.css';
-
-const BADGE_MAP = {
-  daily:       shared.badgeDaily,
-  weekly:      shared.badgeWeekly,
-  monthly:     shared.badgeMonthly,
-  halfmonthly: shared.badgeHalfmonthly,
-  event:       shared.badgeEvent,
-  todo:        shared.badgeTodo,
-};
 
 /**
  * Unified row component for both tasks and events/todos.
@@ -70,8 +61,6 @@ export function TaskRow({
 
   const trigger = useContextTrigger((x, y) => onContextMenu?.(task.id, x, y));
 
-  const badgeLabel = t(`types.${task.type}`);
-
   const row = (
     <Row
       className={s.row}
@@ -87,7 +76,7 @@ export function TaskRow({
       }
       content={
         <>
-          <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}>{badgeLabel}</span>
+          <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}>{t(`types.${task.type}`)}</span>
           <span
             className={s.taskName}
             style={{
