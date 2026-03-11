@@ -75,8 +75,8 @@ export function TaskRow({
         </button>
       }
       content={
-        <>
-          <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}>{t(`types.${task.type}`)}</span>
+        <div className={s.nameGroup}>
+          <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}><span className={shared.badgeText}>{t(`types.${task.type}`)}</span></span>
           <span
             className={s.taskName}
             style={{
@@ -87,7 +87,7 @@ export function TaskRow({
           >
             {task.name.trim() || (!isEvent ? t(`types.${task.type}`) : '')}
           </span>
-        </>
+        </div>
       }
       meta={
         isEvent ? (

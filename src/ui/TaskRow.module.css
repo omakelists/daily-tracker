@@ -34,6 +34,17 @@
   transition: color 0.2s;
 }
 
+/* Wrapper that keeps badge + task name together with a minimum width.
+   12.5rem = 200px at default font size, but scales with user font preferences. */
+.nameGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 12.5rem;
+  flex: 1;
+  overflow: hidden;
+}
+
 /* ─ Event mode extras ─ */
 .deadlineDate {
   font-size: 11px;

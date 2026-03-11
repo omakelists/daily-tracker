@@ -24,6 +24,23 @@ export async function initI18n() {
   }
   document.title = _locale.appTitle;
   document.documentElement.lang = lang;
+
+  // Set badge scaleX as a CSS custom property so only the inner text is compressed
+  // to fit within the fixed 4.5rem badge border. Scale = 4.5 / needed-width-in-rem.
+  // Locales whose longest label already fits in 4.5rem use 1 (no compression).
+  const badgeScaleX = {
+    'en':      (4.5 / 5.5).toFixed(4), // "Half-Monthly" → ~0.8182
+    'es':      (4.5 / 5.0).toFixed(4), // "Quincenal"    → 0.9000
+    'ja':      '1',                     // "ウィークリー" fits in 4.5rem
+    'ko':      '1',                     // "데일리" etc.  fits in 4.5rem
+    'zh-Hans': '1',                     // "每日" etc.    fits in 4.5rem
+    'zh-Hant': '1',                     // "每日" etc.    fits in 4.5rem
+  };
+  document.documentElement.style.setProperty(
+    '--badge-scale-x',
+    badgeScaleX[lang] ?? '1',
+  );
+
   return _locale;
 }
 

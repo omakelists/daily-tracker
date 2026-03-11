@@ -208,13 +208,60 @@
 }
 
 /* ── Sized inputs ────────────────────────────────────────────────── */
-.inputTime     { width: 84px;  font-family: monospace; }
-.inputTimeGame { width: 86px;  font-family: monospace; flex-shrink: 0; }
-.inputNumber   { width: 52px;  font-family: monospace; text-align: center; }
+/* Input elements stretch to fill their wrapper; widths are set on .inputWrap instead. */
+/* Input elements inside resetInputWrap stretch via flex:1; widths are owned by the wrapper. */
+.inputTime     { font-family: monospace; }
+.inputTimeGame { width: 5.5rem; font-family: monospace; flex-shrink: 0; }
+.inputNumber   { font-family: monospace; text-align: center; }
 .typeSelect    { width: 104px; }
 
 /* ── Task / form rows ────────────────────────────────────────────── */
-.taskFormRow     { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+
+/*
+ * Outer row: DragHandle (left) and ✕ (right) are direct children here.
+ * No flex-wrap — they never move off this row and stay vertically centered
+ * even when taskFormInner grows to two lines.
+ */
+.taskFormRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+/*
+ * Inner wrappable area: badge + name input + reset group.
+ * flex-wrap:wrap lets the reset group fall to a second line when width is tight.
+ */
+.taskFormInner {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Name input stretches to fill available space on line 1. */
+.taskNameInput {
+  flex: 1;
+  min-width: 10rem; /* triggers wrap before input becomes unreadably narrow */
+}
+
+/*
+ * Reset group: label + input(s).
+ * margin-left:auto pushes it to the right on whatever line it occupies —
+ * inline (line 1) or wrapped (line 2).
+ * flex-shrink:0 prevents it from compressing, forcing a wrap instead.
+ */
+.resetGroup {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .addTaskFormRow  { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
 /* 2-row card (events): outer wrapper */
 .taskFormCard    { margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px; }
@@ -233,4 +280,23 @@
 .inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
 
 .verChecking { color: var(--muted); font-size: 12px; }
-.inputDow      { width: 108px; }
+.inputDow      { width: 100%; }
+
+/* Wraps all controls to the right of the reset label (input + any suffix label).
+ * All task types share the same width so the flex-wrap breakpoint is identical. */
+.resetInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 7rem;
+  flex-shrink: 0;
+}
+
+/* Inputs inside resetInputWrap stretch to fill remaining space. */
+.resetInputWrap > .inputTime,
+.resetInputWrap > .inputDow,
+.resetInputWrap > .inputNumber {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
