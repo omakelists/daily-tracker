@@ -6,7 +6,7 @@ import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_T
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { Modal, TaskSection } from './UI';
 import { CropModal } from './CropModal';
-import { DailyAddForm, PeriodicAddForm, EventAddForm } from './InlineAddForm';
+import { InlineAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
@@ -109,9 +109,9 @@ const ITEM_ROW = {
 
 /** Maps each variant name to its dedicated add form component. */
 const ADD_FORM = {
-  daily:    ({ game, typeOpts, onAdd, onCancel }) => <DailyAddForm    typeOpts={typeOpts} gameResetTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
-  periodic: ({ game, typeOpts, onAdd, onCancel }) => <PeriodicAddForm typeOpts={typeOpts} onAdd={onAdd} onCancel={onCancel} />,
-  event:    ({ game, onAdd, onCancel })            => <EventAddForm    defaultTime={game.resetTime} onAdd={onAdd} onCancel={onCancel} />,
+  daily:    ({ game, onAdd, onCancel }) => <InlineAddForm type="daily"    game={game} onAdd={onAdd} onCancel={onCancel} />,
+  periodic: ({ game, onAdd, onCancel }) => <InlineAddForm type="weekly"   game={game} onAdd={onAdd} onCancel={onCancel} />,
+  event:    ({ game, onAdd, onCancel }) => <InlineAddForm type="event"    game={game} onAdd={onAdd} onCancel={onCancel} />,
 };
 
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
@@ -157,7 +157,7 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 // Renders one editable item group inside a game card.
 // `variant` must be one of: 'daily' | 'periodic' | 'event'.
 // The corresponding row component is resolved via ITEM_ROW — no if/else needed here.
-function GameItemSection({ game, items, variant, typeOpts, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
+function GameItemSection({ game, items, variant, headerLabel, addKey, addTo, onAddToChange, itemDnd, onUpdate, onDelete, onAdd }) {
   const TaskRowComponent = ITEM_ROW[variant];
 
   return (
@@ -181,7 +181,7 @@ function GameItemSection({ game, items, variant, typeOpts, headerLabel, addKey, 
         );
       }}
       addSlot={addTo === addKey ? (
-        ADD_FORM[variant]({ game, typeOpts, onAdd: (item) => { onAdd(item); onAddToChange(null); }, onCancel: () => onAddToChange(null) })
+        ADD_FORM[variant]({ game, onAdd: (item) => { onAdd(item); onAddToChange(null); }, onCancel: () => onAddToChange(null) })
       ) : (
         <button onClick={() => onAddToChange(addKey)} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{headerLabel}</button>
       )}
@@ -419,7 +419,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       game={game}
                       variant="daily"
                       items={(game.items ?? []).filter((it) => it.type === 'daily')}
-                      typeOpts={DAILY_TYPE_OPTS}
                       headerLabel={t('types.daily')}
                       addKey={`daily-${game.id}`}
                       addTo={addTo}
@@ -435,7 +434,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       game={game}
                       variant="periodic"
                       items={(game.items ?? []).filter((it) => it.type === 'weekly' || it.type === 'halfmonthly' || it.type === 'monthly')}
-                      typeOpts={PERIOD_TYPE_OPTS}
                       headerLabel={t('periodic')}
                       addKey={`periodic-${game.id}`}
                       addTo={addTo}

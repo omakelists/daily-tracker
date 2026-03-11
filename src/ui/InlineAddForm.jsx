@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM, localToUtcHHMM } from '../constants';
+import { uid, utcToLocalHHMM, localToUtcHHMM, DAILY_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS } from '../constants';
 import { msUntilDeadline, formatCountdown, cdColor } from '../util/helpers';
 import s from './InlineAddForm.module.css';
 import shared from './shared.module.css';
@@ -14,22 +14,19 @@ function addDaysToDate(dateStr, n) {
 }
 
 // ── DailyAddForm ──────────────────────────────────────────────────
-// Props: typeOpts, gameResetTime,
-//        initialName, initialType, initialResetTime,
-//        onAdd(task) / onSave(task), onCancel, submitLabel
-export function DailyAddForm({
-  typeOpts,
-  gameResetTime,
-  initialName = '',
-  initialType,
-  initialResetTime,
+// Props: game, item (optional — omit for add mode),
+//        onAdd(task) | onSave(task), onCancel, submitLabel
+function DailyAddForm({
+  game,
+  item,
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const [type,     setType]     = useState(initialType ?? typeOpts[0]);
-  const [name,     setName]     = useState(initialName);
+  const typeOpts    = DAILY_TYPE_OPTS;
+  const [type,      setType]      = useState(item?.type ?? typeOpts[0]);
+  const [name,      setName]      = useState(item?.name ?? '');
   const [taskReset, setTaskReset] = useState(
-    initialResetTime ? utcToLocalHHMM(initialResetTime) : utcToLocalHHMM(gameResetTime ?? '00:00')
+    utcToLocalHHMM(item?.resetTime ?? game?.resetTime ?? '00:00')
   );
 
   const inputRef = useRef(null);
@@ -74,25 +71,20 @@ export function DailyAddForm({
 }
 
 // ── PeriodicAddForm ───────────────────────────────────────────────
-// Props: typeOpts,
-//        initialName, initialType, initialMonthlyResetDay, initialWeeklyResetDay,
-//        initialHalfMonthlyStartDay,
-//        onAdd(task) / onSave(task), onCancel, submitLabel
-export function PeriodicAddForm({
-  typeOpts,
-  initialName = '',
-  initialType,
-  initialMonthlyResetDay,
-  initialWeeklyResetDay,
-  initialHalfMonthlyStartDay,
+// Props: game, item (optional — omit for add mode),
+//        onAdd(task) | onSave(task), onCancel, submitLabel
+function PeriodicAddForm({
+  game,
+  item,
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const [type,           setType]           = useState(initialType ?? typeOpts[0]);
-  const [name,           setName]           = useState(initialName);
-  const [monthDay,       setMonthDay]       = useState(initialMonthlyResetDay ?? 1);
-  const [weeklyDow,      setWeeklyDow]      = useState(initialWeeklyResetDay ?? 1); // 0=Sun..6=Sat
-  const [halfStartDay,   setHalfStartDay]   = useState(initialHalfMonthlyStartDay ?? 1);
+  const typeOpts = PERIOD_TYPE_OPTS;
+  const [type,         setType]         = useState(item?.type ?? typeOpts[0]);
+  const [name,         setName]         = useState(item?.name ?? '');
+  const [monthDay,     setMonthDay]     = useState(item?.monthlyResetDay ?? 1);
+  const [weeklyDow,    setWeeklyDow]    = useState(item?.weeklyResetDay ?? 1);
+  const [halfStartDay, setHalfStartDay] = useState(item?.halfMonthlyStartDay ?? 1);
 
   const inputRef = useRef(null);
   // Use setTimeout to allow AnimatePresence to finish mounting before focusing
@@ -154,23 +146,21 @@ export function PeriodicAddForm({
 }
 
 // ── EventAddForm ──────────────────────────────────────────────────
-// Props: defaultTime,
-//        initialName, initialDeadline, initialDeadlineTime, initialColor,
-//        onAdd(item) / onSave(item), onCancel, submitLabel
-export function EventAddForm({
-  defaultTime = '',
-  initialName = '',
-  initialDeadline = '',
-  initialDeadlineTime = '',
+// Props: game, item (optional — omit for add mode),
+//        onAdd(item) | onSave(item), onCancel, submitLabel
+function EventAddForm({
+  game,
+  item,
   initialColor,
   onAdd, onSave, onCancel,
   submitLabel,
 }) {
-  const [name,  setName]  = useState(initialName);
-  const [date,  setDate]  = useState(initialDeadline);
-  const [time,  setTime]  = useState(initialDeadlineTime ? utcToLocalHHMM(initialDeadlineTime) : '');
+  const [name,  setName]  = useState(item?.name ?? '');
+  const [date,  setDate]  = useState(item?.deadline ?? '');
+  const [time,  setTime]  = useState(item?.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : '');
   const [color, setColor] = useState(initialColor ?? '#4a9eff');
-  const showColor = initialColor !== undefined;
+  const showColor  = initialColor !== undefined;
+  const defaultTime = game?.resetTime ?? '';
 
   const inputRef = useRef(null);
   // Use setTimeout to allow AnimatePresence to finish mounting before focusing
@@ -246,4 +236,22 @@ export function EventAddForm({
       </div>
     </div>
   );
+}
+
+// ── InlineAddForm ─────────────────────────────────────────────────
+// Unified add/edit form. Branches internally on item.type (edit) or type prop (add).
+// Edit mode: pass item — onSave(updates) is called on submit.
+// Add  mode: pass type — onAdd(item) is called on submit.
+// Props: game, item?, type?, onAdd?, onSave, onCancel
+export function InlineAddForm({ game, item, type, onAdd, onSave, onCancel }) {
+  const resolvedType = item?.type ?? type;
+  const isEdit       = !!item;
+  const submitLabel  = isEdit ? t('save') : undefined;
+  if (EVENT_TYPES.has(resolvedType)) {
+    return <EventAddForm game={game} item={item} onAdd={onAdd} onSave={onSave} onCancel={onCancel} submitLabel={submitLabel} />;
+  }
+  if (DAILY_TYPES.has(resolvedType)) {
+    return <DailyAddForm game={game} item={item} onAdd={onAdd} onSave={onSave} onCancel={onCancel} submitLabel={submitLabel} />;
+  }
+  return <PeriodicAddForm game={game} item={item} onAdd={onAdd} onSave={onSave} onCancel={onCancel} submitLabel={submitLabel} />;
 }

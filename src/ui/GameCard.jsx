@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAILY_TYPE_OPTS, PERIOD_TYPE_OPTS, DAY_MS } from '../constants';
+import { ensureContrast, utcToLocalHHMM, DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAY_MS } from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow';
-import { DailyAddForm, PeriodicAddForm, EventAddForm } from './InlineAddForm';
+import { InlineAddForm } from './InlineAddForm';
 import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
@@ -32,46 +32,6 @@ const bodyVariants = {
   initial: { height: 0, opacity: 0 },
   animate: { height: 'auto', opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } },
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
-};
-
-// ── Edit form map: one add-form component per variant ────────────
-const EDIT_FORM = {
-  daily: ({ item, game, onSave, onCancel }) => (
-    <DailyAddForm
-      typeOpts={DAILY_TYPE_OPTS}
-      gameResetTime={game.resetTime}
-      initialName={item.name}
-      initialType={item.type}
-      initialResetTime={item.resetTime ?? ''}
-      submitLabel={t('save')}
-      onSave={onSave}
-      onCancel={onCancel}
-    />
-  ),
-  periodic: ({ item, game, onSave, onCancel }) => (
-    <PeriodicAddForm
-      typeOpts={PERIOD_TYPE_OPTS}
-      initialName={item.name}
-      initialType={item.type}
-      initialMonthlyResetDay={item.monthlyResetDay ?? 1}
-      initialWeeklyResetDay={item.weeklyResetDay ?? 1}
-      initialHalfMonthlyStartDay={item.halfMonthlyStartDay ?? 1}
-      submitLabel={t('save')}
-      onSave={onSave}
-      onCancel={onCancel}
-    />
-  ),
-  event: ({ item, game, onSave, onCancel }) => (
-    <EventAddForm
-      defaultTime={game.resetTime}
-      initialName={item.name}
-      initialDeadline={item.deadline || ''}
-      initialDeadlineTime={item.deadlineTime || ''}
-      submitLabel={t('save')}
-      onSave={onSave}
-      onCancel={onCancel}
-    />
-  ),
 };
 
 // ── View row: unified for all item types ─────────────────────────
@@ -187,9 +147,7 @@ export function GameCard({
 
   // Unified wrapper for all item types — variant resolves which map entry to use
   const wrapItem = (item) => {
-    const isEditing   = editingId === item.id;
-    const isEvent     = EVENT_TYPES.has(item.type);
-    const editVariant = isEvent ? 'event' : DAILY_TYPES.has(item.type) ? 'daily' : 'periodic';
+    const isEditing = editingId === item.id;
     const sharedProps = {
       item,
       game,
@@ -204,7 +162,9 @@ export function GameCard({
     };
     return (
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {isEditing ? EDIT_FORM[editVariant](sharedProps) : VIEW_ROW(sharedProps)}
+        {isEditing
+          ? <InlineAddForm  game={game} item={item} onSave={sharedProps.onSave} onCancel={sharedProps.onCancel} />
+          : VIEW_ROW(sharedProps)}
       </motion.div>
     );
   };
@@ -219,11 +179,7 @@ export function GameCard({
         ]
       : ctxMenu.target === 'item'
         ? [
-            {
-              label: t(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type) ? 'ctxEditEvent' : 'ctxEditTask'),
-              icon: '✏️',
-              onClick: () => setEditingId(ctxMenu.itemId)
-            },
+            { label: t(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type) ? 'ctxEditEvent' : 'ctxEditTask'), icon: '✏️', onClick: () => setEditingId(ctxMenu.itemId) },
             ...(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type)
               ? [{ separator: true }, { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.itemId) }]
               : []),
@@ -292,9 +248,9 @@ export function GameCard({
                     popLayout
                     addSlot={animatedForm('add-daily',
                       formState?.mode === 'addDaily' && (
-                        <DailyAddForm
-                          typeOpts={DAILY_TYPE_OPTS}
-                          gameResetTime={game.resetTime}
+                        <InlineAddForm
+                          type="daily"
+                          game={game}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
                         />
@@ -312,9 +268,9 @@ export function GameCard({
                     popLayout
                     addSlot={animatedForm('add-periodic',
                       formState?.mode === 'addPeriodic' && (
-                        <PeriodicAddForm
-                          typeOpts={PERIOD_TYPE_OPTS}
-                          gameResetTime={game.resetTime}
+                        <InlineAddForm
+                          type="weekly"
+                          game={game}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                           onCancel={() => setFormState(null)}
                         />
@@ -332,8 +288,9 @@ export function GameCard({
                     popLayout
                     addSlot={animatedForm('add-event',
                       formState?.mode === 'addEvent' && (
-                        <EventAddForm
-                          defaultTime={game.resetTime}
+                        <InlineAddForm
+                          type="event"
+                          game={game}
                           onAdd={(item) => { onAddItem?.(game.id, { ...item, type: 'event' }); setFormState(null); }}
                           onCancel={() => setFormState(null)}
                         />
