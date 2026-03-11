@@ -149,7 +149,7 @@ export const GameCard = forwardRef(function GameCard({
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
         {isEditing
           ? <InlineAddForm  game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
-          : <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? (id) => onDeleteItem(game.id, id) : undefined} />}
+          : <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? (id) => onDeleteItem(game.id, id) : undefined} gameResetTime={game.resetTime} />}
       </motion.div>
     );
   };
