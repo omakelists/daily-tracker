@@ -1,6 +1,6 @@
 import { useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import {BADGE_MAP, DAILY_TYPES, EVENT_TYPES, utcToLocalHHMM} from '../constants';
+import {BADGE_MAP, DAILY_TYPES, EVENT_TYPES, DAY_MS, utcToLocalHHMM} from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { Row, PrevBar } from './UI';
@@ -15,12 +15,12 @@ import shared from './shared.module.css';
  *
  * Event mode (type: event | todo):
  *   Required: task (event item), now, cd, onToggle(itemId)
- *   Optional: onContextMenu(itemId, x, y), onDelete(itemId), gameResetTime
+ *   Optional: onContextMenu(itemId, x, y), onDelete(itemId)
  */
 export function TaskRow({
   task, game, checks, now, onToggle, cd,
   // Event mode extras
-  onContextMenu, onDelete, gameResetTime,
+  onContextMenu, onDelete,
 }) {
   const [cbScope, animateCb] = useAnimate();
   const isEvent = EVENT_TYPES.has(task.type);
@@ -37,8 +37,10 @@ export function TaskRow({
   const eventCdColor      = cdColor(deadlineMs ?? Infinity, 24, 48);
   const dateColor         = isExpired ? 'var(--danger)' : 'var(--dim)';
   const hasTime           = isEvent && !!task.deadlineTime;
-  const timeIsSameAsReset = hasTime && gameResetTime && task.deadlineTime === gameResetTime;
-  const showTime          = hasTime && !timeIsSameAsReset;
+  // Show date when >24h remaining; show time when <24h remaining.
+  const isWithin24h       = deadlineMs !== null && deadlineMs < DAY_MS;
+  const showDate          = !isWithin24h || !hasTime;
+  const showTime          = hasTime && isWithin24h;
   const localDeadlineTime = showTime ? utcToLocalHHMM(task.deadlineTime) : null;
 
   // ── Task-specific ────────────────────────────────────────────────
@@ -119,7 +121,7 @@ export function TaskRow({
             : task.deadline
               ? (
                 <span className={s.deadlineDate} style={{ color: dateColor }}>
-                  {fmtDeadlineDate(task.deadline, t)}
+                  {showDate && fmtDeadlineDate(task.deadline, t)}
                   {localDeadlineTime && <span className={s.deadlineTime}>{localDeadlineTime}</span>}
                 </span>
               )
