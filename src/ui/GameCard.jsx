@@ -50,7 +50,7 @@ export const GameCard = forwardRef(function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks, cd,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
   showSectionHeaders = true,
-  onAddItem, onDeleteItem, onEditItem,
+  onAddItem, onDeleteItem, onEditItem, showConfirm,
 }, ref) {
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
@@ -59,6 +59,19 @@ export const GameCard = forwardRef(function GameCard({
 
   const closeCtx    = useCallback(() => setCtxMenu(null), []);
   const closeEdit   = useCallback(() => setEditingId(null), []);
+
+  // Show confirm dialog before deleting.
+  // Exception: expired events are deleted immediately without confirmation.
+  const confirmDeleteItem = useCallback((itemId) => {
+    const item = (game.items ?? []).find((it) => it.id === itemId);
+    const isExpiredEvent = EVENT_TYPES.has(item?.type) &&
+      item?.deadline &&
+      msUntilDeadline(item.deadline, now, item.deadlineTime ?? null) <= 0;
+    const doDelete = () => onDeleteItem?.(game.id, itemId);
+    if (isExpiredEvent || !showConfirm) { doDelete(); return; }
+    const name = item?.name?.trim() || t(`types.${item?.type}`);
+    showConfirm(t('deleteMsg', { name }), doDelete, t('deleteBtn'));
+  }, [game, now, onDeleteItem, showConfirm]);
 
   const headerTrigger = useContextTrigger(
     useCallback((x, y) => setCtxMenu({ x, y, target: 'header' }), [])
@@ -149,7 +162,7 @@ export const GameCard = forwardRef(function GameCard({
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
         {isEditing
           ? <InlineAddForm  game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
-          : <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? (id) => onDeleteItem(game.id, id) : undefined} />}
+          : <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined} />}
       </motion.div>
     );
   };
@@ -168,7 +181,7 @@ export const GameCard = forwardRef(function GameCard({
         ? [
             { label: t('ctxEditTask'), icon: '✏️', onClick: () => setEditingId(ctxMenu.itemId) },
             { separator: true },
-            { label: t('ctxDeleteTask'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.itemId) },
+            { label: t('ctxDeleteTask'), icon: '🗑️', danger: true, onClick: () => confirmDeleteItem(ctxMenu.itemId) },
           ]
         : []
     : [];

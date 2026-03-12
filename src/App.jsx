@@ -292,6 +292,7 @@ const editItem = useCallback((gameId, itemId, updates) => {
               onAddItem={addItem}
               onDeleteItem={deleteItem}
               onEditItem={editItem}
+              showConfirm={showConfirm}
             />
           ))}
         </AnimatePresence>
