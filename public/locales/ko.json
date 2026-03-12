@@ -119,5 +119,6 @@
   "verUpdating": "업데이트 중…",
   "verReloading": "재시작 중…",
   "verUpdated": "업데이트 완료 ✓",
-  "verUpdateFailed": "새 버전을 가져올 수 없습니다"
+  "verUpdateFailed": "새 버전을 가져올 수 없습니다",
+  "ctxDeleteTask": "작업 삭제"
 }

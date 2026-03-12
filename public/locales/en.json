@@ -120,5 +120,6 @@
   "verUpdating": "Updating…",
   "verReloading": "Restarting…",
   "verUpdated": "Updated successfully ✓",
-  "verUpdateFailed": "Could not fetch new version"
+  "verUpdateFailed": "Could not fetch new version",
+  "ctxDeleteTask": "Delete task"
 }

@@ -119,5 +119,6 @@
   "verUpdating": "Actualizando…",
   "verReloading": "Reiniciando…",
   "verUpdated": "Actualizado correctamente ✓",
-  "verUpdateFailed": "No se pudo obtener la nueva versión"
+  "verUpdateFailed": "No se pudo obtener la nueva versión",
+  "ctxDeleteTask": "Eliminar tarea"
 }

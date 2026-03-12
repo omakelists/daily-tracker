@@ -119,5 +119,6 @@
   "verUpdating": "更新中…",
   "verReloading": "重啟中…",
   "verUpdated": "更新成功 ✓",
-  "verUpdateFailed": "無法取得新版本"
+  "verUpdateFailed": "無法取得新版本",
+  "ctxDeleteTask": "刪除任務"
 }

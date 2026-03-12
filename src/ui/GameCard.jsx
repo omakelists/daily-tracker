@@ -166,10 +166,9 @@ export const GameCard = forwardRef(function GameCard({
         ]
       : ctxMenu.target === 'item'
         ? [
-            { label: t(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type) ? 'ctxEditEvent' : 'ctxEditTask'), icon: '✏️', onClick: () => setEditingId(ctxMenu.itemId) },
-            ...(EVENT_TYPES.has((game.items ?? []).find((it) => it.id === ctxMenu.itemId)?.type)
-              ? [{ separator: true }, { label: t('ctxDeleteEvent'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.itemId) }]
-              : []),
+            { label: t('ctxEditTask'), icon: '✏️', onClick: () => setEditingId(ctxMenu.itemId) },
+            { separator: true },
+            { label: t('ctxDeleteTask'), icon: '🗑️', danger: true, onClick: () => onDeleteItem?.(game.id, ctxMenu.itemId) },
           ]
         : []
     : [];
