@@ -36,7 +36,7 @@
     "m": "分"
   },
   "everyDay": "毎月{day}日",
-  "everyWeek": "毎週{day}曜",
+  "everyWeek": "毎週{day}",
   "everyHalfMonth": "{a}・{b}日",
   "halfMonthSuffix": "・{b}日",
   "dayNamesFull": [
