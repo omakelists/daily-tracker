@@ -10,7 +10,6 @@ export const BADGE_MAP = {
   monthly:     shared.badgeMonthly,
   halfmonthly: shared.badgeHalfmonthly,
   event:       shared.badgeEvent,
-  todo:        shared.badgeTodo,
 };
 
 // ── Shared motion variants ────────────────────────────────────────
