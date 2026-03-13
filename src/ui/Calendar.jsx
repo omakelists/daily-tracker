@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { t, ta } from '../util/i18n';
-import { getDaysInMonth, fmtDate, DAILY_TYPES, EVENT_TYPES } from '../constants';
-import { checkKey } from '../util/helpers';
+import { DAILY_TYPES, EVENT_TYPES } from '../constants';
+import { getDaysInMonth, fmtDate, checkKey } from '../util/helpers';
 import { Modal } from './UI';
 import s from './Calendar.module.css';
 import shared from './shared.module.css';

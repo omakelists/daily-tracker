@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
-import { DEFAULT_GAMES, DAILY_TYPES, EVENT_TYPES, uid } from './constants';
+import { DEFAULT_GAMES, DAILY_TYPES, EVENT_TYPES } from './constants';
 import { loadAll, saveGames, saveChecks } from './util/storage';
-import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
+import { uid, getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset, calcAllDone } from './util/helpers';
 import { useAppUpdate } from './util/useAppUpdate';
 import { useAppSettings } from './util/useAppSettings';

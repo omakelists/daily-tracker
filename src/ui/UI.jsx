@@ -3,6 +3,16 @@ import { t } from '../util/i18n';
 import s from './UI.module.css';
 import shared from './shared.module.css';
 
+// ── Badge CSS class map ───────────────────────────────────────────
+export const BADGE_MAP = {
+  daily:       shared.badgeDaily,
+  weekly:      shared.badgeWeekly,
+  monthly:     shared.badgeMonthly,
+  halfmonthly: shared.badgeHalfmonthly,
+  event:       shared.badgeEvent,
+  todo:        shared.badgeTodo,
+};
+
 // ── Shared motion variants ────────────────────────────────────────
 const overlayVariants = {
   initial: { opacity: 0 },

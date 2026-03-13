@@ -1,9 +1,9 @@
 import { useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import {BADGE_MAP, DAILY_TYPES, EVENT_TYPES, DAY_MS, utcToLocalHHMM} from '../constants';
-import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey } from '../util/helpers';
+import {DAILY_TYPES, EVENT_TYPES, DAY_MS} from '../constants';
+import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey, utcToLocalHHMM } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
-import { Row, PrevBar } from './UI';
+import { Row, PrevBar, BADGE_MAP } from './UI';
 import s from './TaskRow.module.css';
 import shared from './shared.module.css';
 
