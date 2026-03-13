@@ -171,11 +171,11 @@ export const GameCard = forwardRef(function GameCard({
   const ctxItems = ctxMenu
     ? ctxMenu.target === 'header'
       ? [
-          { label: t('ctxAddDaily'),       icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
+          { label: t('types.daily'),        icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
           { label: t('types.weekly'),       icon: '➕', onClick: () => setFormState({ mode: 'addWeekly' }) },
           { label: t('types.halfmonthly'),  icon: '➕', onClick: () => setFormState({ mode: 'addHalfmonthly' }) },
           { label: t('types.monthly'),      icon: '➕', onClick: () => setFormState({ mode: 'addMonthly' }) },
-          { label: t('ctxAddEvent'),        icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
+          { label: t('types.event'),        icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
         ]
       : ctxMenu.target === 'item'
         ? [
