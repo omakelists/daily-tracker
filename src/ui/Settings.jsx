@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../util/i18n';
 import {uid, utcToLocalHHMM, localToUtcHHMM, BADGE_MAP} from '../constants';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
+import { useAppUpdate } from '../util/useAppUpdate';
 import { Modal, TaskSection } from './UI';
 import { ContextMenu } from './ContextMenu';
 import { CropModal } from './CropModal';
@@ -192,13 +193,13 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, onUpdate, sortUncheckedFirst, onSortUncheckedFirst, showSectionHeaders, onShowSectionHeaders, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, sortUncheckedFirst, onSortUncheckedFirst, showSectionHeaders, onShowSectionHeaders, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
   const importRef = useRef(null);
 
-  // Version panel state
-  const [verState, setVerState] = useState(null); // null | 'checking' | { current, latest, hasUpdate } | 'error'
+  // Version panel state — managed by useAppUpdate
+  const { verState, checkVersion, doUpdate } = useAppUpdate();
 
   const [cropFile,     setCropFile]     = useState(null);
   const [cropTarget,   setCropTarget]   = useState(null);
@@ -214,92 +215,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openCrop = (target, file) => { setCropTarget(target); setCropFile(file); };
-
-  const handleCheckVersion = async () => {
-    setVerState('checking');
-    try {
-      const [cachedRes, netRes] = await Promise.all([
-        fetch('./version.json'),
-        fetch('./version.json?check=' + Date.now()),
-      ]);
-      if (!cachedRes.ok || !netRes.ok) throw new Error('fetch failed');
-      const [cached, net] = await Promise.all([cachedRes.json(), netRes.json()]);
-      setVerState({ current: cached.version ?? '?', latest: net.version ?? '?', hasUpdate: net.version && net.version !== cached.version });
-    } catch {
-      setVerState('error');
-    }
-  };
-
-  const handleDoUpdate = async () => {
-    if (!('serviceWorker' in navigator)) return;
-    setVerState('updating');
-
-    try {
-      const reg = await navigator.serviceWorker.ready;
-
-      // Send SKIP_WAITING to the waiting SW, then reload when the new SW takes control.
-      const activateAndReload = () => {
-        // Signal App.jsx to show a "update complete" toast after the page reloads.
-        try { localStorage.setItem('app-updated', '1'); } catch {}
-        setVerState('reloading');
-        // Register the controllerchange listener BEFORE posting SKIP_WAITING.
-        // If the listener were added after postMessage, a fast-responding SW could
-        // fire controllerchange before the listener is in place, causing reload() to
-        // never be called.
-        navigator.serviceWorker.addEventListener(
-          'controllerchange',
-          () => window.location.reload(),
-          { once: true },
-        );
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      };
-
-      // Fast path: new SW is already waiting (App-level detection already ran).
-      if (reg.waiting) {
-        activateAndReload();
-        return;
-      }
-
-      // Slow path: version.json showed a new build but the new SW hasn't been
-      // downloaded yet. Force a SW update check and wait for it to reach the
-      // 'installed' (waiting) state before activating.
-      await reg.update();
-
-      let settled = false;
-
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        // Timed out — preserve version numbers so the user can retry.
-        setVerState((prev) => ({
-          ...(typeof prev === 'object' && prev !== null ? prev : {}),
-          hasUpdate: true,
-          timedOut: true,
-        }));
-      }, 20_000);
-
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && !settled) {
-            settled = true;
-            clearTimeout(timeout);
-            activateAndReload();
-          }
-        });
-      }, { once: true });
-
-      // Race: another tab may have already advanced the SW to waiting.
-      if (reg.waiting && !settled) {
-        settled = true;
-        clearTimeout(timeout);
-        activateAndReload();
-      }
-    } catch {
-      setVerState('error');
-    }
-  };
 
   const handleCropConfirm = async (dataUrl, opacity) => {
     if (!cropTarget) return;
@@ -523,7 +438,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
               <span className={s.verPanelTitle}>{t('verPanel')}</span>
               <button
                 className={`${shared.btn} ${shared.btnAdd}`}
-                onClick={handleCheckVersion}
+                onClick={checkVersion}
                 disabled={verState === 'checking' || verState === 'updating' || verState === 'reloading'}
               >
                 {verState === 'checking' ? t('verChecking') : t('verCheck')}
@@ -544,7 +459,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     {verState.timedOut ? (
                       <span className={s.verError}>{t('verUpdateFailed')}</span>
                     ) : verState.hasUpdate ? (
-                      <button className={`${shared.btn} ${shared.btnConfirm} ${s.verUpdateBtn}`} onClick={handleDoUpdate}>{t('verUpdate')}</button>
+                      <button className={`${shared.btn} ${shared.btnConfirm} ${s.verUpdateBtn}`} onClick={doUpdate}>{t('verUpdate')}</button>
                     ) : (
                       <span className={s.verUpToDate}>✓ {t('verUpToDate')}</span>
                     )}

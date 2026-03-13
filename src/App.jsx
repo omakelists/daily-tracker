@@ -8,6 +8,7 @@ import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './util/useLocalStorage
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset, msUntilDeadline, calcAllDone } from './util/helpers';
 import { imgGet, imgPurgeOrphans } from './util/imageStorage';
+import { useAppUpdate } from './util/useAppUpdate';
 import { ConfirmDialog } from './ui/UI';
 import { GameCard } from './ui/GameCard';
 import { SettingsModal } from './ui/Settings';
@@ -27,8 +28,7 @@ export function App() {
       return v ? new Set(JSON.parse(v)) : new Set();
     } catch { return new Set(); }
   });
-  const [updateInfo, setUpdateInfo] = useState(null);
-  const [flashMsg,   setFlashMsg]   = useState(null); // brief post-update toast
+  const { updateInfo, flashMsg, verState, checkVersion, doUpdate } = useAppUpdate();
   const [sortUncheckedFirst,  setSortUncheckedFirst]  = useLocalStoragePref('dt:sortUncheckedFirst',  true,  BOOL_PREF);
   const [showSectionHeaders,  setShowSectionHeaders]  = useLocalStoragePref('dt:showSectionHeaders',  true,  BOOL_PREF);
   const [autoDeleteExpired,   setAutoDeleteExpired]   = useLocalStoragePref('dt:autoDeleteExpired',   false, BOOL_PREF);
@@ -119,41 +119,6 @@ export function App() {
     if (games) imgPurgeOrphans(games.map((g) => g.id));
   }, [games]);
 
-  // ── Post-update toast ─────────────────────────────────────────
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem('app-updated')) return;
-      localStorage.removeItem('app-updated');
-      setFlashMsg(t('verUpdated'));
-      const timer = setTimeout(() => setFlashMsg(null), 4000);
-      return () => clearTimeout(timer);
-    } catch {}
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── SW update detection ────────────────────────────────────────
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-    const checkVersions = async () => {
-      try {
-        const [cachedRes, netRes] = await Promise.all([fetch('./version.json'), fetch('./version.json?check=1')]);
-        if (!cachedRes.ok || !netRes.ok) return;
-        const [cached, net] = await Promise.all([cachedRes.json(), netRes.json()]);
-        if (net.version && net.version !== cached.version) setUpdateInfo({ current: cached.version, next: net.version });
-      } catch {}
-    };
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.update();
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) checkVersions();
-        });
-      });
-      if (reg.waiting && navigator.serviceWorker.controller) checkVersions();
-    });
-  }, []);
-
   const cd     = { d: t('cd.d'), h: t('cd.h'), m: t('cd.m') };
   const soloId = (game) => `${game.id}_solo`;
 
@@ -210,12 +175,6 @@ export function App() {
     setCollapsed((prev) => { const next = new Set(prev); if (next.has(gameId)) next.delete(gameId); else next.add(gameId); return next; });
   }, []);
 
-  const handleUpdate = useCallback(async () => {
-    const reg = await navigator.serviceWorker.ready;
-    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
-  }, []);
-
   const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
   // ── Unified item operations ──────────────────────────────────
@@ -250,7 +209,7 @@ const editItem = useCallback((gameId, itemId, updates) => {
           <span className={s.wcoTitle}>{t('appTitle')}</span>
           <span className={s.wcoClock}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           {updateInfo && (
-            <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn'))} className={s.wcoBtn} title={t('updateAvail')}>⬆️</button>
+            <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), doUpdate, t('updateBtn'))} className={s.wcoBtn} title={t('updateAvail')}>⬆️</button>
           )}
           <button onClick={() => setShowCalendar(true)} className={s.wcoBtn} title={t('record')}>📅</button>
           <button onClick={() => setShowSettings(true)} className={s.wcoBtn} title={t('settings')}>⚙️</button>
@@ -264,7 +223,7 @@ const editItem = useCallback((gameId, itemId, updates) => {
             </div>
             <div className={s.actions}>
               {updateInfo && (
-                <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), handleUpdate, t('updateBtn'))} className={s.btnUpdate} title={t('updateAvail')}>⬆️</button>
+                <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), doUpdate, t('updateBtn'))} className={s.btnUpdate} title={t('updateAvail')}>⬆️</button>
               )}
               <button onClick={() => setShowCalendar(true)} className={s.btnRecord}   title={t('record')}>📅</button>
               <button onClick={() => setShowSettings(true)} className={s.btnSettings} title={t('settings')}>⚙️</button>
@@ -300,7 +259,7 @@ const editItem = useCallback((gameId, itemId, updates) => {
       </main>
 
       <AnimatePresence>
-        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} onUpdate={handleUpdate} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} showSectionHeaders={showSectionHeaders} onShowSectionHeaders={setShowSectionHeaders} autoDeleteExpired={autoDeleteExpired} onAutoDeleteExpired={setAutoDeleteExpired} autoDeleteDays={autoDeleteDays} onAutoDeleteDays={setAutoDeleteDays} />}
+        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} showSectionHeaders={showSectionHeaders} onShowSectionHeaders={setShowSectionHeaders} autoDeleteExpired={autoDeleteExpired} onAutoDeleteExpired={setAutoDeleteExpired} autoDeleteDays={autoDeleteDays} onAutoDeleteDays={setAutoDeleteDays} />}
       </AnimatePresence>
       <AnimatePresence>
         {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}
