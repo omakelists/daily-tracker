@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY_TYPES, EVENT_TYPES, uid } from './constants';
 import { loadAll, saveGames, saveChecks } from './util/storage';
-import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './util/useLocalStoragePref';
 import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset, msUntilDeadline, calcAllDone } from './util/helpers';
-import { imgGet, imgPurgeOrphans } from './util/imageStorage';
+         msUntilTaskReset, calcAllDone } from './util/helpers';
 import { useAppUpdate } from './util/useAppUpdate';
+import { useAppSettings } from './util/useAppSettings';
 import { ConfirmDialog } from './ui/UI';
 import { GameCard } from './ui/GameCard';
 import { SettingsModal } from './ui/Settings';
@@ -22,17 +21,17 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [confirm,      setConfirm]      = useState(null);
-  const [collapsed,    setCollapsed]    = useState(() => {
-    try {
-      const v = localStorage.getItem('dt:collapsed');
-      return v ? new Set(JSON.parse(v)) : new Set();
-    } catch { return new Set(); }
-  });
-  const { updateInfo, flashMsg, verState, checkVersion, doUpdate } = useAppUpdate();
-  const [sortUncheckedFirst,  setSortUncheckedFirst]  = useLocalStoragePref('dt:sortUncheckedFirst',  true,  BOOL_PREF);
-  const [showSectionHeaders,  setShowSectionHeaders]  = useLocalStoragePref('dt:showSectionHeaders',  true,  BOOL_PREF);
-  const [autoDeleteExpired,   setAutoDeleteExpired]   = useLocalStoragePref('dt:autoDeleteExpired',   false, BOOL_PREF);
-  const [autoDeleteDays,      setAutoDeleteDays]      = useLocalStoragePref('dt:autoDeleteDays',      1,     INT_PREF);
+
+  const { updateInfo, flashMsg, doUpdate } = useAppUpdate();
+
+  const {
+    sortUncheckedFirst,  setSortUncheckedFirst,
+    showSectionHeaders,  setShowSectionHeaders,
+    autoDeleteExpired,   setAutoDeleteExpired,
+    autoDeleteDays,      setAutoDeleteDays,
+    collapsed, toggleCollapse,
+    appBg, gameBgs, refreshImages,
+  } = useAppSettings(games, setGames, now);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
   const [wcoVisible, setWcoVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
@@ -43,31 +42,6 @@ export function App() {
     wco.addEventListener('geometrychange', handler);
     return () => wco.removeEventListener('geometrychange', handler);
   }, []);
-
-  // ── Image states ──────────────────────────────────────────────
-  const [appBg,   setAppBg]   = useState(null);
-  const [gameBgs, setGameBgs] = useState({});
-  const [imgVer,  setImgVer]  = useState(0);
-
-  const refreshImages = useCallback(() => setImgVer((v) => v + 1), []);
-
-  useEffect(() => {
-    if (!games) return;
-    let cancelled = false;
-    (async () => {
-      const ab = await imgGet('app-bg');
-      if (cancelled) return;
-      setAppBg(ab ? ab.dataUrl : null);
-      const bgs = {};
-      await Promise.all(games.map(async (g) => {
-        const entry = await imgGet(`game-${g.id}`);
-        if (entry) bgs[g.id] = entry;
-      }));
-      if (!cancelled) setGameBgs(bgs);
-    })();
-    return () => { cancelled = true; };
-  }, [imgVer, games]);
-
 
   // Unified clock: fires at whichever comes first — the next task reset or 30s fallback.
   // This replaces a separate setInterval(30s) + setTimeout(nextReset) pair.
@@ -95,29 +69,6 @@ export function App() {
   }, []);
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
-
-  // ── Auto-delete expired events ────────────────────────────────
-  useEffect(() => {
-    if (!autoDeleteExpired || !games) return;
-    const thresholdMs = autoDeleteDays * 86_400_000;
-    setGames((prev) => prev.map((g) => {
-      const filtered = (g.items ?? []).filter((item) => {
-        if (!EVENT_TYPES.has(item.type)) return true; // never auto-delete tasks
-        if (!item.deadline) return true;
-        const ms = msUntilDeadline(item.deadline, now, item.deadlineTime ?? null);
-        return ms > -thresholdMs; // keep if not yet past threshold
-      });
-      return filtered.length === (g.items ?? []).length ? g : { ...g, items: filtered };
-    }));
-  }, [now, autoDeleteExpired, autoDeleteDays]);
-
-  useEffect(() => {
-    try { localStorage.setItem('dt:collapsed', JSON.stringify([...collapsed])); } catch {}
-  }, [collapsed]);
-
-  useEffect(() => {
-    if (games) imgPurgeOrphans(games.map((g) => g.id));
-  }, [games]);
 
   const cd     = { d: t('cd.d'), h: t('cd.h'), m: t('cd.m') };
   const soloId = (game) => `${game.id}_solo`;
@@ -170,10 +121,6 @@ export function App() {
     if (document.startViewTransition) document.startViewTransition(applyUpdates);
     else applyUpdates();
   }, [now, getDailyTasks]);
-
-  const toggleCollapse = useCallback((gameId) => {
-    setCollapsed((prev) => { const next = new Set(prev); if (next.has(gameId)) next.delete(gameId); else next.add(gameId); return next; });
-  }, []);
 
   const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
@@ -259,7 +206,10 @@ const editItem = useCallback((gameId, itemId, updates) => {
       </main>
 
       <AnimatePresence>
-        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages} sortUncheckedFirst={sortUncheckedFirst} onSortUncheckedFirst={setSortUncheckedFirst} showSectionHeaders={showSectionHeaders} onShowSectionHeaders={setShowSectionHeaders} autoDeleteExpired={autoDeleteExpired} onAutoDeleteExpired={setAutoDeleteExpired} autoDeleteDays={autoDeleteDays} onAutoDeleteDays={setAutoDeleteDays} />}
+        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages}
+            prefs={{ sortUncheckedFirst, showSectionHeaders, autoDeleteExpired, autoDeleteDays }}
+            onPrefs={(key, val) => ({ sortUncheckedFirst: setSortUncheckedFirst, showSectionHeaders: setShowSectionHeaders, autoDeleteExpired: setAutoDeleteExpired, autoDeleteDays: setAutoDeleteDays })[key]?.(val)}
+          />}
       </AnimatePresence>
       <AnimatePresence>
         {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}

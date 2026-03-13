@@ -193,7 +193,7 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
 }
 
 // ── SettingsModal ─────────────────────────────────────────────────
-export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, sortUncheckedFirst, onSortUncheckedFirst, showSectionHeaders, onShowSectionHeaders, autoDeleteExpired, onAutoDeleteExpired, autoDeleteDays, onAutoDeleteDays }) {
+export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, prefs, onPrefs }) {
   const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
   const [showNG,   setShowNG]   = useState(false);
   const importRef = useRef(null);
@@ -392,8 +392,8 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           <label className={s.prefRow}>
             <input
               type="checkbox"
-              checked={!!showSectionHeaders}
-              onChange={(e) => onShowSectionHeaders(e.target.checked)}
+              checked={!!prefs.showSectionHeaders}
+              onChange={(e) => onPrefs('showSectionHeaders', e.target.checked)}
               className={s.prefCheck}
             />
             <span className={s.prefLabel}>{t('showSectionHeaders')}</span>
@@ -403,8 +403,8 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           <label className={s.prefRow}>
             <input
               type="checkbox"
-              checked={!!sortUncheckedFirst}
-              onChange={(e) => onSortUncheckedFirst(e.target.checked)}
+              checked={!!prefs.sortUncheckedFirst}
+              onChange={(e) => onPrefs('sortUncheckedFirst', e.target.checked)}
               className={s.prefCheck}
             />
             <span className={s.prefLabel}>{t('sortUncheckedFirst')}</span>
@@ -414,20 +414,20 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           <label className={s.prefRow}>
             <input
               type="checkbox"
-              checked={!!autoDeleteExpired}
-              onChange={(e) => onAutoDeleteExpired(e.target.checked)}
+              checked={!!prefs.autoDeleteExpired}
+              onChange={(e) => onPrefs('autoDeleteExpired', e.target.checked)}
               className={s.prefCheck}
             />
             <span className={s.prefLabel}>{t('autoDeleteExpired')}</span>
             <input
               type="number"
               min="0"
-              value={autoDeleteDays}
-              onChange={(e) => onAutoDeleteDays(e.target.value)}
-              disabled={!autoDeleteExpired}
-              className={`${shared.inputCls} ${s.prefDayInput}${!autoDeleteExpired ? ` ${s.prefDayDisabled}` : ''}`}
+              value={prefs.autoDeleteDays}
+              onChange={(e) => onPrefs('autoDeleteDays', e.target.value)}
+              disabled={!prefs.autoDeleteExpired}
+              className={`${shared.inputCls} ${s.prefDayInput}${!prefs.autoDeleteExpired ? ` ${s.prefDayDisabled}` : ''}`}
             />
-            <span className={`${s.prefLabel}${!autoDeleteExpired ? ` ${s.prefDayDisabled}` : ''}`}>{t('autoDeleteDaysUnit')}</span>
+            <span className={`${s.prefLabel}${!prefs.autoDeleteExpired ? ` ${s.prefDayDisabled}` : ''}`}>{t('autoDeleteDaysUnit')}</span>
           </label>
 
           <div className={s.listSeparator} />
