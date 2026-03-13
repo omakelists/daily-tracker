@@ -5,6 +5,8 @@
   border: var(--card-border) solid var(--border);
   transition: opacity 0.5s;
   position: relative;
+  container-type: inline-size;
+  container-name: card;
 }
 .cardDone { opacity: 0.62; }
 

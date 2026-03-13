@@ -54,7 +54,7 @@ export function TaskSection({ header, items, wrapItem, popLayout = false, addSlo
 }
 
 // ── Row ───────────────────────────────────────────────────────────
-export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
+export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
   return (
     <div
       className={`${shared.row}${className ? ` ${className}` : ""}`}
@@ -64,9 +64,14 @@ export function Row({ preSlot, barSlot, checkbox, content, meta, rightSlot, bg, 
       {preSlot != null && <div className={shared.preSlot}>{preSlot}</div>}
       <div className={shared.barSlot}>{barSlot}</div>
       {checkbox != null && <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
+      {badgeSlot != null && <div className={shared.badgeSlot}>{badgeSlot}</div>}
       <div className={shared.content}>{content}</div>
-      {meta      && <div className={shared.meta}>{meta}</div>}
-      {rightSlot && <div className={shared.right}>{rightSlot}</div>}
+      {(meta || rightSlot) && (
+        <div className={shared.metaRight}>
+          {meta      && <div className={shared.meta}>{meta}</div>}
+          {rightSlot && <div className={shared.right}>{rightSlot}</div>}
+        </div>
+      )}
     </div>
   );
 }

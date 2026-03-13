@@ -30,12 +30,19 @@
   align-items: center;
   justify-content: center;
 }
+/* Badge extracted as its own flex/grid item so it can span rows in narrow mode. */
+.badgeSlot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-left: var(--cb-gap);
+}
 .content {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: var(--cb-gap);
+  margin-left: 8px;
   min-width: 0;
 }
 .meta {
@@ -50,6 +57,53 @@
   margin-left: 6px;
   display: flex;
   align-items: center;
+}
+/* Transparent wrapper in normal mode; becomes a grid cell in narrow mode. */
+.metaRight {
+  display: contents;
+}
+
+/*
+ * 2-row layout for narrow cards.
+ * When the card container (container-name: card) is narrower than 360px,
+ * the row switches from flex to a 4-column grid:
+ *
+ *   col:  [bar-slot]  [cb-w]  [badge]  [1fr        ]
+ *   row1:  barSlot     cbWrap  badge    taskName
+ *   row2:  barSlot     cbWrap  badge    meta + right →right-aligned
+ *
+ * barSlot, cbWrap, and badge span both rows and are vertically centered.
+ * badge stretches to the full row height.
+ */
+@container card (max-width: 360px) {
+  .row {
+    display: grid;
+    grid-template-columns: var(--bar-slot) var(--cb-w) auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: var(--cb-gap);
+    align-items: center;
+  }
+
+  .barSlot   { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: center; }
+  .cbWrap    { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .badgeSlot { grid-column: 3; grid-row: 1 / 3; align-self: stretch; margin-left: 0;
+               display: flex; align-items: stretch; }
+  .content   { grid-column: 4; grid-row: 1;     align-self: center; margin-left: 0; padding-top: 2px; }
+  .metaRight { grid-column: 4; grid-row: 2;
+               display: flex; align-items: center; justify-content: flex-end;
+               gap: 6px; padding-bottom: 2px; }
+  .meta      { margin-left: 0; }
+  .right     { margin-left: 0; }
+
+  /* Badge stretches to fill full row height; text stays centered. */
+  .badgeSlot .badge {
+    align-self: stretch;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
 }
 
 /* ── Checkbox ────────────────────────────────────────────────────── */

@@ -76,9 +76,13 @@ export function TaskRow({
           {dimmed ? '✓' : ''}
         </button>
       }
+      badgeSlot={
+        <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}>
+          <span className={shared.badgeText}>{t(`types.${task.type}`)}</span>
+        </span>
+      }
       content={
         <div className={s.nameGroup}>
-          <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}><span className={shared.badgeText}>{t(`types.${task.type}`)}</span></span>
           <span
             className={s.taskName}
             style={{
