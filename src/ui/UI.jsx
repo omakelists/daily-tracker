@@ -53,9 +53,10 @@ export function TaskSection({ header, items, wrapItem, popLayout = false, addSlo
 }
 
 // ── Row ───────────────────────────────────────────────────────────
-export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, deleteSlot, bg, borderBottom, className, style, onClick }) {
+export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
   return (
     <div
+      {...rootProps}
       className={`${shared.row}${className ? ` ${className}` : ""}`}
       style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
       onClick={onClick}

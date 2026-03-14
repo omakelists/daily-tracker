@@ -217,74 +217,25 @@
 .inputNumber   { font-family: monospace; text-align: center; }
 .typeSelect    { width: 104px; }
 
-/* ── Task / form rows ────────────────────────────────────────────── */
+/* ── Task rows (ItemTaskRow via Row component) ───────────────────── */
 
-/*
- * Outer row: DragHandle (left) and ✕ (right) are direct children here.
- * align-items:stretch lets them fill the full height when taskFormInner
- * grows to two lines. Each anchor uses align-self:stretch + flex centering
- * to stay vertically centered within their own stretched height.
- */
-.taskRow {
-  display: flex;
-  align-items: stretch;
-  gap: 7px;
-  margin-bottom: 6px;
-}
+/* Normal (flex) mode — Row component handles outer structure via shared.row.
+ * .taskRow is an extra class applied to Row for Settings-specific overrides. */
+.taskRow { margin-bottom: 6px; }
 
-/*
- * Inner wrappable area: badge + name input + reset group.
- * flex-wrap:wrap lets the reset group fall to a second line when width is tight.
- */
-.taskFormInner {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 7px;
-}
+/* Name input: fills available width; min-width controls flex-wrap timing. */
+.taskName { flex: 1; min-width: 8rem; }
 
-/* Name input stretches to fill available space on line 1. */
-.taskName {
-  flex: 1;
-  min-width: 10rem; /* triggers wrap before input becomes unreadably narrow */
-}
-
-/*
- * Reset group: label + input(s).
- * margin-left:auto pushes it to the right on whatever line it occupies —
- * inline (line 1) or wrapped (line 2).
- * flex-shrink:0 prevents it from compressing, forcing a wrap instead.
- */
+/* Reset group (meta slot content): label + control(s) inline. */
 .resetGroup {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
-/* Anchors inside taskFormRow that must stretch to match 2-line height. */
-.taskFormAnchor {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
 
-.addTaskFormRow  { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
-/* 2-row card (events): outer wrapper */
-.taskFormCard    { margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px; }
-.taskFormRow1    { display: flex; align-items: center; gap: 7px; }
-.taskFormRow2    { display: flex; align-items: center; gap: 7px; padding-left: 22px; /* align past drag handle */ }
 
-.eventSep {
-  font-size: 11px;
-  color: var(--muted);
-  text-align: center;
-  padding: 6px 0 4px;
-  user-select: none;
-}
 
 /* Date input */
 .inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
@@ -312,75 +263,54 @@
 }
 
 /*
- * Narrow layout for Settings task rows.
- * Container is .gameItem (container-name: task-item).
- * Thresholds offset by gameBody padding (13px × 2 = 26px) vs main card thresholds.
+ * Narrow layout overrides for .taskRow (ItemTaskRow).
+ * These override shared.module.css container queries for rows that have no
+ * checkbox (.cbWrap), replacing the 5-column grid with a 4-column version:
  *
- * ≤386px  (≈ card ≤360px): 2-row — badge spans both rows vertically.
- *   col:  [auto:handle]  [auto:badge-stretch]  [1fr:name+reset]  [auto:✕]
- *   row1:  handle(span)   badge(span)           name input         ✕(span)
- *   row2:  handle(span)   badge(span)           reset group        ✕(span)
+ * ≤360px (2-row):
+ *   col:  [barSlot:handle] [badgeSlot] [minmax(0,1fr):name] [deleteSlot:✕]
+ *   row1:  handle(span)    badge(span)  name input            ✕(span)
+ *   row2:  handle(span)    badge(span)  meta(reset→)         ✕(span)
  *
- * ≤306px  (≈ card ≤280px): 3-row — badge moves to top row, full width.
- *   col:  [auto:handle]  [minmax(0,1fr):badge→content]  [auto:✕]
- *   row1:  handle(span)   badge (full col width)          ✕(span)
- *   row2:  handle(span)   name input                      ✕(span)
- *   row3:                 reset group                     ✕
+ * ≤280px (3-row):
+ *   col:  [barSlot:handle] [minmax(0,1fr): badge/name/meta] [deleteSlot:✕]
+ *   row1:  handle(span)    badge (full width)                ✕(span)
+ *   row2:  handle          name input                        ✕
+ *   row3:  handle          meta (reset, right-aligned)       ✕
  */
-@container task-item (max-width: 386px) {
+@container task-item (max-width: 360px) {
   .taskRow {
-    display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
+    grid-template-columns: var(--bar-slot) auto minmax(0, 1fr) auto;
     column-gap: 7px;
-    row-gap: 4px;
-    align-items: stretch;
   }
-
-  /* (1) drag handle: col1, spans both rows */
-  .taskRow > :nth-child(1) { grid-column: 1; grid-row: 1 / 3; display: flex; align-items: center; }
-
-  /* (2) badge: col2, spans both rows, stretched vertically */
-  .taskRow > :nth-child(2) { grid-column: 2; grid-row: 1 / 3;
-                                  display: flex; align-items: stretch;
-                                  justify-self: stretch; width: auto; }
-  .taskRow > :nth-child(2) > span { display: flex; align-items: center; justify-content: center;
-                                         height: 100%; }
-
-  /* (3) taskFormInner: col3, spans both rows */
-  .taskRow > :nth-child(3) { grid-column: 3; grid-row: 1 / 3; align-self: start; min-width: 0; }
-
-  /* (4) ✕ button: col4, spans both rows */
-  .taskRow > :nth-child(4) { grid-column: 4; grid-row: 1 / 3; display: flex; align-items: center; }
+  .taskRow .barSlot    { grid-column: 1; grid-row: 1 / 3; }
+  .taskRow .badgeSlot  { grid-column: 2; grid-row: 1 / 3; align-self: stretch; margin-left: 0;
+                         display: flex; align-items: stretch; }
+  .taskRow .badgeSlot .taskBadge { align-self: stretch; height: auto;
+                                   display: flex; align-items: center; justify-content: center; }
+  .taskRow .content    { grid-column: 3; grid-row: 1; margin-left: 0; padding-top: 2px; }
+  .taskRow .metaRight  { grid-column: 3; grid-row: 2; display: flex; align-items: center;
+                         justify-content: flex-end; gap: 6px; padding-bottom: 2px; }
+  .taskRow .meta       { margin-left: 0; }
+  .taskRow .deleteSlot { grid-column: 4; grid-row: 1 / 3; margin-left: 4px; }
 }
 
-@container task-item (max-width: 306px) {
+@container task-item (max-width: 280px) {
   .taskRow {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: var(--bar-slot) minmax(0, 1fr) auto;
     grid-template-rows: auto auto auto;
-    row-gap: 4px;
+    row-gap: 2px;
   }
-
-  /* (1) drag handle: col1, spans all 3 rows, centered */
-  .taskRow > :nth-child(1) { grid-column: 1; grid-row: 1 / 4; display: flex; align-items: center; }
-
-  /* (2) badge: col2, row1, full column width */
-  .taskRow > :nth-child(2) { grid-column: 2; grid-row: 1;
-                                  justify-self: stretch; width: auto;
-                                  display: flex; align-items: center; }
-  .taskRow > :nth-child(2) > span { width: 100%; display: flex; align-items: center; justify-content: center; }
-
-  /* (3) taskFormInner: col2, rows 2–3, stacks name and reset vertically */
-  .taskRow > :nth-child(3) { grid-column: 2; grid-row: 2 / 4;
-                                  display: flex; flex-direction: column;
-                                  align-items: stretch; gap: 4px; min-width: 0; }
-
-  /* (4) ✕ button: col3, spans all 3 rows, centered */
-  .taskRow > :nth-child(4) { grid-column: 3; grid-row: 1 / 4; display: flex; align-items: center; }
-
-  /* name input fills column */
-  .taskName { min-width: 0; width: 100%; }
-
-  /* reset group: remove margin-left:auto (has no meaning in column direction) */
-  .resetGroup { margin-left: 0; flex-shrink: 1; }
+  .taskRow .barSlot    { grid-column: 1; grid-row: 1 / 4; }
+  .taskRow .badgeSlot  { grid-column: 2; grid-row: 1; align-self: center; margin-left: 0;
+                         display: flex; align-items: center; }
+  .taskRow .badgeSlot .taskBadge { width: 100%; height: auto; align-self: auto; }
+  .taskRow .content    { grid-column: 2; grid-row: 2; align-self: center; margin-left: 0; padding-top: 0; }
+  .taskRow .metaRight  { grid-column: 2; grid-row: 3; display: flex; align-items: center;
+                         justify-content: flex-end; gap: 4px; }
+  .taskRow .meta       { margin-left: 0; }
+  .taskRow .deleteSlot { grid-column: 3; grid-row: 1 / 4; margin-left: 0; }
+  /* name input fills column; reset group stacks vertically */
+  .taskRow .taskName   { min-width: 0; width: 100%; }
+  .taskRow .resetGroup { flex-direction: column; align-items: flex-start; gap: 4px; }
 }

@@ -7,19 +7,8 @@
   gap: 6px;
 }
 
-/* ─ Main row: [name input] + [reset controls] side by side when wide enough.
- * flex-wrap lets resetGroup/eventControlGroup fall to its own line when narrow.
- * btnRow always occupies a full line below via width:100%.
- */
-.mainRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-
-/* Name input stretches to fill available space; min-width controls wrap timing. */
-.nameInput { flex: 1; min-width: 10rem; }
+/* Name input fills available width in content slot; min-width controls wrap timing. */
+.nameInput { flex: 1; min-width: 8rem; }
 
 /* Reset label + controls: pushed right via margin-left:auto, never compressed. */
 .resetGroup {

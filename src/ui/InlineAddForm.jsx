@@ -3,6 +3,7 @@ import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../util/helpers';
 import { DAILY_TYPES, EVENT_TYPES } from '../constants';
 import { msUntilDeadline, formatCountdown, cdColor } from '../util/helpers';
+import { Row, BADGE_MAP } from './UI';
 import s from './InlineAddForm.module.css';
 import shared from './shared.module.css';
 
@@ -132,29 +133,35 @@ export function InlineAddForm({ game, item, type, onAdd, onSave, onCancel }) {
   );
 
   // ── Render ───────────────────────────────────────────────────────
-  // Layout:
-  //   Wide:   [color?][name input ──────────────] [resetControls]
-  //   Narrow: [color?][name input ──────────────]
-  //                                    [resetControls] ←right-aligned
-  //   Always: [add/save][cancel] ←own line, right-aligned
+  // Uses Row component matching main-screen slot structure:
+  //   barSlot=empty(align) | badgeSlot=type badge | content=nameInput | meta=resetControls
+  // Buttons are a sibling below the Row inside .form.
   return (
     <div className={s.form}>
-      <div className={s.mainRow}>
-        <input
-          ref={inputRef}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t(`types.${resolvedType}`)}
-          className={`${shared.inputCls} ${s.nameInput}`}
-        />
-        {resetControls}
-        <div className={s.btnRow}>
-          <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit} disabled={!name.trim()}>
-            {submitLabel ?? t('add')}
-          </button>
-          <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
-        </div>
+      <Row
+        barSlot={null}
+        badgeSlot={
+          <span className={`${shared.taskBadge} ${BADGE_MAP[resolvedType]}`}>
+            <span className={shared.badgeText}>{t(`types.${resolvedType}`)}</span>
+          </span>
+        }
+        content={
+          <input
+            ref={inputRef}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t(`types.${resolvedType}`)}
+            className={`${shared.inputCls} ${s.nameInput}`}
+          />
+        }
+        meta={resetControls}
+      />
+      <div className={s.btnRow}>
+        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit} disabled={!name.trim()}>
+          {submitLabel ?? t('add')}
+        </button>
+        <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
       </div>
     </div>
   );

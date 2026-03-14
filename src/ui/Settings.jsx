@@ -5,7 +5,7 @@ import { t } from '../util/i18n';
 import {uid, utcToLocalHHMM, localToUtcHHMM} from '../util/helpers';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { useAppUpdate } from '../util/useAppUpdate';
-import { Modal, TaskSection, BADGE_MAP } from './UI';
+import { Modal, TaskSection, BADGE_MAP, Row } from './UI';
 import { ContextMenu } from './ContextMenu';
 import { CropModal } from './CropModal';
 import { InlineAddForm } from './InlineAddForm';
@@ -30,73 +30,75 @@ const taskItemVariants = {
 const ALL_TYPE_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
 
 /** Unified settings row for all item types. Branches internally on item.type. */
+/** Unified settings row for all item types. Uses Row component matching main-screen slot structure:
+ *   barSlot=DragHandle | badgeSlot=badge | content=nameInput | meta=resetControls | deleteSlot=✕
+ */
 function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
-  // Layout:
-  //   Wide:   [handle] [badge] [name ──────────────] [reset label] [reset input] [✕]
-  //   Narrow: [handle] [badge] [name ──────]                                     [✕]
-  //                            [reset label] [reset input] ←right align (line 2)
-  //
-  // DragHandle, badge, and ✕ are direct children of taskFormRow (no flex-wrap),
-  // so they stay vertically centered across both lines via align-items:center.
-  // The reset group uses margin-left:auto to stay right-aligned on whichever line it lands.
-  return (
-    <div {...dndProps} className={s.taskRow} style={dndStyle}>
-      {/* Left anchors — never wrap, stay vertically centered across all lines */}
-      {DragHandle}
-      <span className={`${s.taskFormAnchor} ${shared.taskBadge} ${BADGE_MAP[item.type]}`}><span className={shared.badgeText}>{t(`types.${item.type}`)}</span></span>
-
-      {/* Wrappable inner area: name input + reset group */}
-      <div className={s.taskFormInner}>
-        <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${s.taskName}`} placeholder={t(`types.${item.type}`)} />
-
-        {item.type === 'daily' && (
-          <div className={s.resetGroup}>
-            <span className={s.resetLbl}>{t('resetLbl')}</span>
-            <div className={s.resetInputWrap}>
-              <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
-            </div>
-          </div>
-        )}
-        {item.type === 'weekly' && (
-          <div className={s.resetGroup}>
-            <span className={s.resetLbl}>{t('resetLbl')}</span>
-            <div className={s.resetInputWrap}>
-              <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
-                {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
-        {item.type === 'monthly' && (
-          <div className={s.resetGroup}>
-            <span className={s.resetLbl}>{t('resetLbl')}</span>
-            <div className={s.resetInputWrap}>
-              <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-              <span className={s.resetLbl}>{t('dayUnit')}</span>
-            </div>
-          </div>
-        )}
-        {item.type === 'halfmonthly' && (
-          <div className={s.resetGroup}>
-            <span className={s.resetLbl}>{t('resetLbl')}</span>
-            <div className={s.resetInputWrap}>
-              <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-              <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
-            </div>
-          </div>
-        )}
-        {item.type === 'event' && (
-          <div className={s.resetGroup}>
-            <span className={s.resetLbl}>{t('resetLbl')}</span>
-            <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-            <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
-          </div>
-        )}
+  const resetMeta =
+    item.type === 'daily' ? (
+      <div className={s.resetGroup}>
+        <span className={s.resetLbl}>{t('resetLbl')}</span>
+        <div className={s.resetInputWrap}>
+          <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
+        </div>
       </div>
+    ) : item.type === 'weekly' ? (
+      <div className={s.resetGroup}>
+        <span className={s.resetLbl}>{t('resetLbl')}</span>
+        <div className={s.resetInputWrap}>
+          <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
+            {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
+          </select>
+        </div>
+      </div>
+    ) : item.type === 'monthly' ? (
+      <div className={s.resetGroup}>
+        <span className={s.resetLbl}>{t('resetLbl')}</span>
+        <div className={s.resetInputWrap}>
+          <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
+          <span className={s.resetLbl}>{t('dayUnit')}</span>
+        </div>
+      </div>
+    ) : item.type === 'halfmonthly' ? (
+      <div className={s.resetGroup}>
+        <span className={s.resetLbl}>{t('resetLbl')}</span>
+        <div className={s.resetInputWrap}>
+          <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
+          <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
+        </div>
+      </div>
+    ) : item.type === 'event' ? (
+      <div className={s.resetGroup}>
+        <span className={s.resetLbl}>{t('resetLbl')}</span>
+        <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+        <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
+      </div>
+    ) : null;
 
-      {/* Right anchor — stretches to match 2-line height */}
-      <button onClick={() => onDelete(item.id)} className={`${s.taskFormAnchor} ${shared.btn} ${shared.btnDanger}`}>✕</button>
-    </div>
+  return (
+    <Row
+      rootProps={dndProps}
+      className={s.taskRow}
+      style={dndStyle}
+      barSlot={<span className={s.dragHandle}>⠿</span>}
+      badgeSlot={
+        <span className={`${shared.taskBadge} ${BADGE_MAP[item.type]}`}>
+          <span className={shared.badgeText}>{t(`types.${item.type}`)}</span>
+        </span>
+      }
+      content={
+        <input
+          value={item.name}
+          onChange={(e) => onUpdate(item.id, 'name', e.target.value)}
+          className={`${shared.inputCls} ${s.taskName}`}
+          placeholder={t(`types.${item.type}`)}
+        />
+      }
+      meta={resetMeta}
+      deleteSlot={
+        <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+      }
+    />
   );
 }
 
