@@ -5,6 +5,8 @@
   overflow: hidden;
   background: var(--bg-surface);
   margin-bottom: 10px;
+  container-type: inline-size;
+  container-name: task-item;
 }
 
 .gameHeader {
@@ -15,11 +17,11 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .colorInput { width: 26px; height: 26px; border: none; background: none; cursor: pointer; flex-shrink: 0; }
-.nameInput  { flex: 1; min-width: 0; font-weight: 700; }
+.gameName  { flex: 1; min-width: 0; font-weight: 700; }
 .resetLbl   { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .gameBody   { padding: 8px 13px 10px; }
 
-.extraLbl   { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.resetLbl   { font-size: 10px; color: var(--muted); white-space: nowrap; }
 .addTaskBtn { margin-top: 4px; }
 
 .newGameBox {
@@ -211,7 +213,7 @@
 /* Input elements stretch to fill their wrapper; widths are set on .inputWrap instead. */
 /* Input elements inside resetInputWrap stretch via flex:1; widths are owned by the wrapper. */
 .inputTime     { font-family: monospace; }
-.inputTimeGame { width: 5.5rem; font-family: monospace; flex-shrink: 0; }
+.resetTime { width: 5.5rem; font-family: monospace; flex-shrink: 0; }
 .inputNumber   { font-family: monospace; text-align: center; }
 .typeSelect    { width: 104px; }
 
@@ -223,7 +225,7 @@
  * grows to two lines. Each anchor uses align-self:stretch + flex centering
  * to stay vertically centered within their own stretched height.
  */
-.taskFormRow {
+.taskRow {
   display: flex;
   align-items: stretch;
   gap: 7px;
@@ -244,7 +246,7 @@
 }
 
 /* Name input stretches to fill available space on line 1. */
-.taskNameInput {
+.taskName {
   flex: 1;
   min-width: 10rem; /* triggers wrap before input becomes unreadably narrow */
 }
@@ -307,4 +309,78 @@
   flex: 1;
   min-width: 0;
   width: 100%;
+}
+
+/*
+ * Narrow layout for Settings task rows.
+ * Container is .gameItem (container-name: task-item).
+ * Thresholds offset by gameBody padding (13px × 2 = 26px) vs main card thresholds.
+ *
+ * ≤386px  (≈ card ≤360px): 2-row — badge spans both rows vertically.
+ *   col:  [auto:handle]  [auto:badge-stretch]  [1fr:name+reset]  [auto:✕]
+ *   row1:  handle(span)   badge(span)           name input         ✕(span)
+ *   row2:  handle(span)   badge(span)           reset group        ✕(span)
+ *
+ * ≤306px  (≈ card ≤280px): 3-row — badge moves to top row, full width.
+ *   col:  [auto:handle]  [minmax(0,1fr):badge→content]  [auto:✕]
+ *   row1:  handle(span)   badge (full col width)          ✕(span)
+ *   row2:  handle(span)   name input                      ✕(span)
+ *   row3:                 reset group                     ✕
+ */
+@container task-item (max-width: 386px) {
+  .taskRow {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 7px;
+    row-gap: 4px;
+    align-items: stretch;
+  }
+
+  /* (1) drag handle: col1, spans both rows */
+  .taskRow > :nth-child(1) { grid-column: 1; grid-row: 1 / 3; display: flex; align-items: center; }
+
+  /* (2) badge: col2, spans both rows, stretched vertically */
+  .taskRow > :nth-child(2) { grid-column: 2; grid-row: 1 / 3;
+                                  display: flex; align-items: stretch;
+                                  justify-self: stretch; width: auto; }
+  .taskRow > :nth-child(2) > span { display: flex; align-items: center; justify-content: center;
+                                         height: 100%; }
+
+  /* (3) taskFormInner: col3, spans both rows */
+  .taskRow > :nth-child(3) { grid-column: 3; grid-row: 1 / 3; align-self: start; min-width: 0; }
+
+  /* (4) ✕ button: col4, spans both rows */
+  .taskRow > :nth-child(4) { grid-column: 4; grid-row: 1 / 3; display: flex; align-items: center; }
+}
+
+@container task-item (max-width: 306px) {
+  .taskRow {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    row-gap: 4px;
+  }
+
+  /* (1) drag handle: col1, spans all 3 rows, centered */
+  .taskRow > :nth-child(1) { grid-column: 1; grid-row: 1 / 4; display: flex; align-items: center; }
+
+  /* (2) badge: col2, row1, full column width */
+  .taskRow > :nth-child(2) { grid-column: 2; grid-row: 1;
+                                  justify-self: stretch; width: auto;
+                                  display: flex; align-items: center; }
+  .taskRow > :nth-child(2) > span { width: 100%; display: flex; align-items: center; justify-content: center; }
+
+  /* (3) taskFormInner: col2, rows 2–3, stacks name and reset vertically */
+  .taskRow > :nth-child(3) { grid-column: 2; grid-row: 2 / 4;
+                                  display: flex; flex-direction: column;
+                                  align-items: stretch; gap: 4px; min-width: 0; }
+
+  /* (4) ✕ button: col3, spans all 3 rows, centered */
+  .taskRow > :nth-child(4) { grid-column: 3; grid-row: 1 / 4; display: flex; align-items: center; }
+
+  /* name input fills column */
+  .taskName { min-width: 0; width: 100%; }
+
+  /* reset group: remove margin-left:auto (has no meaning in column direction) */
+  .resetGroup { margin-left: 0; flex-shrink: 1; }
 }

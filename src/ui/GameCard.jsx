@@ -189,7 +189,7 @@ export const GameCard = forwardRef(function GameCard({
   return (
     <div
       ref={ref}
-      className={`${s.card}${allDone && !bgDataUrl ? ` ${s.cardDone}` : ''}`}
+      className={`${s.gameItem}${allDone && !bgDataUrl ? ` ${s.gameItemDone}` : ''}`}
       style={{ border: `var(--card-border) solid ${game.color}60`, viewTransitionName: `game-${game.id}` }}
       data-game-card="true"
     >
@@ -203,7 +203,7 @@ export const GameCard = forwardRef(function GameCard({
             bg={headerBg}
             borderBottom={showBody ? '1px solid rgba(255,255,255,0.055)' : 'none'}
             onClick={allItems.length > 0 ? handleToggleCollapse : undefined}
-            className={allItems.length > 0 ? s.cardClickable : undefined}
+            className={allItems.length > 0 ? s.gameItemClickable : undefined}
             preSlot={allItems.length > 0 ? (
               <motion.span className={s.accordionBtn} animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.22 }}>▼</motion.span>
             ) : null}
@@ -228,7 +228,6 @@ export const GameCard = forwardRef(function GameCard({
                 <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
               </>
             }
-            rightSlot={null}
           />
         </div>
 
@@ -236,7 +235,7 @@ export const GameCard = forwardRef(function GameCard({
         <AnimatePresence initial={false}>
           {showBody && (
             <motion.div key="body" variants={bodyVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-              <div className={`${s.body}${bgDataUrl ? ` ${s.bodyWithBg}` : ''}`}>
+              <div className={`${s.gameBody}${bgDataUrl ? ` ${s.gameBodyWithBg}` : ''}`}>
 
                 {/* Section 1: Daily / WebDaily */}
                 {showDailySection && (

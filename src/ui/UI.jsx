@@ -53,24 +53,24 @@ export function TaskSection({ header, items, wrapItem, popLayout = false, addSlo
 }
 
 // ── Row ───────────────────────────────────────────────────────────
-export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, rightSlot, bg, borderBottom, className, style, onClick }) {
+export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, deleteSlot, bg, borderBottom, className, style, onClick }) {
   return (
     <div
       className={`${shared.row}${className ? ` ${className}` : ""}`}
       style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
       onClick={onClick}
     >
-      {preSlot != null && <div className={shared.preSlot}>{preSlot}</div>}
       <div className={shared.barSlot}>{barSlot}</div>
-      {checkbox != null && <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
-      {badgeSlot != null && <div className={shared.badgeSlot}>{badgeSlot}</div>}
+      {checkbox  != null && <div className={shared.cbWrap}    onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
+      {preSlot   != null && <div className={shared.preSlot}   >{preSlot}</div>}
+      {badgeSlot != null && <div className={shared.badgeSlot} >{badgeSlot}</div>}
       <div className={shared.content}>{content}</div>
-      {(meta || rightSlot) && (
+      {meta && (
         <div className={shared.metaRight}>
           {meta      && <div className={shared.meta}>{meta}</div>}
-          {rightSlot && <div className={shared.right}>{rightSlot}</div>}
         </div>
       )}
+      {deleteSlot != null && <div className={shared.deleteSlot}>{deleteSlot}</div>}
     </div>
   );
 }

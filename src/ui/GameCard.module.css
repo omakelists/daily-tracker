@@ -1,4 +1,4 @@
-.card {
+.gameItem {
   border-radius: 12px;
   margin-bottom: 10px;
   overflow: hidden;
@@ -6,9 +6,9 @@
   transition: opacity 0.5s;
   position: relative;
   container-type: inline-size;
-  container-name: card;
+  container-name: task-item;
 }
-.cardDone { opacity: 0.62; }
+.gameItemDone { opacity: 0.62; }
 
 .bgLayer   { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
 .bgOverlay { position: absolute; inset: 0; background: black; z-index: 1; }
@@ -32,8 +32,8 @@
 }
 .accordionBtn:hover { color: var(--text); }
 
-.body        { background: rgba(13, 17, 23, 0.50); padding-top: 2px; padding-bottom: 4px; }
-.bodyWithBg  { background: rgba(13, 17, 23, 0.30); }
+.gameBody        { background: rgba(13, 17, 23, 0.50); padding-top: 2px; padding-bottom: 4px; }
+.gameBodyWithBg  { background: rgba(13, 17, 23, 0.30); }
 
 .divider {
   margin: 5px 0;
@@ -81,7 +81,7 @@
   transition: all 0.3s;
 }
 
-.cardClickable { cursor: pointer; }
+.gameItemClickable { cursor: pointer; }
 
 /* ── Mixed row (D&D drag handle + task/event) ────────────────────── */
 .mixRow        { display: flex; align-items: stretch; }

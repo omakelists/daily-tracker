@@ -40,18 +40,18 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
   // so they stay vertically centered across both lines via align-items:center.
   // The reset group uses margin-left:auto to stay right-aligned on whichever line it lands.
   return (
-    <div {...dndProps} className={s.taskFormRow} style={dndStyle}>
+    <div {...dndProps} className={s.taskRow} style={dndStyle}>
       {/* Left anchors — never wrap, stay vertically centered across all lines */}
       {DragHandle}
-      <span className={`${s.taskFormAnchor} ${shared.badge} ${BADGE_MAP[item.type]}`}><span className={shared.badgeText}>{t(`types.${item.type}`)}</span></span>
+      <span className={`${s.taskFormAnchor} ${shared.taskBadge} ${BADGE_MAP[item.type]}`}><span className={shared.badgeText}>{t(`types.${item.type}`)}</span></span>
 
       {/* Wrappable inner area: name input + reset group */}
       <div className={s.taskFormInner}>
-        <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${s.taskNameInput}`} placeholder={t(`types.${item.type}`)} />
+        <input value={item.name} onChange={(e) => onUpdate(item.id, 'name', e.target.value)} className={`${shared.inputCls} ${s.taskName}`} placeholder={t(`types.${item.type}`)} />
 
         {item.type === 'daily' && (
           <div className={s.resetGroup}>
-            <span className={s.extraLbl}>{t('resetLbl')}</span>
+            <span className={s.resetLbl}>{t('resetLbl')}</span>
             <div className={s.resetInputWrap}>
               <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
             </div>
@@ -59,7 +59,7 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
         )}
         {item.type === 'weekly' && (
           <div className={s.resetGroup}>
-            <span className={s.extraLbl}>{t('resetLbl')}</span>
+            <span className={s.resetLbl}>{t('resetLbl')}</span>
             <div className={s.resetInputWrap}>
               <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
                 {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
@@ -69,25 +69,25 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
         )}
         {item.type === 'monthly' && (
           <div className={s.resetGroup}>
-            <span className={s.extraLbl}>{t('resetLbl')}</span>
+            <span className={s.resetLbl}>{t('resetLbl')}</span>
             <div className={s.resetInputWrap}>
               <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-              <span className={s.extraLbl}>{t('dayUnit')}</span>
+              <span className={s.resetLbl}>{t('dayUnit')}</span>
             </div>
           </div>
         )}
         {item.type === 'halfmonthly' && (
           <div className={s.resetGroup}>
-            <span className={s.extraLbl}>{t('resetLbl')}</span>
+            <span className={s.resetLbl}>{t('resetLbl')}</span>
             <div className={s.resetInputWrap}>
               <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-              <span className={s.extraLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
+              <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
             </div>
           </div>
         )}
         {item.type === 'event' && (
           <div className={s.resetGroup}>
-            <span className={s.extraLbl}>{t('resetLbl')}</span>
+            <span className={s.resetLbl}>{t('resetLbl')}</span>
             <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
             <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
           </div>
@@ -322,9 +322,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   <div className={s.gameHeader}>
                     {DragHandle}
                     <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
-                    <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${s.nameInput} ${shared.inputCls}`} placeholder={t('gameName')} />
+                    <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${s.gameName} ${shared.inputCls}`} placeholder={t('gameName')} />
                     <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTimeGame}`} />
+                    <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.resetTime}`} />
                     <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
                     <button onClick={() => delGame(game.id, game.name)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
                   </div>
@@ -357,7 +357,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                     <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value }))} className={s.colorInput} />
                     <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addGame()} className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('gameName')} autoFocus />
                     <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={`${shared.inputCls} ${s.inputTimeGame}`} />
+                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))} className={`${shared.inputCls} ${s.resetTime}`} />
                   </div>
                   <div className={s.newGameActions}>
                     <button onClick={addGame}                className={`${shared.btn} ${shared.btnConfirm}`}>{t('add')}</button>

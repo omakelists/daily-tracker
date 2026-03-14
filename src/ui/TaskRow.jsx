@@ -23,7 +23,7 @@ export function TaskRow({
   onContextMenu, onDelete,
 }) {
   const [cbScope, animateCb] = useAnimate();
-  const isEvent = EVENT_TYPES.has(task.type);
+  const isEvent = task.type === 'event';
 
   // ── Checked state (unified: all types use checks map) ────────────
   const isChecked   = !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
@@ -34,26 +34,22 @@ export function TaskRow({
   const deadlineMs = isEvent && task.deadline
     ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null;
   const isExpired  = deadlineMs !== null && deadlineMs <= 0;
-  const eventCdColor      = cdColor(deadlineMs ?? Infinity, 24, 48);
-  const dateColor         = isExpired ? 'var(--danger)' : 'var(--dim)';
-  const hasTime           = isEvent && !!task.deadlineTime;
-  // Show date when >24h remaining; show time when <24h remaining.
-  const isWithin24h       = deadlineMs !== null && deadlineMs < DAY_MS;
-  const showDate          = !isWithin24h || !hasTime;
-  const showTime          = hasTime && isWithin24h;
-  const localDeadlineTime = showTime ? utcToLocalHHMM(task.deadlineTime) : null;
 
   // ── Task-specific ────────────────────────────────────────────────
-  const taskMs = !isEvent ? msUntilTaskReset(task, game, now) : 0;
-  const [urgentH, warnH] = task.type === 'weekly'      ? [24,  48]
-                         : task.type === 'monthly'      ? [72, 168]
+  const taskMs = !isEvent ? msUntilTaskReset(task, game, now) : task.deadline
+    ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null;
+  const [urgentH, warnH] =
+                           task.type === 'daily'        ? [ 3,   6]
+                         : task.type === 'weekly'       ? [24,  48]
                          : task.type === 'halfmonthly'  ? [48, 120]
-                         :                               [3,   6];
+                         : task.type === 'monthly'      ? [72, 168]
+                         : task.type === 'event'        ? [72, 168]
+                         :                                [ 3,   6];
   const taskCdColor    = cdColor(taskMs, urgentH, warnH);
   const localResetTime = !isEvent ? utcToLocalHHMM(task.resetTime || game?.resetTime) : null;
 
   // ── Shared ───────────────────────────────────────────────────────
-  const dimmed     = isChecked || isExpired;
+  const dimmed     = isChecked;
   const showDelete = isEvent && dimmed && onDelete;
 
   const handleClick = (e) => {
@@ -65,7 +61,7 @@ export function TaskRow({
 
   const row = (
     <Row
-      className={s.row}
+      className={s.taskRow}
       barSlot={<PrevBar show={showPrev} checked={prevChecked} />}
       checkbox={
         <button
@@ -77,7 +73,7 @@ export function TaskRow({
         </button>
       }
       badgeSlot={
-        <span className={`${shared.badge} ${BADGE_MAP[task.type]}`}>
+        <span className={`${shared.taskBadge} ${BADGE_MAP[task.type]}`}>
           <span className={shared.badgeText}>{t(`types.${task.type}`)}</span>
         </span>
       }
@@ -91,46 +87,31 @@ export function TaskRow({
               textDecorationThickness: dimmed ? '2px' : undefined,
             }}
           >
-            {task.name.trim() || (!isEvent ? t(`types.${task.type}`) : '')}
+            {task.name.trim() || t(`types.${task.type}`)}
           </span>
         </div>
       }
       meta={
-        isEvent ? (
-          deadlineMs !== null && !isChecked ? (
-            <span className={s.countdown} style={{ color: eventCdColor }}>
-              {isExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
-            </span>
-          ) : null
-        ) : (
-          <>
-            {!isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>⏱{formatCountdown(taskMs, cd)}</span>}
-            {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
-            {task.type === 'weekly'      && <span className={s.resetLbl}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
-            {task.type === 'monthly'     && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
-            {task.type === 'halfmonthly' && <span className={s.resetLbl}>{t('everyHalfMonth', { a: task.halfMonthlyStartDay ?? 1, b: (task.halfMonthlyStartDay ?? 1) + 15 })}</span>}
-          </>
-        )
+        <>
+          {!isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>{(isEvent && isExpired) ? t('expired') : `⏱${formatCountdown(taskMs, cd)}`}</span>}
+          {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
+          {task.type === 'weekly'      && <span className={s.resetLbl}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
+          {task.type === 'monthly'     && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
+          {task.type === 'halfmonthly' && <span className={s.resetLbl}>{t('everyHalfMonth', { a: task.halfMonthlyStartDay ?? 1, b: (task.halfMonthlyStartDay ?? 1) + 15 })}</span>}
+          {task.type === 'event' && !showDelete && task.deadline && <span className={s.resetLbl}>
+            {(deadlineMs >= DAY_MS || isExpired) && fmtDeadlineDate(task.deadline, t)}
+            {(deadlineMs < DAY_MS && !isExpired) && utcToLocalHHMM(task.deadlineTime)}
+          </span>}
+        </>
       }
-      rightSlot={
-        isEvent
-          ? showDelete
-            ? (
-              <button
-                className={`${shared.btn} ${shared.btnDanger} ${s.deleteBtn}`}
-                onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-                title={t('delete')}
-              >✕</button>
-            )
-            : task.deadline
-              ? (
-                <span className={s.deadlineDate} style={{ color: dateColor }}>
-                  {showDate && fmtDeadlineDate(task.deadline, t)}
-                  {localDeadlineTime && <span className={s.deadlineTime}>{localDeadlineTime}</span>}
-                </span>
-              )
-              : null
-          : null
+      deleteSlot={
+        showDelete ? (
+          <button
+            className={`${shared.btn} ${shared.btnDanger} ${s.deleteBtn}`}
+            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+            title={t('delete')}
+          >✕</button>
+        ) : null
       }
     />
   );
