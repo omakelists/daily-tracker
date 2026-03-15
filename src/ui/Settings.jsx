@@ -5,14 +5,13 @@ import { t } from '../util/i18n';
 import {uid, utcToLocalHHMM, localToUtcHHMM} from '../util/helpers';
 import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
 import { useAppUpdate } from '../util/useAppUpdate';
-import { Modal, TaskSection, BADGE_MAP, Row } from './UI';
+import { Modal, TaskSection, BADGE_MAP } from './UI';
 import { ContextMenu } from './ContextMenu';
 import { CropModal } from './CropModal';
 import { InlineAddForm } from './InlineAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
-const DragHandle = <span className={s.dragHandle}>⠿</span>;
 
 // Shared item variants for game/task rows
 const itemVariants = {
@@ -29,9 +28,10 @@ const taskItemVariants = {
 // All available item types for the unified type selector
 const ALL_TYPE_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
 
-/** Unified settings row for all item types. Branches internally on item.type. */
-/** Unified settings row for all item types. Uses Row component matching main-screen slot structure:
- *   barSlot=DragHandle | badgeSlot=badge | content=nameInput | meta=resetControls | deleteSlot=✕
+/**
+ * ItemTaskRow — Settings task row.
+ * Symmetric structure to main-screen TaskRow:
+ *   dragSlot | badgeSlot | content(.taskName) | meta(.resetGroup) | deleteSlot
  */
 function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
   const resetMeta =
@@ -76,29 +76,26 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
     ) : null;
 
   return (
-    <Row
-      rootProps={dndProps}
-      className={s.taskRow}
-      style={dndStyle}
-      barSlot={<span className={s.dragHandle}>⠿</span>}
-      badgeSlot={
+    <div {...dndProps} className={s.taskRow} style={dndStyle}>
+      <div className={shared.handleSlot}><span className={s.dragHandle}>⠿</span></div>
+      <div className={shared.badgeSlot}>
         <span className={`${shared.taskBadge} ${BADGE_MAP[item.type]}`}>
           <span className={shared.badgeText}>{t(`types.${item.type}`)}</span>
         </span>
-      }
-      content={
+      </div>
+      <div className={shared.content}>
         <input
           value={item.name}
           onChange={(e) => onUpdate(item.id, 'name', e.target.value)}
           className={`${shared.inputCls} ${s.taskName}`}
           placeholder={t(`types.${item.type}`)}
         />
-      }
-      meta={resetMeta}
-      deleteSlot={
+      </div>
+      {resetMeta && <div className={shared.metaRight}><div className={shared.meta}>{resetMeta}</div></div>}
+      <div className={shared.deleteSlot}>
         <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-      }
-    />
+      </div>
+    </div>
   );
 }
 
@@ -317,18 +314,35 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                 className={shared.clipContents}
               >
                 <div
-                  {...gameDnd.itemProps(gi)}
                   className={s.gameItem}
-                  style={{ ...gameDnd.dropStyle(gi), border: `1px solid ${game.color}44`, opacity: gameDnd.isDragging(gi) ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                  style={{ ...gameDnd.dropStyle(gi), border: `1px solid ${game.color}44` }}
                 >
-                  <div className={s.gameHeader}>
-                    {DragHandle}
-                    <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
-                    <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${s.gameName} ${shared.inputCls}`} placeholder={t('gameName')} />
-                    <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.resetTime}`} />
-                    <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
-                    <button onClick={() => delGame(game.id, game.name)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                  {/* Game header — symmetric to GameCard's GameHeader component:
+                      dragSlot | colorSlot | content(.gameName) | metaRight(.gameResetGroup) | deleteSlot */}
+                  <div
+                    {...gameDnd.itemProps(gi)}
+                    className={s.gameHeaderRow}
+                    style={{ borderBottom: `1px solid ${game.color}44`, opacity: gameDnd.isDragging(gi) ? 0.4 : 1, transition: 'opacity 0.15s' }}
+                  >
+                    <div className={shared.handleSlot}><span className={s.dragHandle}>⠿</span></div>
+                    <div className={shared.colorSlot}>
+                      <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
+                    </div>
+                    <div className={shared.content}>
+                      <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${s.gameName} ${shared.inputCls}`} placeholder={t('gameName')} />
+                    </div>
+                    <div className={shared.metaRight}>
+                      <div className={shared.meta}>
+                        <div className={s.gameResetGroup}>
+                          <span className={s.resetLbl}>{t('resetLbl')}</span>
+                          <input type="time" value={utcToLocalHHMM(game.resetTime)} onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.resetTime}`} />
+                          <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null} onFile={(file) => openCrop(`game-${game.id}`, file)} onRemove={() => removeGameBg(game.id)} mode="compact" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className={shared.deleteSlot}>
+                      <button onClick={() => delGame(game.id, game.name)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                    </div>
                   </div>
 
                   <div className={s.gameBody}>

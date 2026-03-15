@@ -3,7 +3,7 @@ import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM, localToUtcHHMM } from '../util/helpers';
 import { DAILY_TYPES, EVENT_TYPES } from '../constants';
 import { msUntilDeadline, formatCountdown, cdColor } from '../util/helpers';
-import { Row, BADGE_MAP } from './UI';
+import { BADGE_MAP } from './UI';
 import s from './InlineAddForm.module.css';
 import shared from './shared.module.css';
 
@@ -133,19 +133,17 @@ export function InlineAddForm({ game, item, type, onAdd, onSave, onCancel }) {
   );
 
   // ── Render ───────────────────────────────────────────────────────
-  // Uses Row component matching main-screen slot structure:
-  //   barSlot=empty(align) | badgeSlot=type badge | content=nameInput | meta=resetControls
-  // Buttons are a sibling below the Row inside .form.
+  // Structure symmetric to ItemTaskRow:
+  //   badgeSlot | content(.nameInput) | meta(resetControls)
   return (
     <div className={s.form}>
-      <Row
-        barSlot={null}
-        badgeSlot={
+      <div className={s.mainRow}>
+        <div className={shared.badgeSlot}>
           <span className={`${shared.taskBadge} ${BADGE_MAP[resolvedType]}`}>
             <span className={shared.badgeText}>{t(`types.${resolvedType}`)}</span>
           </span>
-        }
-        content={
+        </div>
+        <div className={shared.content}>
           <input
             ref={inputRef}
             value={name}
@@ -154,9 +152,9 @@ export function InlineAddForm({ game, item, type, onAdd, onSave, onCancel }) {
             placeholder={t(`types.${resolvedType}`)}
             className={`${shared.inputCls} ${s.nameInput}`}
           />
-        }
-        meta={resetControls}
-      />
+        </div>
+        {resetControls && <div className={shared.metaRight}><div className={shared.meta}>{resetControls}</div></div>}
+      </div>
       <div className={s.btnRow}>
         <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit} disabled={!name.trim()}>
           {submitLabel ?? t('add')}

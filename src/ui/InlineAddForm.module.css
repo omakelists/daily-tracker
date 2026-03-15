@@ -7,6 +7,19 @@
   gap: 6px;
 }
 
+/*
+ * mainRow: badge + nameInput + resetControls in one flex row.
+ * Structure symmetric to ItemTaskRow (without dragSlot/deleteSlot).
+ *   badgeSlot | content(.nameInput) | metaRight > meta(resetControls)
+ */
+.mainRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--slot-gap);
+}
+/* Slot layout (.barSlot, .badgeSlot, .content, .metaRight, .meta)
+ * is handled by shared.module.css. */
+
 /* Name input fills available width in content slot; min-width controls wrap timing. */
 .nameInput { flex: 1; min-width: 8rem; }
 

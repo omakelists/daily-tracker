@@ -53,7 +53,10 @@ export function TaskSection({ header, items, wrapItem, popLayout = false, addSlo
 }
 
 // ── Row ───────────────────────────────────────────────────────────
-export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
+// ── Row ───────────────────────────────────────────────────────────
+// Main-screen task row. Slot structure (left→right):
+//   barSlot | checkbox | handleSlot | badgeSlot | contentSlot | metaSlot | deleteSlot
+export function Row({ handleSlot, barSlot, checkbox, badgeSlot, contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
   return (
     <div
       {...rootProps}
@@ -62,13 +65,13 @@ export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, dele
       onClick={onClick}
     >
       <div className={shared.barSlot}>{barSlot}</div>
-      {checkbox  != null && <div className={shared.cbWrap}    onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
-      {preSlot   != null && <div className={shared.preSlot}   >{preSlot}</div>}
-      {badgeSlot != null && <div className={shared.badgeSlot} >{badgeSlot}</div>}
-      <div className={shared.content}>{content}</div>
-      {meta && (
+      {checkbox   != null && <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
+      {handleSlot != null && <div className={shared.handleSlot} >{handleSlot}</div>}
+      {badgeSlot  != null && <div className={shared.badgeSlot}  >{badgeSlot}</div>}
+      <div className={shared.content}>{contentSlot}</div>
+      {metaSlot && (
         <div className={shared.metaRight}>
-          {meta      && <div className={shared.meta}>{meta}</div>}
+          <div className={shared.meta}>{metaSlot}</div>
         </div>
       )}
       {deleteSlot != null && <div className={shared.deleteSlot}>{deleteSlot}</div>}
@@ -76,7 +79,32 @@ export function Row({ preSlot, barSlot, checkbox, badgeSlot, content, meta, dele
   );
 }
 
-// ── PrevBar ───────────────────────────────────────────────────────
+// ── GameHeader ────────────────────────────────────────────────────
+// Game-level header row. Used by both GameCard (main) and Settings.
+// Slot structure (left→right):
+//   barSlot | colorSlot | checkbox | handleSlot | contentSlot | metaSlot | deleteSlot
+export function GameHeader({ barSlot, colorSlot, checkbox, handleSlot, contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
+  return (
+    <div
+      {...rootProps}
+      className={`${shared.gameHeaderRow}${className ? ` ${className}` : ''}`}
+      style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
+      onClick={onClick}
+    >
+      <div className={shared.barSlot}>{barSlot}</div>
+      <div className={shared.colorSlot}>{colorSlot}</div>
+      {checkbox   != null && <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
+      {handleSlot != null && <div className={shared.handleSlot} >{handleSlot}</div>}
+      <div className={shared.content}>{contentSlot}</div>
+      {metaSlot != null && (
+        <div className={shared.metaRight}>
+          <div className={shared.meta}>{metaSlot}</div>
+        </div>
+      )}
+      {deleteSlot != null && <div className={shared.deleteSlot}>{deleteSlot}</div>}
+    </div>
+  );
+}
 export function PrevBar({ show, checked, partial }) {
   if (!show) return null;
   const color = checked ? 'var(--prev-done)' : partial ? 'var(--prev-partial)' : 'var(--prev-miss)';

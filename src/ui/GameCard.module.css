@@ -6,7 +6,7 @@
   transition: opacity 0.5s;
   position: relative;
   container-type: inline-size;
-  container-name: task-item;
+  container-name: card;
 }
 .gameItemDone { opacity: 0.62; }
 
@@ -32,7 +32,7 @@
 }
 .accordionBtn:hover { color: var(--text); }
 
-.gameBody        { background: rgba(13, 17, 23, 0.50); padding-top: 2px; padding-bottom: 4px; }
+.gameBody        { background: rgba(13, 17, 23, 0.50); padding: 8px 13px 10px; }
 .gameBodyWithBg  { background: rgba(13, 17, 23, 0.30); }
 
 .divider {

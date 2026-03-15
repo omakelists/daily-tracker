@@ -9,17 +9,17 @@
   container-name: task-item;
 }
 
-.gameHeader {
-  padding: 10px 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
 .colorInput { width: 26px; height: 26px; border: none; background: none; cursor: pointer; flex-shrink: 0; }
 .gameName  { flex: 1; min-width: 0; font-weight: 700; }
-.resetLbl   { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .gameBody   { padding: 8px 13px 10px; }
+
+/* Reset label + time input + image button grouped for meta slot */
+.gameResetGroup {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
 
 .resetLbl   { font-size: 10px; color: var(--muted); white-space: nowrap; }
 .addTaskBtn { margin-top: 4px; }
@@ -217,16 +217,18 @@
 .inputNumber   { font-family: monospace; text-align: center; }
 .typeSelect    { width: 104px; }
 
-/* ── Task rows (ItemTaskRow via Row component) ───────────────────── */
-
-/* Normal (flex) mode — Row component handles outer structure via shared.row.
- * .taskRow is an extra class applied to Row for Settings-specific overrides. */
-.taskRow { margin-bottom: 6px; }
-
-/* Name input: fills available width; min-width controls flex-wrap timing. */
+/* ── Task rows (ItemTaskRow) ─────────────────────────────────────── */
+/*
+ * Base flex. display:grid is applied by @container task-item below.
+ * Slot classes (.handleSlot, .badgeSlot, .content, etc.) and their
+ * grid positions are defined in shared.module.css.
+ */
+.taskRow {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 2px;
+}
 .taskName { flex: 1; min-width: 8rem; }
-
-/* Reset group (meta slot content): label + control(s) inline. */
 .resetGroup {
   display: flex;
   align-items: center;
@@ -234,83 +236,39 @@
   flex-shrink: 0;
 }
 
-
-
-
-/* Date input */
-.inputDate { width: 130px; font-family: monospace; color-scheme: dark; flex-shrink: 0; }
-
-.verChecking { color: var(--muted); font-size: 12px; }
-.inputDow      { width: 100%; }
-
-/* Wraps all controls to the right of the reset label (input + any suffix label).
- * All task types share the same width so the flex-wrap breakpoint is identical. */
-.resetInputWrap {
+/* ── Game header row (gameHeaderRow) ─────────────────────────────── */
+.gameHeaderRow {
   display: flex;
   align-items: center;
-  gap: 4px;
-  width: 7rem;
-  flex-shrink: 0;
+  padding: 10px var(--row-pr) 10px var(--row-pl);
 }
 
-/* Inputs inside resetInputWrap stretch to fill remaining space. */
-.resetInputWrap > .inputTime,
-.resetInputWrap > .inputDow,
-.resetInputWrap > .inputNumber {
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-}
-
+/* ── @container task-item ────────────────────────────────────────── */
 /*
- * Narrow layout overrides for .taskRow (ItemTaskRow).
- * These override shared.module.css container queries for rows that have no
- * checkbox (.cbWrap), replacing the 5-column grid with a 4-column version:
+ * Switches .taskRow and .gameHeaderRow from flex to grid.
+ * Slot column positions are in shared.module.css @container task-item.
  *
- * ≤360px (2-row):
- *   col:  [barSlot:handle] [badgeSlot] [minmax(0,1fr):name] [deleteSlot:✕]
- *   row1:  handle(span)    badge(span)  name input            ✕(span)
- *   row2:  handle(span)    badge(span)  meta(reset→)         ✕(span)
- *
- * ≤280px (3-row):
- *   col:  [barSlot:handle] [minmax(0,1fr): badge/name/meta] [deleteSlot:✕]
- *   row1:  handle(span)    badge (full width)                ✕(span)
- *   row2:  handle          name input                        ✕
- *   row3:  handle          meta (reset, right-aligned)       ✕
+ * ≤360px (2-row): cols = [handleSlot] [badgeSlot/colorSlot] [1fr] [deleteSlot]
+ * ≤280px (3-row taskRow): cols = [handleSlot] [1fr] [deleteSlot]
  */
 @container task-item (max-width: 360px) {
-  .taskRow {
-    grid-template-columns: var(--bar-slot) auto minmax(0, 1fr) auto;
-    column-gap: 7px;
+  .taskRow, .gameHeaderRow {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
   }
-  .taskRow .barSlot    { grid-column: 1; grid-row: 1 / 3; }
-  .taskRow .badgeSlot  { grid-column: 2; grid-row: 1 / 3; align-self: stretch; margin-left: 0;
-                         display: flex; align-items: stretch; }
-  .taskRow .badgeSlot .taskBadge { align-self: stretch; height: auto;
-                                   display: flex; align-items: center; justify-content: center; }
-  .taskRow .content    { grid-column: 3; grid-row: 1; margin-left: 0; padding-top: 2px; }
-  .taskRow .metaRight  { grid-column: 3; grid-row: 2; display: flex; align-items: center;
-                         justify-content: flex-end; gap: 6px; padding-bottom: 2px; }
-  .taskRow .meta       { margin-left: 0; }
-  .taskRow .deleteSlot { grid-column: 4; grid-row: 1 / 3; margin-left: 4px; }
 }
 
 @container task-item (max-width: 280px) {
   .taskRow {
-    grid-template-columns: var(--bar-slot) minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto auto;
     row-gap: 2px;
   }
-  .taskRow .barSlot    { grid-column: 1; grid-row: 1 / 4; }
-  .taskRow .badgeSlot  { grid-column: 2; grid-row: 1; align-self: center; margin-left: 0;
-                         display: flex; align-items: center; }
-  .taskRow .badgeSlot .taskBadge { width: 100%; height: auto; align-self: auto; }
-  .taskRow .content    { grid-column: 2; grid-row: 2; align-self: center; margin-left: 0; padding-top: 0; }
-  .taskRow .metaRight  { grid-column: 2; grid-row: 3; display: flex; align-items: center;
-                         justify-content: flex-end; gap: 4px; }
-  .taskRow .meta       { margin-left: 0; }
-  .taskRow .deleteSlot { grid-column: 3; grid-row: 1 / 4; margin-left: 0; }
-  /* name input fills column; reset group stacks vertically */
-  .taskRow .taskName   { min-width: 0; width: 100%; }
-  .taskRow .resetGroup { flex-direction: column; align-items: flex-start; gap: 4px; }
+  /* Settings-specific class adjustments for narrow widths */
+  .taskName       { min-width: 0; width: 100%; }
+  .resetGroup     { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .gameResetGroup { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .gameName       { min-width: 0; }
 }

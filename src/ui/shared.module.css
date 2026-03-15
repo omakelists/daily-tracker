@@ -10,18 +10,15 @@
   font-family: inherit;
 }
 
-/* ── Row layout ──────────────────────────────────────────────────── */
+/* ── Main-screen task row (.row) ─────────────────────────────────── */
+/*
+ * Base flex layout. Becomes a grid inside @container card queries.
+ * Slot order (left→right): barSlot | cbWrap | handleSlot | badgeSlot | content | metaRight | deleteSlot
+ */
 .row {
   display: flex;
   align-items: stretch;
-  padding: 10px var(--row-pr) 10px var(--row-pl);
-}
-.preSlot {
-  /* ▼ accordion button — sits right of checkbox in flex mode */
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 3px 0;
 }
 .barSlot {
   width: var(--bar-slot);
@@ -30,20 +27,35 @@
   align-items: center;
   justify-content: center;
 }
-/* Badge extracted as its own flex/grid item so it can span rows in narrow mode. */
+.cbWrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.handleSlot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--slot-gap);
+}
 .badgeSlot {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  margin-left: var(--cb-gap);
+  margin-left: var(--slot-gap);
 }
 .content {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 8px;
+  margin-left: var(--slot-gap);
   min-width: 0;
+}
+/* metaRight: transparent wrapper in flex mode; becomes a grid cell in narrow mode */
+.metaRight {
+  display: contents;
 }
 .meta {
   display: flex;
@@ -52,17 +64,6 @@
   flex-shrink: 0;
   margin-left: 10px;
 }
-.right {
-  flex-shrink: 0;
-  margin-left: 6px;
-  display: flex;
-  align-items: center;
-}
-/* Transparent wrapper in normal mode; becomes a grid cell in narrow mode. */
-.metaRight {
-  display: contents;
-}
-/* Delete button slot — separate from rightSlot so it can span rows in narrow mode. */
 .deleteSlot {
   flex-shrink: 0;
   display: flex;
@@ -70,104 +71,140 @@
   margin-left: 6px;
 }
 
+/* ── Main-screen game header row (.gameHeaderRow) ────────────────── */
 /*
- * 2-row layout for narrow cards (≤360px).
- *
- *   col:  [bar-slot]  [cb-w]  [col3: ▼ or badge]  [1fr]  [auto:delete]
- *
- * preSlot(▼) and badgeSlot share col 3 — they never coexist.
- * Both span rows 1–2 and are vertically centered / stretched.
- *
- *   Game header:  bar(s)  cb(s)  ▼(s)    name         del(s)
- *                 bar     cb     ▼        meta→        del
- *
- *   Task row:     bar(s)  cb(s)  badge(s) name         del(s)
- *                 bar     cb     badge    meta→        del
+ * Base flex layout. Becomes a grid inside @container card queries.
+ * Slot order: barSlot | colorSlot | cbWrap | handleSlot | content | metaRight | deleteSlot
+ * gameHandleSlot/colorSlot hide themselves when empty.
  */
-@container task-item (max-width: 360px) {
+.gameHeaderRow {
+  display: flex;
+  align-items: center;
+  padding: 10px var(--row-pr) 10px var(--row-pl);
+}
+.colorSlot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-left: var(--slot-gap);
+}
+.colorSlot:empty { display: none; }
+.gameHeaderRow .handleSlot:empty { display: none; }
+.gameHeaderRow .cbWrap:empty     { display: none; }
+
+/* ── @container card: main-screen 2-row (≤360px) ────────────────── */
+/*
+ * Task rows (.row):
+ *   col: [bar-slot] [cb-w] [auto: handleSlot or badgeSlot] [1fr] [auto: deleteSlot]
+ *   handleSlot and badgeSlot share col3 — they never coexist in the same row.
+ *
+ * Game header (.gameHeaderRow):
+ *   col: [bar-slot] [auto: colorSlot] [auto: cbWrap] [auto: handleSlot] [1fr] [hidden deleteSlot]
+ */
+@container card (max-width: 360px) {
   .row {
     display: grid;
     grid-template-columns: var(--bar-slot) var(--cb-w) auto 1fr auto;
     grid-template-rows: auto auto;
-    column-gap: var(--cb-gap);
     align-items: center;
   }
+  .row .barSlot    { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: center; }
+  .row .cbWrap     { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .row .handleSlot { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-self: center; }
+  .row .badgeSlot  { grid-column: 3; grid-row: 1 / 3; align-self: stretch; margin-left: var(--slot-gap);
+                     display: flex; align-items: stretch; }
+  .row .badgeSlot .taskBadge { align-self: stretch; height: auto;
+                                display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+  .row .content    { grid-column: 4; grid-row: 1;     align-self: center; margin-left: var(--slot-gap); padding-top: 2px; }
+  .row .metaRight  { grid-column: 4; grid-row: 2;
+                     display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-bottom: 2px; }
+  .row .meta       { margin-left: 0; }
+  .row .deleteSlot { grid-column: 5; grid-row: 1 / 3; align-self: center; margin-left: 4px; }
 
-  .barSlot    { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: center; }
-  .cbWrap     { grid-column: 2; grid-row: 1 / 3; align-self: center; }
-  /* ▼ — same col as badge, spans both rows, centered */
-  .preSlot    { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-self: center; }
-  /* badge — same col as ▼, spans both rows, stretched */
-  .badgeSlot  { grid-column: 3; grid-row: 1 / 3; align-self: stretch; margin-left: 0;
-                display: flex; align-items: stretch; }
-  .content    { grid-column: 4; grid-row: 1;     align-self: center; margin-left: 0; padding-top: 2px; }
-  .metaRight  { grid-column: 4; grid-row: 2;
-                display: flex; align-items: center; justify-content: flex-end;
-                gap: 6px; padding-bottom: 2px; }
-  .meta       { margin-left: 0; }
-  .right      { margin-left: 0; }
-  .deleteSlot { grid-column: 5; grid-row: 1 / 3; align-self: center; margin-left: 4px; }
-
-  /* Badge stretches to fill full row height; text stays centered. */
-  .badgeSlot .taskBadge {
-    align-self: stretch;
-    height: auto;
-    display: flex;
+  .gameHeaderRow {
+    display: grid;
+    grid-template-columns: var(--bar-slot) auto auto auto 1fr;
+    grid-template-rows: auto auto;
     align-items: center;
-    justify-content: center;
-    border-radius: 4px;
   }
+  .gameHeaderRow .barSlot    { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: center; }
+  .gameHeaderRow .colorSlot  { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .gameHeaderRow .cbWrap     { grid-column: 3; grid-row: 1 / 3; align-self: center; }
+  .gameHeaderRow .handleSlot { grid-column: 4; grid-row: 1 / 3; align-self: center; margin-left: var(--slot-gap); }
+  .gameHeaderRow .content    { grid-column: 5; grid-row: 1;     align-self: center; margin-left: var(--slot-gap); }
+  .gameHeaderRow .metaRight  { grid-column: 5; grid-row: 2;
+                                display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+  .gameHeaderRow .meta       { margin-left: 0; }
+  .gameHeaderRow .deleteSlot { display: none; }
 }
 
+/* ── @container card: main-screen 3-row (≤280px) ────────────────── */
 /*
- * 3-row layout for very narrow cards (≤280px).
- * Uses :has() to differentiate game-header rows (have preSlot/▼) from
- * task rows (have badgeSlot/badge), as they need different row structures.
- *
- *   col:  [bar-slot]  [cb-w]  [auto: ▼ or empty]  [1fr]  [auto:delete]
- *
- * Task row (badgeSlot present):
- *   row1:  bar(s)  cb(s)  badge spans col3+4         del(s)
- *   row2:  bar     cb     (empty)  name(col4)         del
- *   row3:  bar     cb     (empty)  meta→(col4)        del
- *
- * Game header (preSlot present):
- *   row1:  bar(s)  cb(s)  ▼(col3,s) name(col4)       del(s)
- *   row2:  bar     cb     ▼          meta→(col4)      del
- *   row3:  (empty — collapses to 0)
+ * Task rows: badge moves to row1 full-width; name row2; meta row3.
+ * Game header (.gameHeaderRow): unchanged from 2-row (no 3-row needed).
  */
-@container task-item (max-width: 280px) {
+@container card (max-width: 280px) {
   .row {
     grid-template-columns: var(--bar-slot) var(--cb-w) auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto auto;
     row-gap: 2px;
   }
+  .row .barSlot    { grid-column: 1; grid-row: 1 / 4; align-self: center; justify-self: center; }
+  .row .cbWrap     { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+  .row .deleteSlot { grid-column: 5; grid-row: 1 / 4; align-self: center; margin-left: 0; }
 
-  .barSlot    { grid-column: 1; grid-row: 1 / 4; align-self: center; justify-self: center; }
-  .cbWrap     { grid-column: 2; grid-row: 1 / 4; align-self: center; }
-  .deleteSlot { grid-column: 5; grid-row: 1 / 4; align-self: center; margin-left: 0; }
-
-  /* ── task rows (badge present) ── */
-  .row:has(.badgeSlot) .badgeSlot {
-    grid-column: 3 / 5; /* spans auto col + 1fr for full width */
-    grid-row: 1;
-    align-self: center; margin-left: 0;
-    display: flex; align-items: center;
-  }
+  /* task rows: badge spans col3+4 on row1 */
+  .row:has(.badgeSlot) .handleSlot { display: none; }
+  .row:has(.badgeSlot) .badgeSlot  { grid-column: 3 / 5; grid-row: 1;
+                                     align-self: center; margin-left: var(--slot-gap);
+                                     display: flex; align-items: center; }
   .row:has(.badgeSlot) .badgeSlot .taskBadge { width: 100%; height: auto; align-self: auto; }
-  .row:has(.badgeSlot) .content   { grid-column: 4; grid-row: 2; align-self: center; margin-left: 0; padding-top: 0; }
-  .row:has(.badgeSlot) .metaRight { grid-column: 4; grid-row: 3;
-                                    display: flex; align-items: center;
-                                    justify-content: flex-end; gap: 4px; padding-bottom: 0; }
+  .row:has(.badgeSlot) .content    { grid-column: 4; grid-row: 2; align-self: center; margin-left: var(--slot-gap); padding-top: 0; }
+  .row:has(.badgeSlot) .metaRight  { grid-column: 4; grid-row: 3;
+                                     display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
 
-  /* ── game header rows (▼ present) ── */
-  .row:has(.preSlot) .preSlot    { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-self: center; }
-  .row:has(.preSlot) .content    { grid-column: 4; grid-row: 1;     align-self: center; margin-left: 0; padding-top: 0; }
-  .row:has(.preSlot) .metaRight  { grid-column: 4; grid-row: 2;
-                                   display: flex; align-items: center;
-                                   justify-content: flex-end; gap: 6px; padding-bottom: 0; }
+  /* game header: handleSlot (▼) spans col3 rows 1-2 */
+  .row:has(.handleSlot):not(:has(.badgeSlot)) .handleSlot { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-self: center; }
+  .row:has(.handleSlot):not(:has(.badgeSlot)) .content    { grid-column: 4; grid-row: 1;     align-self: center; margin-left: 0; padding-top: 0; }
+  .row:has(.handleSlot):not(:has(.badgeSlot)) .metaRight  { grid-column: 4; grid-row: 2;
+                                                            display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
   .meta  { margin-left: 0; }
-  .right { margin-left: 0; }
+}
+
+/* ── @container task-item: settings-screen slots ────────────────── */
+/*
+ * Container is .gameItem (container-name: task-item) in Settings.module.css.
+ * These queries target shared slot classes directly — no .taskRow/.gameHeaderRow
+ * prefix needed because `display: grid` is handled in Settings.module.css,
+ * and the shared slot class hashes are consistent here.
+ *
+ * Both taskRow and gameHeaderRow use the same 4-column structure:
+ *   col: [auto: handleSlot] [auto: badgeSlot or colorSlot] [minmax(0,1fr)] [auto: deleteSlot]
+ */
+@container task-item (max-width: 360px) {
+  .handleSlot  { grid-column: 1; grid-row: 1 / 3; align-self: center; }
+  .colorSlot   { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .badgeSlot   { grid-column: 2; grid-row: 1 / 3; align-self: stretch; margin-left: var(--slot-gap);
+                 display: flex; align-items: stretch; }
+  .badgeSlot > * { align-self: stretch; height: auto;
+                   display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+  .content     { grid-column: 3; grid-row: 1; align-self: center; margin-left: var(--slot-gap); }
+  .metaRight   { grid-column: 3; grid-row: 2;
+                 display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+  .meta        { margin-left: 0; }
+  .deleteSlot  { grid-column: 4; grid-row: 1 / 3; align-self: center; margin-left: var(--slot-gap); }
+}
+
+/* ≤280px: taskRow becomes 3-row; gameHeaderRow stays 2-row */
+@container task-item (max-width: 280px) {
+  /* taskRow 3-row: handle col1 span3, badge row1 full, name row2, meta row3 */
+  .handleSlot  { grid-row: 1 / 4; }
+  .badgeSlot   { grid-column: 2; grid-row: 1; align-self: center; display: flex; align-items: center; }
+  .badgeSlot > * { width: 100%; height: auto; align-self: auto; }
+  .content     { grid-column: 2; grid-row: 2; align-self: center; margin-left: 0; }
+  .metaRight   { grid-column: 2; grid-row: 3;
+                 display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+  .deleteSlot  { grid-column: 3; grid-row: 1 / 4; align-self: center; margin-left: var(--slot-gap); }
 }
 
 /* ── Checkbox ────────────────────────────────────────────────────── */
@@ -189,7 +226,6 @@
 }
 .cbGame    { border-radius: 7px; font-size: 13px; border-color: rgba(255, 255, 255, 0.3); }
 .cbChecked { background: var(--checked-bg) !important; border-color: var(--checked-br) !important; }
-/* Read-only game checkbox: shown when the game has daily subtasks (state is derived) */
 .cbReadOnly {
   cursor: default !important;
   background: rgba(255, 255, 255, 0.06) !important;
@@ -209,24 +245,22 @@
   flex-shrink: 0;
   border: 1px solid transparent;
   line-height: 1.4;
-  width: 4.5rem;          /* fixed layout width — border always stays this size */
+  width: 4.5rem;
   box-sizing: border-box;
-  overflow: hidden;       /* clip text that would escape the border */
+  overflow: hidden;
 }
-
-/* Inner text wrapper: only the text is compressed, not the border. */
 .badgeText {
   display: inline-block;
   white-space: nowrap;
   transform: scaleX(var(--badge-scale-x, 1));
   transform-origin: center;
 }
-.badgeDaily       { color: var(--type-daily);        background: rgba(0, 0, 0, 0.4); border-color: #3a6ea8; }
-.badgeWeekly      { color: var(--type-weekly);       background: rgba(0, 0, 0, 0.4); border-color: #7a5aaa; }
-.badgeMonthly     { color: var(--type-monthly);      background: rgba(0, 0, 0, 0.4); border-color: #a8453f; }
-.badgeHalfmonthly { color: var(--type-halfmonthly);  background: rgba(0, 0, 0, 0.4); border-color: #a86030; }
-.badgeEvent       { color: var(--warn);              background: rgba(0, 0, 0, 0.4); border-color: #7a6020; }
-.badgeTodo        { color: var(--link);              background: rgba(0, 0, 0, 0.4); border-color: #1f4e7d; }
+.badgeDaily       { color: var(--type-daily);       background: rgba(0, 0, 0, 0.4); border-color: #3a6ea8; }
+.badgeWeekly      { color: var(--type-weekly);      background: rgba(0, 0, 0, 0.4); border-color: #7a5aaa; }
+.badgeMonthly     { color: var(--type-monthly);     background: rgba(0, 0, 0, 0.4); border-color: #a8453f; }
+.badgeHalfmonthly { color: var(--type-halfmonthly); background: rgba(0, 0, 0, 0.4); border-color: #a86030; }
+.badgeEvent       { color: var(--warn);             background: rgba(0, 0, 0, 0.4); border-color: #7a6020; }
+.badgeTodo        { color: var(--link);             background: rgba(0, 0, 0, 0.4); border-color: #1f4e7d; }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .btn {
@@ -245,7 +279,6 @@
 .btnConfirm { color: var(--green);  border-color: rgba(63, 185, 80, 0.27); }
 
 /* ── Layout utilities ────────────────────────────────────────────── */
-.cbWrap       { flex-shrink: 0; display: flex; align-items: center; }
 .flexInput    { flex: 1; min-width: 0; }
 .hidden       { display: none; }
 .clipContents { overflow: hidden; }

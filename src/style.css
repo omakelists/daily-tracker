@@ -20,7 +20,8 @@ input, textarea, select { user-select: text; -webkit-user-select: text; }
   --bar-slot:    18px;
   --bar-w:        3px;
   --cb-w:        26px;
-  --cb-gap:       8px;
+  --cb-gap:       8px;   /* gap between checkbox and adjacent content */
+  --slot-gap:     8px;   /* general gap between row slots */
   --page-m:      12px;
   --card-border:  2px;
 

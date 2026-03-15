@@ -4,7 +4,7 @@ import { t } from '../util/i18n';
 import { DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAY_MS } from '../constants';
 import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
-import { Row, PrevBar, TaskSection } from './UI';
+import { Row, GameHeader, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow';
 import { InlineAddForm } from './InlineAddForm';
 import { ContextMenu } from './ContextMenu';
@@ -199,15 +199,15 @@ export const GameCard = forwardRef(function GameCard({
       <div className={s.content}>
         {/* Header */}
         <div {...headerTrigger}>
-          <Row
+          <GameHeader
             bg={headerBg}
             borderBottom={showBody ? '1px solid rgba(255,255,255,0.055)' : 'none'}
             onClick={allItems.length > 0 ? handleToggleCollapse : undefined}
             className={allItems.length > 0 ? s.gameItemClickable : undefined}
-            preSlot={allItems.length > 0 ? (
+            barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
+            handleSlot={allItems.length > 0 ? (
               <motion.span className={s.accordionBtn} animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.22 }}>▼</motion.span>
             ) : null}
-            barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
             checkbox={
               <button
                 ref={cbScope}
@@ -217,12 +217,12 @@ export const GameCard = forwardRef(function GameCard({
                 {allTodayDone ? '✓' : ''}
               </button>
             }
-            content={
+            contentSlot={
               <span className={s.gameName} style={{ color: allDone ? 'var(--muted)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textDecorationThickness: allDone ? '2px' : undefined }}>
                 {game.name}
               </span>
             }
-            meta={
+            metaSlot={
               <>
                 {displayMs !== null && <span className={s.countdown} style={{ color: headerCdColor }}>⏱{formatCountdown(displayMs, cd)}</span>}
                 <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>

@@ -77,7 +77,7 @@ export function TaskRow({
           <span className={shared.badgeText}>{t(`types.${task.type}`)}</span>
         </span>
       }
-      content={
+      contentSlot={
         <div className={s.nameGroup}>
           <span
             className={s.taskName}
@@ -91,7 +91,7 @@ export function TaskRow({
           </span>
         </div>
       }
-      meta={
+      metaSlot={
         <>
           {!isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>{(isEvent && isExpired) ? t('expired') : `⏱${formatCountdown(taskMs, cd)}`}</span>}
           {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
