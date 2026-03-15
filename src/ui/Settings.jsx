@@ -38,40 +38,44 @@ function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
     item.type === 'daily' ? (
       <div className={s.resetGroup}>
         <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <div className={s.resetInputWrap}>
+        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
           <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
-        </div>
+        </span>
       </div>
     ) : item.type === 'weekly' ? (
       <div className={s.resetGroup}>
         <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <div className={s.resetInputWrap}>
+        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
           <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
             {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
           </select>
-        </div>
+        </span>
       </div>
     ) : item.type === 'monthly' ? (
       <div className={s.resetGroup}>
         <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <div className={s.resetInputWrap}>
+        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
           <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
           <span className={s.resetLbl}>{t('dayUnit')}</span>
-        </div>
+        </span>
       </div>
     ) : item.type === 'halfmonthly' ? (
       <div className={s.resetGroup}>
         <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <div className={s.resetInputWrap}>
+        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
           <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
           <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
-        </div>
+        </span>
       </div>
     ) : item.type === 'event' ? (
       <div className={s.resetGroup}>
         <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-        <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
+        <span className={s.resetInputGroup}>
+          <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
+        </span>
+        <span className={s.resetInputGroup}>
+          <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
+        </span>
       </div>
     ) : null;
 
@@ -321,7 +325,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       dragSlot | colorSlot | content(.gameName) | metaRight(.gameResetGroup) | deleteSlot */}
                   <div
                     {...gameDnd.itemProps(gi)}
-                    className={s.gameHeaderRow}
+                    className={shared.gameHeaderRow}
                     style={{ borderBottom: `1px solid ${game.color}44`, opacity: gameDnd.isDragging(gi) ? 0.4 : 1, transition: 'opacity 0.15s' }}
                   >
                     <div className={shared.handleSlot}><span className={s.dragHandle}>⠿</span></div>

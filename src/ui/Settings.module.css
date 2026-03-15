@@ -19,9 +19,11 @@
   align-items: center;
   gap: 7px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.resetLbl   { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.resetLbl   { font-size: 10px; color: var(--muted); white-space: nowrap; margin-left: 6px; }
 .addTaskBtn { margin-top: 4px; }
 
 .newGameBox {
@@ -228,20 +230,34 @@
   align-items: stretch;
   margin-bottom: 2px;
 }
-.taskName { flex: 1; min-width: 8rem; }
+/* Content slot min-width controls when the row wraps to 2-row */
+.taskRow .content { min-width: 8rem; }
+.taskName { flex: 1; min-width: 0; }
+/* Reset group: label + input group — wraps when narrow */
 .resetGroup {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
-  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-shrink: 1;
 }
 
-/* ── Game header row (gameHeaderRow) ─────────────────────────────── */
-.gameHeaderRow {
-  display: flex;
+/* Input + optional suffix label — always stays on one line */
+.resetInputGroup {
+  display: inline-flex;
   align-items: center;
-  padding: 10px var(--row-pr) 10px var(--row-pl);
+  gap: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
+
+/* Fixed-width wrapper for non-event types — all the same width */
+.resetInputGroup--fixed { width: 7.5rem; }
+
+/* Inputs inside fixed-width group expand to fill the wrapper (not suffix labels) */
+.resetInputGroup--fixed > input,
+.resetInputGroup--fixed > select { flex: 1; min-width: 0; width: 100%; }
 
 /* ── @container task-item ────────────────────────────────────────── */
 /*
@@ -251,13 +267,18 @@
  * ≤360px (2-row): cols = [handleSlot] [badgeSlot/colorSlot] [1fr] [deleteSlot]
  * ≤280px (3-row taskRow): cols = [handleSlot] [1fr] [deleteSlot]
  */
-@container task-item (max-width: 360px) {
-  .taskRow, .gameHeaderRow {
+@container task-item (max-width: 420px) {
+  .taskRow {
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
+    row-gap: 4px;           /* gap between name row and reset row */
     align-items: center;
   }
+}
+
+@container task-item (max-width: 420px) {
+  .resetGroup { flex-shrink: 1; align-items: flex-start; flex-direction: column; }
 }
 
 @container task-item (max-width: 280px) {
@@ -266,9 +287,9 @@
     grid-template-rows: auto auto auto;
     row-gap: 2px;
   }
+
   /* Settings-specific class adjustments for narrow widths */
   .taskName       { min-width: 0; width: 100%; }
-  .resetGroup     { flex-direction: column; align-items: flex-start; gap: 4px; }
   .gameResetGroup { flex-direction: column; align-items: flex-start; gap: 4px; }
   .gameName       { min-width: 0; }
 }
