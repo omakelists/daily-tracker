@@ -52,33 +52,6 @@ export function TaskSection({ header, items, wrapItem, popLayout = false, addSlo
   );
 }
 
-// ── Row ───────────────────────────────────────────────────────────
-// ── Row ───────────────────────────────────────────────────────────
-// Main-screen task row. Slot structure (left→right):
-//   barSlot | checkbox | handleSlot | badgeSlot | contentSlot | metaSlot | deleteSlot
-export function Row({ handleSlot, barSlot, checkbox, badgeSlot, contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
-  return (
-    <div
-      {...rootProps}
-      className={`${shared.row}${className ? ` ${className}` : ""}`}
-      style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
-      onClick={onClick}
-    >
-      <div className={shared.barSlot}>{barSlot}</div>
-      {checkbox   != null && <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
-      {handleSlot != null && <div className={shared.handleSlot} >{handleSlot}</div>}
-      {badgeSlot  != null && <div className={shared.badgeSlot}  >{badgeSlot}</div>}
-      <div className={shared.content}>{contentSlot}</div>
-      {metaSlot && (
-        <div className={shared.metaRight}>
-          <div className={shared.meta}>{metaSlot}</div>
-        </div>
-      )}
-      {deleteSlot != null && <div className={shared.deleteSlot}>{deleteSlot}</div>}
-    </div>
-  );
-}
-
 // ── GameHeader ────────────────────────────────────────────────────
 // Game-level header row. Used by both GameCard (main) and Settings.
 // Slot structure (left→right):

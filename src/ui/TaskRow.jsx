@@ -3,7 +3,7 @@ import { t } from '../util/i18n';
 import {DAILY_TYPES, EVENT_TYPES, DAY_MS} from '../constants';
 import { getPeriodKey, getPrevPeriodKey, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, fmtDeadlineDate, checkKey, utcToLocalHHMM } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
-import { Row, PrevBar, BADGE_MAP } from './UI';
+import { PrevBar, BADGE_MAP } from './UI';
 import s from './TaskRow.module.css';
 import shared from './shared.module.css';
 
@@ -49,8 +49,7 @@ export function TaskRow({
   const localResetTime = !isEvent ? utcToLocalHHMM(task.resetTime || game?.resetTime) : null;
 
   // ── Shared ───────────────────────────────────────────────────────
-  const dimmed     = isChecked;
-  const showDelete = isEvent && dimmed && onDelete;
+  const showDelete = isEvent && isChecked && onDelete;
 
   const handleClick = (e) => {
     animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
@@ -59,66 +58,69 @@ export function TaskRow({
 
   const trigger = useContextTrigger((x, y) => onContextMenu?.(task.id, x, y));
 
-  const row = (
-    <Row
-      className={s.taskRow}
-      barSlot={<PrevBar show={showPrev} checked={prevChecked} />}
-      checkbox={
-        <button
-          ref={cbScope}
-          onClick={handleClick}
-          className={`${shared.cb}${dimmed ? ` ${shared.cbChecked}` : ''}`}
-        >
-          {dimmed ? '✓' : ''}
-        </button>
-      }
-      badgeSlot={
-        <span className={`${shared.taskBadge} ${BADGE_MAP[task.type]}`}>
-          <span className={shared.badgeText}>{t(`types.${task.type}`)}</span>
-        </span>
-      }
-      contentSlot={
-        <div className={s.nameGroup}>
-          <span
-            className={s.taskName}
-            style={{
-              color:                   dimmed ? 'var(--muted)' : 'var(--text)',
-              textDecoration:          dimmed ? 'line-through' : 'none',
-              textDecorationThickness: dimmed ? '2px' : undefined,
-            }}
-          >
-            {task.name.trim() || t(`types.${task.type}`)}
-          </span>
-        </div>
-      }
-      metaSlot={
-        <>
-          {!isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>{(isEvent && isExpired) ? t('expired') : `⏱${formatCountdown(taskMs, cd)}`}</span>}
-          {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
-          {task.type === 'weekly'      && <span className={s.resetLbl}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
-          {task.type === 'monthly'     && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
-          {task.type === 'halfmonthly' && <span className={s.resetLbl}>{t('everyHalfMonth', { a: task.halfMonthlyStartDay ?? 1, b: (task.halfMonthlyStartDay ?? 1) + 15 })}</span>}
-          {task.type === 'event' && !showDelete && task.deadline && <span className={s.resetLbl}>
-            {(deadlineMs >= DAY_MS || isExpired) && fmtDeadlineDate(task.deadline, t)}
-            {(deadlineMs < DAY_MS && !isExpired) && utcToLocalHHMM(task.deadlineTime)}
-          </span>}
-        </>
-      }
-      deleteSlot={
-        showDelete ? (
-          <button
-            className={`${shared.btn} ${shared.btnDanger} ${s.deleteBtn}`}
-            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-            title={t('delete')}
-          >✕</button>
-        ) : null
-      }
-    />
-  );
-
   // Wrap with context-menu trigger whenever a handler is provided
   if (onContextMenu) {
-    return <div {...trigger} style={{ userSelect: 'none' }}>{row}</div>;
+    return <div {...trigger} style={{ userSelect: 'none' }}>
+      <div
+        className={`${shared.row} ${s.taskRow}`}
+      >
+        <div className={shared.barSlot}>
+          <PrevBar show={showPrev} checked={prevChecked} />
+        </div>
+        <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>
+          <button
+            ref={cbScope}
+            onClick={handleClick}
+            className={`${shared.cb}${isChecked ? ` ${shared.cbChecked}` : ''}`}
+          >
+            {isChecked ? '✓' : ''}
+          </button>
+        </div>
+        <div className={shared.badgeSlot}>
+          <span className={`${shared.taskBadge} ${BADGE_MAP[task.type]}`}>
+            <span className={shared.badgeText}>{t(`types.${task.type}`)}</span>
+          </span>
+        </div>
+        <div className={shared.content}>
+          <div className={s.nameGroup}>
+            <span
+              className={s.taskName}
+              style={{
+                color:                   isChecked ? 'var(--muted)' : 'var(--text)',
+                textDecoration:          isChecked ? 'line-through' : 'none',
+                textDecorationThickness: isChecked ? '2px' : undefined,
+              }}
+            >
+              {task.name.trim() || t(`types.${task.type}`)}
+            </span>
+          </div>
+        </div>
+        <div className={shared.metaRight}>
+          <div className={shared.meta}>
+            {!isChecked && <span className={s.countdown} style={{ color: taskCdColor }}>{(isEvent && isExpired) ? t('expired') : `⏱${formatCountdown(taskMs, cd)}`}</span>}
+            {task.type === 'daily' && localResetTime && <span className={s.resetLbl}>{localResetTime}</span>}
+            {task.type === 'weekly'      && <span className={s.resetLbl}>{t('everyWeek', { day: t('dayNamesFull.' + (task.weeklyResetDay ?? 1)) })}</span>}
+            {task.type === 'monthly'     && <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay ?? 1 })}</span>}
+            {task.type === 'halfmonthly' && <span className={s.resetLbl}>{t('everyHalfMonth', { a: task.halfMonthlyStartDay ?? 1, b: (task.halfMonthlyStartDay ?? 1) + 15 })}</span>}
+            {task.type === 'event' && !showDelete && task.deadline && <span className={s.resetLbl}>
+              {(deadlineMs >= DAY_MS || isExpired) && fmtDeadlineDate(task.deadline, t)}
+                  {(deadlineMs < DAY_MS && !isExpired) && utcToLocalHHMM(task.deadlineTime)}
+            </span>}
+          </div>
+        </div>
+        <div className={shared.deleteSlot}>
+          {
+            showDelete ? (
+              <button
+                className={`${shared.btn} ${shared.btnDanger} ${s.deleteBtn}`}
+                onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+                title={t('delete')}
+              >✕</button>
+            ) : null
+          }
+        </div>
+      </div>
+    </div>;
   }
   return row;
 }
