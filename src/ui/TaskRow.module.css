@@ -7,47 +7,6 @@
 }
 .taskRow:hover { background: rgba(255, 255, 255, 0.025); }
 
-.countdown {
-  font-size: 11px;
-  font-weight: 600;
-  font-family: monospace;
-  flex-shrink: 0;
-  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
-  paint-order: stroke fill;
-}
-.resetLbl {
-  font-size: 10px;
-  color: var(--dim);
-  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
-  paint-order: stroke fill;
-}
-
-/* Wrapper that keeps badge + task name together with a minimum width.
-   12.5rem = 200px at default font size, but scales with user font preferences. */
-.nameGroup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ─ Event mode extras ─ */
-.deadlineDate {
-  font-size: 11px;
-  font-weight: 600;
-  font-family: monospace;
-  flex-shrink: 0;
-  min-width: 32px;
-  text-align: right;
-  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
-  paint-order: stroke fill;
-}
-
-.deadlineTime {
-  font-size: 10px;
-}
-
 .deleteBtn {
   padding: 2px 7px;
   font-size: 11px;

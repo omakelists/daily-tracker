@@ -185,7 +185,7 @@ export const GameCard = forwardRef(function GameCard({
                   animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
                   onToggle(item.id, game);
                 }}
-                className={`${shared.cb}${isItemChecked ? ` ${shared.cbChecked}` : ''}`}
+                className={`${s.cb}${isItemChecked ? ` ${s.cbChecked}` : ''}`}
               >
                 {isItemChecked ? '✓' : ''}
               </button>
@@ -241,7 +241,7 @@ export const GameCard = forwardRef(function GameCard({
             <button
               ref={cbScope}
               onClick={isMasterClickable ? handleMasterClick : undefined}
-              className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ''}${!isMasterClickable ? ` ${shared.cbReadOnly}` : ''}`}
+              className={`${s.cb} ${s.cbGame}${allTodayDone ? ` ${s.cbChecked}` : ''}${!isMasterClickable ? ` ${s.cbReadOnly}` : ''}`}
             >
               {allTodayDone ? '✓' : ''}
             </button>

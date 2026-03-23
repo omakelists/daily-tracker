@@ -22,7 +22,7 @@
   background: linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%);
 }
 
-/* App background image layers */
+/* ── App background image layers ─────────────────────────────────── */
 .appBgImg {
   position: fixed;
   inset: 0;
@@ -43,7 +43,7 @@
   );
 }
 
-/* Non-WCO header */
+/* ── Non-WCO header ──────────────────────────────────────────────── */
 .header {
   background: var(--bg-header);
   backdrop-filter: blur(10px);
@@ -69,7 +69,7 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* WCO titlebar */
+/* ── WCO titlebar ────────────────────────────────────────────────── */
 .wcoBar {
   position: fixed;
   top:    env(titlebar-area-y,      0px);
@@ -135,33 +135,13 @@
   padding-top: env(titlebar-area-y, 0px);
 }
 
+/* ── Shared header elements ──────────────────────────────────────── */
 .clock   { font-size: 11px; color: var(--muted); font-family: monospace; }
 .actions { display: flex; gap: 8px; }
 .main    { padding: 12px var(--page-m) 24px; max-width: 740px; margin: 0 auto; position: relative; }
 .noGames { text-align: center; padding: 60px 20px; color: var(--muted); }
 
-.todoAddCard {
-  border-radius: 12px;
-  overflow: hidden;
-  border: var(--card-border) solid rgba(88, 166, 255, 0.28);
-  background: linear-gradient(90deg, rgba(88,166,255,0.08) 0%, rgba(22,27,34,0.92) 100%);
-}
-
-.btnAdd {
-  background: transparent;
-  border: none;
-  color: var(--link);
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 6px;
-  line-height: 1;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-.btnAdd:hover { background: rgba(88, 166, 255, 0.12); }
-
+/* ── Header action buttons ───────────────────────────────────────── */
 .btnRecord {
   background: var(--bg-surface);
   border: 1px solid rgba(88, 166, 255, 0.27);
@@ -196,20 +176,7 @@
   animation: pulseUpdate 2s ease-in-out infinite;
 }
 
-/* ── New game form ────────────────────────────────────────────── */
-.gameAddRow {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 13px 10px;
-  flex-wrap: wrap;
-}
-.gameAddColor { width: 26px; height: 26px; border: none; background: none; cursor: pointer; flex-shrink: 0; padding: 0; }
-.gameAddName  { flex: 1; min-width: 80px; font-weight: 700; }
-.gameAddLbl   { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
-.gameAddTime  { width: 84px; flex-shrink: 0; font-family: monospace; }
-
-/* ── Post-update toast ─────────────────────────────────────────── */
+/* ── Post-update toast ───────────────────────────────────────────── */
 .flashToast {
   position: fixed;
   bottom: 24px;

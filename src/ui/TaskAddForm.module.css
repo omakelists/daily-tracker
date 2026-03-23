@@ -1,3 +1,5 @@
+/* TaskAddForm wraps a TaskEdit component with a submit/cancel button row. */
+/* Layout and input styles live in TaskEdit.module.css. */
 .form {
   padding: 8px 13px 10px;
   background: rgba(13, 17, 23, 0.55);
@@ -7,42 +9,14 @@
   gap: 6px;
 }
 
-/*
- * mainRow: badge + nameInput + resetControls in one flex row.
- * Structure symmetric to ItemTaskRow (without dragSlot/deleteSlot).
- *   badgeSlot | content(.nameInput) | metaRight > meta(resetControls)
- */
+/* TaskEdit is placed inside this row. */
 .mainRow {
   display: flex;
   align-items: stretch;
   gap: var(--slot-gap);
 }
-/* Slot layout (.barSlot, .badgeSlot, .content, .metaRight, .meta)
- * is handled by shared.module.css. */
 
-/* Name input fills available width in content slot; min-width controls wrap timing. */
-.nameInput { flex: 1; min-width: 8rem; }
-
-/* Reset label + controls: pushed right via margin-left:auto, never compressed. */
-.resetGroup {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-/* Event-only wrapper: stacks resetGroup and quickRow vertically so quick buttons
- * always appear directly below the date/time controls. */
-.eventControlGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-/* Buttons always occupy a dedicated line, right-aligned. */
+/* Submit / cancel buttons, right-aligned. */
 .btnRow {
   width: 100%;
   display: flex;
@@ -50,72 +24,3 @@
   justify-content: flex-end;
   gap: 5px;
 }
-
-.dateInput {
-  width: 130px;
-  flex-shrink: 0;
-  color-scheme: dark;
-}
-
-.timeInput {
-  width: 84px;
-  flex-shrink: 0;
-  font-family: monospace;
-}
-
-.timeDisabled { opacity: 0.35; }
-
-.colorInput {
-  width: 26px;
-  height: 26px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.deadlineLbl {
-  font-size: 11px;
-  color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* ─ Row 3: quick +N day buttons ─ */
-.quickRow {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.quickBtn {
-  padding: 3px 8px;
-  font-size: 11px;
-  color: var(--muted);
-}
-.quickBtn:hover { color: var(--text); }
-
-/* Inline deadline date + countdown display */
-.deadlineInfo {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 11px;
-  font-family: monospace;
-  font-weight: 600;
-  flex-shrink: 0;
-  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
-  paint-order: stroke fill;
-}
-
-.dateLabel  { letter-spacing: 0.02em; }
-.timeLabel  { opacity: 0.85; font-size: 10px; }
-.cdLabel    { opacity: 0.9; }
-
-
-
-/* ─ Task mode extras ─ */
-.typeSelect { width: 108px; flex-shrink: 0; }
-.dayInput   { width: 52px;  flex-shrink: 0; }

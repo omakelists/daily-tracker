@@ -11,6 +11,7 @@
   font-family: inherit;
 }
 
+/* ── Row content wrapper ─────────────────────────────────────────── */
 .rowContent {
   display: flex;
   flex: 1 1 auto;
@@ -19,9 +20,12 @@
   padding: 3px 0;
   gap: var(--slot-gap);
 }
+
+/* ── Drag handle ─────────────────────────────────────────────────── */
 .dragHandle { font-size: 14px; color: #484f58; cursor: grab; line-height: 1; padding-right: 2px; flex-shrink: 0; display: flex; align-items: center; }
 .dragHandle:active { cursor: grabbing; }
 
+/* ── Layout slots ────────────────────────────────────────────────── */
 .barSlot {
   display: flex;
   flex: 0 0 var(--bar-slot);
@@ -39,6 +43,8 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ── Task info grid (badge | content) ────────────────────────────── */
 .taskInfo {
   display: grid;
   flex: 1 1 auto;
@@ -85,82 +91,6 @@
   display: flex;
   align-items: center;
 }
-
-/* ── Main-screen game header row (.gameHeaderRow) ────────────────── */
-/*
- * Base flex layout. Becomes a grid inside @container card queries.
- * Slot order: barSlot | colorSlot | cbWrap | handleSlot | content | metaRight | deleteSlot
- * gameHandleSlot/colorSlot hide themselves when empty.
- */
-.gameHeaderRow {
-  display: flex;
-  align-items: center;
-  padding: 11px 13px 10px;
-  gap: var(--slot-gap);
-}
-.colorSlot {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-.colorSlot:empty { display: none; }
-.gameHeaderRow .handleSlot:empty { display: none; }
-.gameHeaderRow .cbWrap:empty     { display: none; }
-
-/* ── Checkbox ────────────────────────────────────────────────────── */
-.cb {
-  width: var(--cb-w);
-  height: var(--cb-w);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--text);
-  background: rgba(0, 0, 0, 0.42);
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  transition: background 0.15s, border-color 0.15s;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
-}
-.cbGame    { border-radius: 7px; font-size: 13px; border-color: rgba(255, 255, 255, 0.3); }
-.cbChecked { background: var(--checked-bg) !important; border-color: var(--checked-br) !important; }
-.cbReadOnly {
-  cursor: default !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  border-style: solid !important;
-  pointer-events: none;
-}
-
-/* ── Type badges ─────────────────────────────────────────────────── */
-.taskBadge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  border-radius: 4px;
-  padding: 1px 5px;
-  flex: 1 0 4.5rem;
-  border: 1px solid transparent;
-  line-height: 1.4;
-  height: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-.badgeText {
-  display: inline-block;
-  white-space: nowrap;
-  transform: scaleX(var(--badge-scale-x, 1));
-  transform-origin: center;
-}
-.badgeDaily       { color: var(--type-daily);       background: rgba(0, 0, 0, 0.4); border-color: #3a6ea8; }
-.badgeWeekly      { color: var(--type-weekly);      background: rgba(0, 0, 0, 0.4); border-color: #7a5aaa; }
-.badgeMonthly     { color: var(--type-monthly);     background: rgba(0, 0, 0, 0.4); border-color: #a8453f; }
-.badgeHalfmonthly { color: var(--type-halfmonthly); background: rgba(0, 0, 0, 0.4); border-color: #a86030; }
-.badgeEvent       { color: var(--warn);             background: rgba(0, 0, 0, 0.4); border-color: #7a6020; }
-.badgeTodo        { color: var(--link);             background: rgba(0, 0, 0, 0.4); border-color: #1f4e7d; }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .btn {

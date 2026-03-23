@@ -12,9 +12,9 @@
 
 .bgLayer   { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
 .bgOverlay { position: absolute; inset: 0; background: black; z-index: 1; }
-.taskLabelSlot   { position: relative; z-index: 2; }
 .content   { position: relative; z-index: 2; }
 
+/* ── Accordion toggle ────────────────────────────────────────────── */
 .accordionBtn {
   width: var(--rot-sign);
   height: var(--rot-sign);
@@ -33,9 +33,11 @@
 }
 .accordionBtn:hover { color: var(--text); }
 
+/* ── Card body ───────────────────────────────────────────────────── */
 .gameBody        { background: rgba(13, 17, 23, 0.50); padding: 8px 13px 10px; }
 .gameBodyWithBg  { background: rgba(13, 17, 23, 0.30); }
 
+/* ── Section divider ─────────────────────────────────────────────── */
 .divider {
   margin: 5px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -54,6 +56,7 @@
   white-space: nowrap;
 }
 
+/* ── Header meta: countdown + reset time ────────────────────────── */
 .countdown {
   flex-shrink: 0;
   font-size: 11px;
@@ -71,6 +74,7 @@
   paint-order: stroke fill;
 }
 
+/* ── Game name ───────────────────────────────────────────────────── */
 .gameName {
   font-weight: 700;
   font-size: 14px;
@@ -86,26 +90,29 @@
 
 .gameItemClickable { cursor: pointer; }
 
-/* ── Mixed row (D&D drag handle + task/event) ────────────────────── */
-.mixRow        { display: flex; align-items: stretch; }
-.mixRowContent { flex: 1; min-width: 0; }
-.dragHandle    { font-size: 14px; color: #484f58; cursor: grab; line-height: 1; padding: 0 6px; display: flex; align-items: center; flex-shrink: 0; }
-.dragHandle:active { cursor: grabbing; }
-
-/* ── Task add form ────────────────────────────────────────────────── */
-.taskAddForm {
-  padding: 8px 13px 10px;
-  background: rgba(13, 17, 23, 0.55);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+/* ── Checkbox ────────────────────────────────────────────────────── */
+.cb {
+  width: var(--cb-w);
+  height: var(--cb-w);
+  flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.42);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  transition: background 0.15s, border-color 0.15s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
 }
-.taskAddRow     { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-.taskTypeSelect { width: 108px; flex-shrink: 0; }
-.taskAddName    { flex: 1; min-width: 80px; }
-.taskAddLbl     { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
-.taskAddTime    { width: 84px; flex-shrink: 0; font-family: monospace; }
-.taskAddDay     { width: 52px; flex-shrink: 0; }
-.taskAddActions { display: flex; align-items: center; gap: 5px; }
-.taskAddSpacer  { flex: 1; }
+.cbGame    { border-radius: 7px; font-size: 13px; border-color: rgba(255, 255, 255, 0.3); }
+.cbChecked { background: var(--checked-bg) !important; border-color: var(--checked-br) !important; }
+.cbReadOnly {
+  cursor: default !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-style: solid !important;
+  pointer-events: none;
+}

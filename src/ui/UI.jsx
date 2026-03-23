@@ -5,11 +5,11 @@ import shared from './shared.module.css';
 
 // ── Badge CSS class map ───────────────────────────────────────────
 export const BADGE_MAP = {
-  daily:       shared.badgeDaily,
-  weekly:      shared.badgeWeekly,
-  monthly:     shared.badgeMonthly,
-  halfmonthly: shared.badgeHalfmonthly,
-  event:       shared.badgeEvent,
+  daily:       s.badgeDaily,
+  weekly:      s.badgeWeekly,
+  monthly:     s.badgeMonthly,
+  halfmonthly: s.badgeHalfmonthly,
+  event:       s.badgeEvent,
 };
 
 // ── Shared motion variants ────────────────────────────────────────
@@ -61,12 +61,12 @@ export function GameHeader({ barSlot, headerTrigger, colorSlot, checkbox, handle
     <div
       {...rootProps}
       {...headerTrigger}
-      className={`${shared.gameHeaderRow}${className ? ` ${className}` : ''}`}
+      className={`${s.gameHeaderRow}${className ? ` ${className}` : ''}`}
       style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
       onClick={onClick}
     >
       <div className={shared.barSlot}>{barSlot}</div>
-      <div className={shared.colorSlot}>{colorSlot}</div>
+      <div className={s.colorSlot}>{colorSlot}</div>
       {checkbox   != null && <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
       {handleSlot != null && <div className={shared.handleSlot} >{handleSlot}</div>}
       <div className={shared.taskWrapSlot}>
@@ -93,8 +93,8 @@ export function PrevBar({ show, checked, partial }) {
 }
 export function Badge({item}) {
   return (
-    <span className={`${shared.taskBadge} ${BADGE_MAP[item.type]}`}>
-      <span className={shared.badgeText}>{t(`types.${item.type}`)}</span>
+    <span className={`${s.taskBadge} ${BADGE_MAP[item.type]}`}>
+      <span className={s.badgeText}>{t(`types.${item.type}`)}</span>
     </span>
   );
 }
