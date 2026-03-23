@@ -1,0 +1,105 @@
+
+.inputDate {
+    font-family: monospace;
+    color-scheme: dark;
+    flex-shrink: 1;
+}
+
+.taskName { flex: 1; min-width: 0; }
+/* Reset group: label + input group — wraps when narrow */
+.resetGroup {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+
+.resetInputGroup {
+    display: flex;
+    flex: 0 0 6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    min-width: 0;
+    white-space: wrap;
+}
+.resetInputGroupLong {
+    display: flex;
+    flex: 0 0 8rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    min-width: 0;
+    white-space: wrap;
+}
+
+.resetInputBlock {
+    display: flex;
+    flex: 0 0 6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    white-space: wrap;
+}
+
+.resetSupport {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ─ Row 3: quick +N day buttons ─ */
+.quickRow {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.quickBtn {
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--muted);
+}
+.quickBtn:hover { color: var(--text); }
+
+/* ── Sized inputs ────────────────────────────────────────────────── */
+/* Input elements stretch to fill their wrapper; widths are set on .inputWrap instead. */
+/* Input elements inside resetInputWrap stretch via flex:1; widths are owned by the wrapper. */
+.inputTime     {
+    font-family: monospace;
+}
+.resetTime { width: 5.5rem; font-family: monospace; flex-shrink: 0; }
+.inputNumber   {
+    font-family: monospace;
+    text-align: center;
+}
+.typeSelect    { width: 104px; }
+
+.resetLbl   { font-size: 10px; color: var(--muted); white-space: nowrap; margin-top: 0.5rem; }
+.inputDow      { width: 100%; }
+
+/* Inline deadline date + countdown display */
+.deadlineInfo {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    font-family: monospace;
+    font-weight: 600;
+    flex-shrink: 0;
+    -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
+    paint-order: stroke fill;
+}
+
+.dateLabel  { letter-spacing: 0.02em; }
+.timeLabel  { opacity: 0.85; font-size: 10px; }
+.cdLabel    { opacity: 0.9; }

@@ -6,17 +6,18 @@
   transition: opacity 0.5s;
   position: relative;
   container-type: inline-size;
-  container-name: card;
+  container-name: taskInfo;
 }
 .gameItemDone { opacity: 0.62; }
 
 .bgLayer   { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
 .bgOverlay { position: absolute; inset: 0; background: black; z-index: 1; }
+.taskLabelSlot   { position: relative; z-index: 2; }
 .content   { position: relative; z-index: 2; }
 
 .accordionBtn {
-  width: var(--bar-slot);
-  height: var(--bar-slot);
+  width: var(--rot-sign);
+  height: var(--rot-sign);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -54,15 +55,17 @@
 }
 
 .countdown {
+  flex-shrink: 0;
   font-size: 11px;
   font-weight: 600;
   font-family: monospace;
-  flex-shrink: 0;
+  text-align: center;
   -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;
 }
 .resetTime {
   font-size: 11px;
+  text-align: center;
   color: var(--dim);
   -webkit-text-stroke: 2px rgba(0, 0, 0, 0.85);
   paint-order: stroke fill;

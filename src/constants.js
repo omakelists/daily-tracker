@@ -17,12 +17,12 @@ export const DEFAULT_GAMES = [
     id: 'g2', name: 'Genshin Impact', color: '#c8a96e',
     resetTime: '20:00',
     items: [
-      { id: 't1',  name: '',                    type: 'daily' },
-      { id: 't2',  name: 'HoYoLAB',             type: 'daily',    resetTime: '16:00' },
+      { id: 't1',  name: '',                     type: 'daily' },
+      { id: 't2',  name: 'HoYoLAB',              type: 'daily',   resetTime: '16:00' },
       { id: 't3',  name: 'Weekly Boss',          type: 'weekly' },
       { id: 't4',  name: 'Serenitea Pot',        type: 'weekly' },
-      { id: 't5',  name: 'Imaginarium Theater',  type: 'monthly',    monthlyResetDay: 1 },
-      { id: 't6',  name: 'Spiral Abyss',         type: 'monthly',    monthlyResetDay: 16 },
+      { id: 't5',  name: 'Imaginarium Theater',  type: 'monthly', monthlyResetDay: 1 },
+      { id: 't6',  name: 'Spiral Abyss',         type: 'monthly', monthlyResetDay: 16 },
     ],
   },
   {
@@ -30,8 +30,8 @@ export const DEFAULT_GAMES = [
     resetTime: '20:00',
     items: [
       { id: 't7',  name: '',               type: 'daily' },
-      { id: 't8',  name: 'HoYoLAB',       type: 'daily', resetTime: '16:00' },
-      { id: 't9',  name: 'Deadly Assault', type: 'weekly' },
+      { id: 't8',  name: 'HoYoLAB',        type: 'daily', resetTime: '16:00' },
+      { id: 't9',  name: 'Notorious Hunt', type: 'weekly' },
       { id: 't10', name: 'Hollow Zero',    type: 'weekly' },
     ],
   },

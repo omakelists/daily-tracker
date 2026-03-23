@@ -56,10 +56,11 @@ export function TaskSection({ header, items, wrapItem, popLayout = false, addSlo
 // Game-level header row. Used by both GameCard (main) and Settings.
 // Slot structure (left→right):
 //   barSlot | colorSlot | checkbox | handleSlot | contentSlot | metaSlot | deleteSlot
-export function GameHeader({ barSlot, colorSlot, checkbox, handleSlot, contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
+export function GameHeader({ barSlot, headerTrigger, colorSlot, checkbox, handleSlot, contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
   return (
     <div
       {...rootProps}
+      {...headerTrigger}
       className={`${shared.gameHeaderRow}${className ? ` ${className}` : ''}`}
       style={{ background: bg ?? 'transparent', borderBottom: borderBottom ?? 'none', ...style }}
       onClick={onClick}
@@ -68,12 +69,12 @@ export function GameHeader({ barSlot, colorSlot, checkbox, handleSlot, contentSl
       <div className={shared.colorSlot}>{colorSlot}</div>
       {checkbox   != null && <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
       {handleSlot != null && <div className={shared.handleSlot} >{handleSlot}</div>}
-      <div className={shared.content}>{contentSlot}</div>
-      {metaSlot != null && (
-        <div className={shared.metaRight}>
+      <div className={shared.taskWrapSlot}>
+        <div className={shared.taskLabelSlot}>{contentSlot}</div>
+        {metaSlot != null && (
           <div className={shared.meta}>{metaSlot}</div>
-        </div>
-      )}
+        )}
+      </div>
       {deleteSlot != null && <div className={shared.deleteSlot}>{deleteSlot}</div>}
     </div>
   );
@@ -88,6 +89,13 @@ export function PrevBar({ show, checked, partial }) {
         boxShadow: checked ? `0 0 0 1.5px rgba(0,0,0,0.85), 0 0 5px ${color}88` : '0 0 0 1.5px rgba(0,0,0,0.85)',
       }} />
     </div>
+  );
+}
+export function Badge({item}) {
+  return (
+    <span className={`${shared.taskBadge} ${BADGE_MAP[item.type]}`}>
+      <span className={shared.badgeText}>{t(`types.${item.type}`)}</span>
+    </span>
   );
 }
 

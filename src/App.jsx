@@ -70,7 +70,6 @@ export function App() {
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
 
-  const cd     = { d: t('cd.d'), h: t('cd.h'), m: t('cd.m') };
   const soloId = (game) => `${game.id}_solo`;
 
   const getDailyTasks = useCallback((game) => {
@@ -190,7 +189,7 @@ const editItem = useCallback((gameId, itemId, updates) => {
             <GameCard
               key={`game-${game.id}`}
               game={game} checks={checks} now={now} onToggle={toggle}
-              allDone={isAllDone(game)} dailyTasks={getDailyTasks(game)} cd={cd}
+              allDone={isAllDone(game)} dailyTasks={getDailyTasks(game)}
               collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
               bgDataUrl={gameBgs[game.id]?.dataUrl || null}
               bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}

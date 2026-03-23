@@ -1,16 +1,18 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useDragSort, useScopedDragSort } from '../util/useDragSort';
-import { motion, AnimatePresence } from 'motion/react';
-import { t } from '../util/i18n';
-import {uid, utcToLocalHHMM, localToUtcHHMM} from '../util/helpers';
-import { imgGet, imgSet, imgDelete } from '../util/imageStorage';
-import { useAppUpdate } from '../util/useAppUpdate';
-import { Modal, TaskSection, BADGE_MAP } from './UI';
-import { ContextMenu } from './ContextMenu';
-import { CropModal } from './CropModal';
-import { InlineAddForm } from './InlineAddForm';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {useDragSort, useScopedDragSort} from '../util/useDragSort';
+import {AnimatePresence, motion} from 'motion/react';
+import {t} from '../util/i18n';
+import {localToUtcHHMM, uid, utcToLocalHHMM} from '../util/helpers';
+import {imgDelete, imgGet, imgSet} from '../util/imageStorage';
+import {useAppUpdate} from '../util/useAppUpdate';
+import {Modal, TaskSection} from './UI';
+import {ContextMenu} from './ContextMenu';
+import {CropModal} from './CropModal';
+import {TaskAddForm} from './TaskAddForm.jsx';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
+import {TaskRow} from "./TaskRow.jsx";
+import {TaskEdit} from "./TaskEdit.jsx";
 
 
 // Shared item variants for game/task rows
@@ -24,84 +26,6 @@ const taskItemVariants = {
   animate: { opacity: 1, height: 'auto', transition: { duration: 0.15 } },
   exit:    { opacity: 0, height: 0,      transition: { duration: 0.13 } },
 };
-
-// All available item types for the unified type selector
-const ALL_TYPE_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
-
-/**
- * ItemTaskRow — Settings task row.
- * Symmetric structure to main-screen TaskRow:
- *   dragSlot | badgeSlot | content(.taskName) | meta(.resetGroup) | deleteSlot
- */
-function ItemTaskRow({ item, dndProps, dndStyle, onUpdate, onDelete }) {
-  const resetMeta =
-    item.type === 'daily' ? (
-      <div className={s.resetGroup}>
-        <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
-          <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')} onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))} className={`${shared.inputCls} ${s.inputTime}`} />
-        </span>
-      </div>
-    ) : item.type === 'weekly' ? (
-      <div className={s.resetGroup}>
-        <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
-          <select value={item.weeklyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))} className={`${shared.inputCls} ${s.inputDow}`}>
-            {[0,1,2,3,4,5,6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
-          </select>
-        </span>
-      </div>
-    ) : item.type === 'monthly' ? (
-      <div className={s.resetGroup}>
-        <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
-          <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1} onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-          <span className={s.resetLbl}>{t('dayUnit')}</span>
-        </span>
-      </div>
-    ) : item.type === 'halfmonthly' ? (
-      <div className={s.resetGroup}>
-        <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <span className={`${s.resetInputGroup} ${s["resetInputGroup--fixed"]}`}>
-          <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1} onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))} className={`${shared.inputCls} ${s.inputNumber}`} />
-          <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
-        </span>
-      </div>
-    ) : item.type === 'event' ? (
-      <div className={s.resetGroup}>
-        <span className={s.resetLbl}>{t('resetLbl')}</span>
-        <span className={s.resetInputGroup}>
-          <input type="date" value={item.deadline ?? ''} onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)} className={`${shared.inputCls} ${s.inputDate}`} />
-        </span>
-        <span className={s.resetInputGroup}>
-          <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''} onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)} disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`} style={{ opacity: item.deadline ? 1 : 0.35 }} />
-        </span>
-      </div>
-    ) : null;
-
-  return (
-    <div {...dndProps} className={s.taskRow} style={dndStyle}>
-      <div className={shared.handleSlot}><span className={s.dragHandle}>⠿</span></div>
-      <div className={shared.badgeSlot}>
-        <span className={`${shared.taskBadge} ${BADGE_MAP[item.type]}`}>
-          <span className={shared.badgeText}>{t(`types.${item.type}`)}</span>
-        </span>
-      </div>
-      <div className={shared.content}>
-        <input
-          value={item.name}
-          onChange={(e) => onUpdate(item.id, 'name', e.target.value)}
-          className={`${shared.inputCls} ${s.taskName}`}
-          placeholder={t(`types.${item.type}`)}
-        />
-      </div>
-      {resetMeta && <div className={shared.metaRight}><div className={shared.meta}>{resetMeta}</div></div>}
-      <div className={shared.deleteSlot}>
-        <button onClick={() => onDelete(item.id)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
-      </div>
-    </div>
-  );
-}
 
 function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
   const [over, setOver] = useState(false);
@@ -147,7 +71,7 @@ const TYPE_PICK_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
 
 // ── GameItemList ──────────────────────────────────────────────────
 // Renders all items of a game in a unified list with a single "+ Task" button.
-// Clicking the button pops a ContextMenu to pick a type; selecting opens InlineAddForm.
+// Clicking the button pops a ContextMenu to pick a type; selecting opens TaskAddForm.
 function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
   const allItems  = game.items ?? [];
   const btnRef    = useRef(null);
@@ -178,13 +102,15 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
           const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
           return (
             <motion.div key={item.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-              <ItemTaskRow item={item} dndProps={dndProps} dndStyle={dndStyle} onUpdate={onUpdate} onDelete={onDelete} />
+              <TaskRow task={item} showDragHandle={true} showDelete={true} onDelete={onDelete} dndProps={dndProps} dndStyle={dndStyle}>
+                <TaskEdit item={item} onUpdate={onUpdate} />
+              </TaskRow>
             </motion.div>
           );
         }}
         addSlot={
           addType
-            ? <InlineAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => setAddType(undefined)} />
+            ? <TaskAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => setAddType(undefined)} />
             : <button ref={btnRef} onClick={openPicker} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('addTask')}</button>
         }
       />
@@ -321,21 +247,19 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   className={s.gameItem}
                   style={{ ...gameDnd.dropStyle(gi), border: `1px solid ${game.color}44` }}
                 >
-                  {/* Game header — symmetric to GameCard's GameHeader component:
-                      dragSlot | colorSlot | content(.gameName) | metaRight(.gameResetGroup) | deleteSlot */}
                   <div
                     {...gameDnd.itemProps(gi)}
-                    className={shared.gameHeaderRow}
+                    className={s.gameHeaderRow}
                     style={{ borderBottom: `1px solid ${game.color}44`, opacity: gameDnd.isDragging(gi) ? 0.4 : 1, transition: 'opacity 0.15s' }}
                   >
-                    <div className={shared.handleSlot}><span className={s.dragHandle}>⠿</span></div>
-                    <div className={shared.colorSlot}>
+                    <div className={shared.handleSlot}><span className={shared.dragHandle}>⠿</span></div>
+                    <div className={s.colorSlot}>
                       <input type="color" value={game.color} onChange={(e) => upGame(game.id, 'color', e.target.value)} className={s.colorInput} />
                     </div>
-                    <div className={shared.content}>
-                      <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${s.gameName} ${shared.inputCls}`} placeholder={t('gameName')} />
-                    </div>
-                    <div className={shared.metaRight}>
+                    <div className={shared.taskWrapSlot}>
+                      <div className={shared.taskLabelSlot}>
+                        <input value={game.name} onChange={(e) => upGame(game.id, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} className={`${s.gameName} ${shared.inputCls}`} placeholder={t('gameName')} />
+                      </div>
                       <div className={shared.meta}>
                         <div className={s.gameResetGroup}>
                           <span className={s.resetLbl}>{t('resetLbl')}</span>

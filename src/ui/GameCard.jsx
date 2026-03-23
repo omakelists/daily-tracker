@@ -6,10 +6,11 @@ import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntil
 import { useContextTrigger } from '../util/useContextTrigger';
 import { GameHeader, PrevBar, TaskSection } from './UI';
 import { TaskRow } from './TaskRow.jsx';
-import { InlineAddForm } from './InlineAddForm';
+import { TaskAddForm } from './TaskAddForm.jsx';
 import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
+import {TaskView} from "./TaskView.jsx";
 
 const taskVariants = {
   initial: { opacity: 0, height: 0 },
@@ -47,11 +48,12 @@ function applyOrder(items, storedOrder) {
 // forwardRef is required because AnimatePresence with mode="popLayout"
 // attaches a ref to the direct child to measure it during exit animation.
 export const GameCard = forwardRef(function GameCard({
-  game, checks, now, onToggle, allDone, dailyTasks, cd,
+  game, checks, now, onToggle, allDone, dailyTasks,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
   showSectionHeaders = true,
   onAddItem, onDeleteItem, onEditItem, showConfirm,
 }, ref) {
+  const cd = {d: t('cd.d'), h: t('cd.h'), m: t('cd.m')};
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
   const [formState, setFormState] = useState(null); // modes: addDaily | addWeekly | addHalfmonthly | addMonthly | addEvent
@@ -86,7 +88,8 @@ export const GameCard = forwardRef(function GameCard({
   const periodItems = allItems.filter((it) => PERIOD_TYPES.has(it.type));
   const eventItems  = allItems.filter((it) => EVENT_TYPES.has(it.type));
 
-  const isChecked = (tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))];
+  const isChecked = (task) => !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
+  const prevChecked = (task) => !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
 
   const sortedDaily  = applyOrder(dailyItems,  game.itemOrder);
   const sortedPeriod = applyOrder(periodItems, game.itemOrder);
@@ -157,12 +160,38 @@ export const GameCard = forwardRef(function GameCard({
 
   // Unified wrapper for all item types — variant resolves which map entry to use
   const wrapItem = (item) => {
+    const [cbScope, animateCb] = useAnimate();
+
+    const showPrev = item.type === 'daily';
+    const isEvent  = item.type === 'event';
     const isEditing = editingId === item.id;
+    const isItemChecked = isChecked(item)
+
+    // ── Shared ───────────────────────────────────────────────────────
+    const showDelete = isEvent && isChecked && onDeleteItem;
+
     return (
       <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
         {isEditing
-          ? <InlineAddForm  game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
-          : <TaskRow task={item} game={game} checks={checks} now={now} cd={cd} onToggle={onToggle} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined} />}
+          ? <TaskAddForm game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
+          : <TaskRow task={item} showDelete={showDelete} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined}>
+            <div className={shared.barSlot}>
+              <PrevBar show={showPrev} checked={prevChecked(item)}/>
+            </div>
+            <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>
+              <button
+                ref={cbScope}
+                onClick={(e) => {
+                  animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
+                  onToggle(item.id, game);
+                }}
+                className={`${shared.cb}${isItemChecked ? ` ${shared.cbChecked}` : ''}`}
+              >
+                {isItemChecked ? '✓' : ''}
+              </button>
+            </div>
+            <TaskView game={game} task={item} now={now} isChecked={isItemChecked} showDeadline={!showDelete} />
+          </TaskRow>}
       </motion.div>
     );
   };
@@ -198,38 +227,37 @@ export const GameCard = forwardRef(function GameCard({
 
       <div className={s.content}>
         {/* Header */}
-        <div {...headerTrigger}>
-          <GameHeader
-            bg={headerBg}
-            borderBottom={showBody ? '1px solid rgba(255,255,255,0.055)' : 'none'}
-            onClick={allItems.length > 0 ? handleToggleCollapse : undefined}
-            className={allItems.length > 0 ? s.gameItemClickable : undefined}
-            barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
-            handleSlot={allItems.length > 0 ? (
-              <motion.span className={s.accordionBtn} animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.22 }}>▼</motion.span>
-            ) : null}
-            checkbox={
-              <button
-                ref={cbScope}
-                onClick={isMasterClickable ? handleMasterClick : undefined}
-                className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ''}${!isMasterClickable ? ` ${shared.cbReadOnly}` : ''}`}
-              >
-                {allTodayDone ? '✓' : ''}
-              </button>
-            }
-            contentSlot={
-              <span className={s.gameName} style={{ color: allDone ? 'var(--muted)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textDecorationThickness: allDone ? '2px' : undefined }}>
-                {game.name}
-              </span>
-            }
-            metaSlot={
-              <>
-                {displayMs !== null && <span className={s.countdown} style={{ color: headerCdColor }}>⏱{formatCountdown(displayMs, cd)}</span>}
-                <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
-              </>
-            }
-          />
-        </div>
+        <GameHeader
+          bg={headerBg}
+          headerTrigger={headerTrigger}
+          borderBottom={showBody ? '1px solid rgba(255,255,255,0.055)' : 'none'}
+          onClick={allItems.length > 0 ? handleToggleCollapse : undefined}
+          className={allItems.length > 0 ? s.gameItemClickable : undefined}
+          barSlot={<PrevBar show={dailyTasks.length > 0} checked={prevAll} partial={prevPartial} />}
+          handleSlot={allItems.length > 0 ? (
+            <motion.span className={s.accordionBtn} animate={{ rotate: collapsed ? -90 : 0 }} transition={{ duration: 0.22 }}>▼</motion.span>
+          ) : null}
+          checkbox={
+            <button
+              ref={cbScope}
+              onClick={isMasterClickable ? handleMasterClick : undefined}
+              className={`${shared.cb} ${shared.cbGame}${allTodayDone ? ` ${shared.cbChecked}` : ''}${!isMasterClickable ? ` ${shared.cbReadOnly}` : ''}`}
+            >
+              {allTodayDone ? '✓' : ''}
+            </button>
+          }
+          contentSlot={
+            <span className={s.gameName} style={{ color: allDone ? 'var(--muted)' : visColor, textDecoration: allDone ? 'line-through' : 'none', textDecorationThickness: allDone ? '2px' : undefined }}>
+              {game.name}
+            </span>
+          }
+          metaSlot={
+            <>
+              {displayMs !== null && <span className={s.countdown} style={{ color: headerCdColor }}>⏱{formatCountdown(displayMs, cd)}</span>}
+              <span className={s.resetTime}>{utcToLocalHHMM(game.resetTime)}</span>
+            </>
+          }
+        />
 
         {/* Body */}
         <AnimatePresence initial={false}>
@@ -247,7 +275,7 @@ export const GameCard = forwardRef(function GameCard({
                     popLayout
                     addSlot={animatedForm('add-daily',
                       formState?.mode === 'addDaily' && (
-                        <InlineAddForm
+                        <TaskAddForm
                           type="daily"
                           game={game}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
@@ -267,7 +295,7 @@ export const GameCard = forwardRef(function GameCard({
                     popLayout
                     addSlot={animatedForm('add-periodic',
                       (formState?.mode === 'addWeekly' || formState?.mode === 'addHalfmonthly' || formState?.mode === 'addMonthly') && (
-                        <InlineAddForm
+                        <TaskAddForm
                           type={formState.mode === 'addWeekly' ? 'weekly' : formState.mode === 'addHalfmonthly' ? 'halfmonthly' : 'monthly'}
                           game={game}
                           onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
@@ -287,7 +315,7 @@ export const GameCard = forwardRef(function GameCard({
                     popLayout
                     addSlot={animatedForm('add-event',
                       formState?.mode === 'addEvent' && (
-                        <InlineAddForm
+                        <TaskAddForm
                           type="event"
                           game={game}
                           onAdd={(item) => { onAddItem?.(game.id, { ...item, type: 'event' }); setFormState(null); }}
