@@ -46,19 +46,20 @@ function applyOrder(items, storedOrder) {
 
 // ── ItemRow ───────────────────────────────────────────────────────
 // Renders a single game item (task or event) inside GameCard.
-// Extracted into its own component so useAnimate is called unconditionally
-// at the component level, satisfying the Rules of Hooks.
-function ItemRow({ item, game, now, checks, editingId, onToggle, onEditItem, onDeleteItem, confirmDeleteItem, handleItemContextMenu, closeEdit, prevChecked }) {
+// forwardRef is required because AnimatePresence with mode="popLayout"
+// attaches a ref to each direct child to measure it during exit animations.
+// useAnimate is called unconditionally at the top level, satisfying Rules of Hooks.
+const ItemRow = forwardRef(function ItemRow({ item, game, now, checks, editingId, onToggle, onEditItem, onDeleteItem, confirmDeleteItem, handleItemContextMenu, closeEdit, prevChecked }, ref) {
   const [cbScope, animateCb] = useAnimate();
 
-  const isChecked     = !!checks[checkKey(item.id, getPeriodKey(item, game, now))];
-  const showPrev      = item.type === 'daily';
-  const isEvent       = item.type === 'event';
-  const isEditing     = editingId === item.id;
-  const showDelete    = isEvent && isChecked && onDeleteItem;
+  const isChecked  = !!checks[checkKey(item.id, getPeriodKey(item, game, now))];
+  const showPrev   = item.type === 'daily';
+  const isEvent    = item.type === 'event';
+  const isEditing  = editingId === item.id;
+  const showDelete = isEvent && isChecked && onDeleteItem;
 
   return (
-    <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+    <motion.div ref={ref} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
       {isEditing
         ? <TaskAddForm game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
         : <TaskRow task={item} showDelete={showDelete} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined}>
@@ -82,7 +83,7 @@ function ItemRow({ item, game, now, checks, editingId, onToggle, onEditItem, onD
       }
     </motion.div>
   );
-}
+});
 
 const FORM_MODE_TO_TYPE = {
   addDaily:       'daily',
