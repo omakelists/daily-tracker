@@ -18,7 +18,10 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
     weeklyResetDay: item?.weeklyResetDay ?? 1,
     halfMonthlyStartDay: item?.halfMonthlyStartDay ?? 1,
     deadline: item?.deadline ?? '',
-    deadlineTime: item?.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : '',
+    deadlineTime:
+      item?.deadlineTime ? utcToLocalHHMM(item.deadlineTime)
+      : game?.resetTime ? game.resetTime
+      : '',
   });
   const updateTask = (id, key, val) => setTask(prev => ({ ...prev, [key]: val}));
 
