@@ -11,6 +11,7 @@ import shared from "./shared.module.css";
 import {Badge, BADGE_MAP} from "./UI.jsx";
 import s from "./TaskView.module.css";
 import {DAY_MS} from "../constants.js";
+import {useMemo} from "react";
 
 export function TaskView({game, task, now, isChecked, showDeadline}) {
   const isEvent = task.type === 'event';
@@ -29,7 +30,7 @@ export function TaskView({game, task, now, isChecked, showDeadline}) {
                                          : task.type === 'monthly' ? [72, 168]
                                          : task.type === 'event' ? [72, 168]
                                          : [3, 6];
-  const cd = {d: t('cd.d'), h: t('cd.h'), m: t('cd.m')};
+  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), []);
   const taskCdColor = cdColor(taskMs, urgentH, warnH);
   const localResetTime = !isEvent ? utcToLocalHHMM(task.resetTime || game?.resetTime) : null;
 

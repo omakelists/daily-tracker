@@ -3,9 +3,7 @@ import {cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHM
 import s from "./TaskEdit.module.css";
 import shared from "./shared.module.css";
 import {Badge, BADGE_MAP} from "./UI.jsx";
-import {useEffect, useRef} from "react";
-
-const getCd = () => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') });
+import {useEffect, useMemo, useRef} from "react";
 
 function addDaysToDate(dateStr, n) {
   const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
@@ -20,14 +18,16 @@ function addDaysToDate(dateStr, n) {
  */
 export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
   // Countdown to currently-set deadline
-  const timeUtcForCd    = (item.date && item.time) ? localToUtcHHMM(item.time) : undefined;
-  const deadlineMs      = item.type === 'event' && item.date ? msUntilDeadline(item.date, new Date(), timeUtcForCd) : null;
+  const timeUtcForCd    = (item.deadline && item.deadlineTime) ? localToUtcHHMM(item.deadlineTime) : undefined;
+  const deadlineMs      = item.type === 'event' && item.deadline ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd) : null;
   const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
   const deadlineColor   = cdColor(deadlineMs ?? Infinity, 24, 48);
 
   const inputRef = useRef(null);
   // Use setTimeout to allow AnimatePresence to finish mounting before focusing
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 0); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), []);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter')  handleSubmit();
@@ -75,15 +75,15 @@ export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
                        className={`${shared.inputCls} ${s.inputDate}`}/>
               </div>
               <div className={s.resetSupport}>
-                {item.date && deadlineMs !== null && (
+                {item.deadline && deadlineMs !== null && (
                   <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
-                    {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, getCd())}`}
+                    {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
                   </span>
                 )}
               </div>
               <div className={s.resetSupport}>
                 {[1, 2, 5, 10].map((n) => (
-                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate(item.id, 'deadline', addDaysToDate(item.date, n))}>
+                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate(item.id, 'deadline', addDaysToDate(item.deadline, n))}>
                     +{n}{t('cd.d')}
                   </button>
                 ))}
