@@ -6,9 +6,8 @@ import shared from './shared.module.css';
 import {TaskEdit} from "./TaskEdit.jsx";
 
 export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
-  const resolvedType = item?.type ?? type;
-  const isEdit       = !!item;
-  const submitLabel  = isEdit ? t('save') : undefined;
+  const isEdit      = !!item;
+  const submitLabel = isEdit ? t('save') : undefined;
 
   // ── State ────────────────────────────────────────────────────────
   const [task, setTask] = useState({
@@ -25,8 +24,8 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
 
   // ── Submit ───────────────────────────────────────────────────────
   const handleSubmit = () => {
-    const newTask = { id: uid(), type: resolvedType, name: task.name.trim() || t(`types.${item.type}`) };
-    switch (resolvedType) {
+    const newTask = { id: uid(), type: task.type, name: task.name.trim() || t(`types.${task.type}`) };
+    switch (task.type) {
       case 'daily'      : newTask.resetTime           = task.resetTime; break;
       case 'monthly'    : newTask.monthlyResetDay     = Number(task.monthlyResetDay); break;
       case 'weekly'     : newTask.weeklyResetDay      = Number(task.weeklyResetDay); break;

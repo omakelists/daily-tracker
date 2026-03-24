@@ -44,7 +44,46 @@ function applyOrder(items, storedOrder) {
   ];
 }
 
-// Maps context menu formState.mode to the TaskAddForm type prop.
+// ── ItemRow ───────────────────────────────────────────────────────
+// Renders a single game item (task or event) inside GameCard.
+// Extracted into its own component so useAnimate is called unconditionally
+// at the component level, satisfying the Rules of Hooks.
+function ItemRow({ item, game, now, checks, editingId, onToggle, onEditItem, onDeleteItem, confirmDeleteItem, handleItemContextMenu, closeEdit, prevChecked }) {
+  const [cbScope, animateCb] = useAnimate();
+
+  const isChecked     = !!checks[checkKey(item.id, getPeriodKey(item, game, now))];
+  const showPrev      = item.type === 'daily';
+  const isEvent       = item.type === 'event';
+  const isEditing     = editingId === item.id;
+  const showDelete    = isEvent && isChecked && onDeleteItem;
+
+  return (
+    <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+      {isEditing
+        ? <TaskAddForm game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
+        : <TaskRow task={item} showDelete={showDelete} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined}>
+            <div className={shared.barSlot}>
+              <PrevBar show={showPrev} checked={prevChecked(item)} />
+            </div>
+            <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>
+              <button
+                ref={cbScope}
+                onClick={() => {
+                  animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
+                  onToggle(item.id, game);
+                }}
+                className={`${s.cb}${isChecked ? ` ${s.cbChecked}` : ''}`}
+              >
+                {isChecked ? '✓' : ''}
+              </button>
+            </div>
+            <TaskView game={game} task={item} now={now} isChecked={isChecked} showDeadline={!showDelete} />
+          </TaskRow>
+      }
+    </motion.div>
+  );
+}
+
 const FORM_MODE_TO_TYPE = {
   addDaily:       'daily',
   addWeekly:      'weekly',
@@ -152,43 +191,24 @@ export const GameCard = forwardRef(function GameCard({
     onToggle(null, game, true);
   };
 
-  // Unified wrapper for all item types — variant resolves which map entry to use
-  const wrapItem = (item) => {
-    const [cbScope, animateCb] = useAnimate();
-
-    const showPrev = item.type === 'daily';
-    const isEvent  = item.type === 'event';
-    const isEditing = editingId === item.id;
-    const isItemChecked = isChecked(item)
-
-    // ── Shared ───────────────────────────────────────────────────────
-    const showDelete = isEvent && isChecked && onDeleteItem;
-
-    return (
-      <motion.div key={item.id} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {isEditing
-          ? <TaskAddForm game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
-          : <TaskRow task={item} showDelete={showDelete} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined}>
-            <div className={shared.barSlot}>
-              <PrevBar show={showPrev} checked={prevChecked(item)}/>
-            </div>
-            <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>
-              <button
-                ref={cbScope}
-                onClick={(e) => {
-                  animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
-                  onToggle(item.id, game);
-                }}
-                className={`${s.cb}${isItemChecked ? ` ${s.cbChecked}` : ''}`}
-              >
-                {isItemChecked ? '✓' : ''}
-              </button>
-            </div>
-            <TaskView game={game} task={item} now={now} isChecked={isItemChecked} showDeadline={!showDelete} />
-          </TaskRow>}
-      </motion.div>
-    );
-  };
+  // Returns a keyed ItemRow element for each item — no hooks called here.
+  const wrapItem = (item) => (
+    <ItemRow
+      key={item.id}
+      item={item}
+      game={game}
+      now={now}
+      checks={checks}
+      editingId={editingId}
+      onToggle={onToggle}
+      onEditItem={onEditItem}
+      onDeleteItem={onDeleteItem}
+      confirmDeleteItem={confirmDeleteItem}
+      handleItemContextMenu={handleItemContextMenu}
+      closeEdit={closeEdit}
+      prevChecked={prevChecked}
+    />
+  );
 
   // ── Context menu ─────────────────────────────────────────────────
   const ctxItems = ctxMenu

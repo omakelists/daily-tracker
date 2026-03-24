@@ -83,7 +83,7 @@ export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
               </div>
               <div className={s.resetSupport}>
                 {[1, 2, 5, 10].map((n) => (
-                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate(item.id, 'deadline', addDaysToDate(task.date, n))}>
+                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate(item.id, 'deadline', addDaysToDate(item.date, n))}>
                     +{n}{t('cd.d')}
                   </button>
                 ))}
