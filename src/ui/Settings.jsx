@@ -5,7 +5,7 @@ import {t} from '../util/i18n';
 import {localToUtcHHMM, uid, utcToLocalHHMM} from '../util/helpers';
 import {imgDelete, imgGet, imgSet} from '../util/imageStorage';
 import {useAppUpdate} from '../util/useAppUpdate';
-import {Modal, TaskSection} from './UI';
+import {Modal} from './UI';
 import {ContextMenu} from './ContextMenu';
 import {CropModal} from './CropModal';
 import {TaskAddForm} from './TaskAddForm.jsx';
@@ -94,9 +94,8 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
 
   return (
     <>
-      <TaskSection
-        items={allItems}
-        wrapItem={(item) => {
+      <AnimatePresence initial={false}>
+        {allItems.map((item) => {
           const ti       = allItems.indexOf(item);
           const dndProps = itemDnd.itemProps(game.id, ti);
           const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
@@ -107,13 +106,12 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
               </TaskRow>
             </motion.div>
           );
-        }}
-        addSlot={
-          addType
-            ? <TaskAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => setAddType(undefined)} />
-            : <button ref={btnRef} onClick={openPicker} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('addTask')}</button>
-        }
-      />
+        })}
+      </AnimatePresence>
+      {addType
+        ? <TaskAddForm type={addType} game={game} onAdd={handleAdd} onCancel={() => setAddType(undefined)} />
+        : <button ref={btnRef} onClick={openPicker} className={`${shared.btn} ${shared.btnAdd} ${s.addTaskBtn}`}>＋{t('addTask')}</button>
+      }
       <AnimatePresence>
         {pickerPos && <ContextMenu key="type-picker" x={pickerPos.x} y={pickerPos.y} items={pickerItems} onClose={closePicker} />}
       </AnimatePresence>
@@ -331,17 +329,6 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
           </div>
 
           <div className={s.listSeparator} />
-
-          {/* Show section headers */}
-          <label className={s.prefRow}>
-            <input
-              type="checkbox"
-              checked={!!prefs.showSectionHeaders}
-              onChange={(e) => onPrefs('showSectionHeaders', e.target.checked)}
-              className={s.prefCheck}
-            />
-            <span className={s.prefLabel}>{t('showSectionHeaders')}</span>
-          </label>
 
           {/* Sort unchecked games first */}
           <label className={s.prefRow}>

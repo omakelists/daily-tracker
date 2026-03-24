@@ -37,25 +37,6 @@
 .gameBody        { background: rgba(13, 17, 23, 0.50); padding: 8px 13px 10px; }
 .gameBodyWithBg  { background: rgba(13, 17, 23, 0.30); }
 
-/* ── Section divider ─────────────────────────────────────────────── */
-.divider {
-  margin: 5px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  position: relative;
-}
-.sepLabel {
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: transparent;
-  padding: 0 8px;
-  font-size: 10px;
-  color: #8b949e;
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-
 /* ── Header meta: countdown + reset time ────────────────────────── */
 .countdown {
   flex-shrink: 0;

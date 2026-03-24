@@ -1,10 +1,10 @@
 import { useState, useCallback, forwardRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { DAILY_TYPES, PERIOD_TYPES, EVENT_TYPES, DAY_MS } from '../constants';
+import { EVENT_TYPES, DAY_MS } from '../constants';
 import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
-import { GameHeader, PrevBar, TaskSection } from './UI';
+import { GameHeader, PrevBar } from './UI';
 import { TaskRow } from './TaskRow.jsx';
 import { TaskAddForm } from './TaskAddForm.jsx';
 import { ContextMenu } from './ContextMenu';
@@ -44,13 +44,21 @@ function applyOrder(items, storedOrder) {
   ];
 }
 
+// Maps context menu formState.mode to the TaskAddForm type prop.
+const FORM_MODE_TO_TYPE = {
+  addDaily:       'daily',
+  addWeekly:      'weekly',
+  addHalfmonthly: 'halfmonthly',
+  addMonthly:     'monthly',
+  addEvent:       'event',
+};
+
 // ─────────────────────────────────────────────────────────────────
 // forwardRef is required because AnimatePresence with mode="popLayout"
 // attaches a ref to the direct child to measure it during exit animation.
 export const GameCard = forwardRef(function GameCard({
   game, checks, now, onToggle, allDone, dailyTasks,
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
-  showSectionHeaders = true,
   onAddItem, onDeleteItem, onEditItem, showConfirm,
 }, ref) {
   const cd = {d: t('cd.d'), h: t('cd.h'), m: t('cd.m')};
@@ -82,40 +90,26 @@ export const GameCard = forwardRef(function GameCard({
     setCtxMenu({ x, y, target: 'item', itemId: id });
   }, []);
 
-  // ── Item grouping ────────────────────────────────────────────────
-  const allItems    = game.items ?? [];
-  const dailyItems  = allItems.filter((it) => DAILY_TYPES.has(it.type));
-  const periodItems = allItems.filter((it) => PERIOD_TYPES.has(it.type));
-  const eventItems  = allItems.filter((it) => EVENT_TYPES.has(it.type));
+  // ── Item list ────────────────────────────────────────────────────
+  const allItems = game.items ?? [];
 
-  const isChecked = (task) => !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
+  const isChecked   = (task) => !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
   const prevChecked = (task) => !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
 
-  const sortedDaily  = applyOrder(dailyItems,  game.itemOrder);
-  const sortedPeriod = applyOrder(periodItems, game.itemOrder);
-  const sortedEvents = applyOrder(eventItems,  game.itemOrder);
+  // All items in user-defined order, collapsed state hides checked items.
+  const allSortedItems = applyOrder(allItems, game.itemOrder);
+  const visItems = collapsed
+    ? allSortedItems.filter((it) => !isChecked(it) || it.id === editingId)
+    : allSortedItems;
 
-  // Keep the item being edited visible even when collapsed
-  const visDaily  = collapsed ? sortedDaily.filter((tk) => !isChecked(tk) || tk.id === editingId)  : sortedDaily;
-  const visPeriod = collapsed ? sortedPeriod.filter((tk) => !isChecked(tk) || tk.id === editingId) : sortedPeriod;
-  const visEvents = collapsed ? sortedEvents.filter((it) => !isChecked(it) || it.id === editingId) : sortedEvents;
+  const showBody = visItems.length > 0 || formState !== null;
 
   const allTodayDone = calcAllDone(game, checks, now, `${game.id}_solo`);
-  const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
-  const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
-  const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
+  const prevCount   = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
+  const prevAll     = dailyTasks.length > 0 && prevCount === dailyTasks.length;
+  const prevPartial = prevCount > 0 && prevCount < dailyTasks.length;
 
-  const hasVisDaily  = visDaily.length > 0;
-  const hasVisPeriod = visPeriod.length > 0;
-  const hasVisEvents = visEvents.length > 0;
-
-  // Each section is visible if it has items OR its add-form is active
-  const showDailySection  = hasVisDaily  || formState?.mode === 'addDaily';
-  const showPeriodSection = hasVisPeriod || formState?.mode === 'addWeekly' || formState?.mode === 'addHalfmonthly' || formState?.mode === 'addMonthly';
-  const showEventSection  = hasVisEvents || formState?.mode === 'addEvent';
-  const showBody = showDailySection || showPeriodSection || showEventSection;
-
-  const ms      = msUntilReset(now, game.resetTime);
+  const ms = msUntilReset(now, game.resetTime);
 
   // When items exist: show nearest unchecked task deadline within 24h (null if none).
   // When no items (solo mode): show game reset countdown unless master is checked.
@@ -265,66 +259,18 @@ export const GameCard = forwardRef(function GameCard({
             <motion.div key="body" variants={bodyVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
               <div className={`${s.gameBody}${bgDataUrl ? ` ${s.gameBodyWithBg}` : ''}`}>
 
-                {/* Section 1: Daily / WebDaily */}
-                {showDailySection && (
-                  <TaskSection
-                    // [DAILY SECTION HEADER HIDDEN] Uncomment to restore:
-                    // header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('types.daily')} —</span></div>}
-                    items={visDaily}
-                    wrapItem={wrapItem}
-                    popLayout
-                    addSlot={animatedForm('add-daily',
-                      formState?.mode === 'addDaily' && (
-                        <TaskAddForm
-                          type="daily"
-                          game={game}
-                          onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
-                          onCancel={() => setFormState(null)}
-                        />
-                      )
-                    )}
-                  />
-                )}
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {visItems.map(wrapItem)}
+                </AnimatePresence>
 
-                {/* Section 2: Periodic tasks */}
-                {showPeriodSection && (
-                  <TaskSection
-                    header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('periodic')} —</span></div>}
-                    items={visPeriod}
-                    wrapItem={wrapItem}
-                    popLayout
-                    addSlot={animatedForm('add-periodic',
-                      (formState?.mode === 'addWeekly' || formState?.mode === 'addHalfmonthly' || formState?.mode === 'addMonthly') && (
-                        <TaskAddForm
-                          type={formState.mode === 'addWeekly' ? 'weekly' : formState.mode === 'addHalfmonthly' ? 'halfmonthly' : 'monthly'}
-                          game={game}
-                          onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
-                          onCancel={() => setFormState(null)}
-                        />
-                      )
-                    )}
+                {animatedForm('add-form', formState && (
+                  <TaskAddForm
+                    type={FORM_MODE_TO_TYPE[formState.mode]}
+                    game={game}
+                    onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
+                    onCancel={() => setFormState(null)}
                   />
-                )}
-
-                {/* Section 3: Events */}
-                {showEventSection && (
-                  <TaskSection
-                    header={showSectionHeaders && <div className={s.divider}><span className={s.sepLabel}>— {t('events')} —</span></div>}
-                    items={visEvents}
-                    wrapItem={wrapItem}
-                    popLayout
-                    addSlot={animatedForm('add-event',
-                      formState?.mode === 'addEvent' && (
-                        <TaskAddForm
-                          type="event"
-                          game={game}
-                          onAdd={(item) => { onAddItem?.(game.id, { ...item, type: 'event' }); setFormState(null); }}
-                          onCancel={() => setFormState(null)}
-                        />
-                      )
-                    )}
-                  />
-                )}
+                ))}
 
               </div>
             </motion.div>

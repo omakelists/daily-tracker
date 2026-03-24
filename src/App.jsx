@@ -26,7 +26,6 @@ export function App() {
 
   const {
     sortUncheckedFirst,  setSortUncheckedFirst,
-    showSectionHeaders,  setShowSectionHeaders,
     autoDeleteExpired,   setAutoDeleteExpired,
     autoDeleteDays,      setAutoDeleteDays,
     collapsed, toggleCollapse,
@@ -193,7 +192,6 @@ const editItem = useCallback((gameId, itemId, updates) => {
               collapsed={collapsed.has(game.id)} onToggleCollapse={toggleCollapse}
               bgDataUrl={gameBgs[game.id]?.dataUrl || null}
               bgOpacity={gameBgs[game.id]?.opacity ?? 0.5}
-              showSectionHeaders={showSectionHeaders}
               onAddItem={addItem}
               onDeleteItem={deleteItem}
               onEditItem={editItem}
@@ -206,8 +204,8 @@ const editItem = useCallback((gameId, itemId, updates) => {
 
       <AnimatePresence>
         {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages}
-            prefs={{ sortUncheckedFirst, showSectionHeaders, autoDeleteExpired, autoDeleteDays }}
-            onPrefs={(key, val) => ({ sortUncheckedFirst: setSortUncheckedFirst, showSectionHeaders: setShowSectionHeaders, autoDeleteExpired: setAutoDeleteExpired, autoDeleteDays: setAutoDeleteDays })[key]?.(val)}
+            prefs={{ sortUncheckedFirst, autoDeleteExpired, autoDeleteDays }}
+            onPrefs={(key, val) => ({ sortUncheckedFirst: setSortUncheckedFirst, autoDeleteExpired: setAutoDeleteExpired, autoDeleteDays: setAutoDeleteDays })[key]?.(val)}
           />}
       </AnimatePresence>
       <AnimatePresence>

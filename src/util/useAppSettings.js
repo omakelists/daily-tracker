@@ -11,7 +11,6 @@ import { msUntilDeadline } from './helpers';
 //
 //   Preferences (localStorage):
 //     sortUncheckedFirst  — sort games with unchecked tasks to the top
-//     showSectionHeaders  — show daily / periodic / event section labels
 //     autoDeleteExpired   — automatically remove expired events
 //     autoDeleteDays      — grace period in days before auto-deletion
 //
@@ -32,7 +31,6 @@ import { msUntilDeadline } from './helpers';
 export function useAppSettings(games, setGames, now) {
   // ── Persistent preferences ────────────────────────────────────
   const [sortUncheckedFirst,  setSortUncheckedFirst]  = useLocalStoragePref('dt:sortUncheckedFirst',  true,  BOOL_PREF);
-  const [showSectionHeaders,  setShowSectionHeaders]  = useLocalStoragePref('dt:showSectionHeaders',  true,  BOOL_PREF);
   const [autoDeleteExpired,   setAutoDeleteExpired]   = useLocalStoragePref('dt:autoDeleteExpired',   false, BOOL_PREF);
   const [autoDeleteDays,      setAutoDeleteDays]      = useLocalStoragePref('dt:autoDeleteDays',      1,     INT_PREF);
 
@@ -106,7 +104,6 @@ export function useAppSettings(games, setGames, now) {
   return {
     // Preferences
     sortUncheckedFirst,  setSortUncheckedFirst,
-    showSectionHeaders,  setShowSectionHeaders,
     autoDeleteExpired,   setAutoDeleteExpired,
     autoDeleteDays,      setAutoDeleteDays,
     // Collapsed state
