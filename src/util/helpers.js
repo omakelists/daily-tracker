@@ -276,7 +276,7 @@ export function msUntilDeadline(dateStr, now, timeUtc) {
     const deadline = new Date(Date.UTC(y, m - 1, d, th, tm, 0, 0));
     return deadline - now;
   }
-  return new Date(y, m - 1, d + 1, 0, 0, 0, 0) - now;
+  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0)) - now;
 }
 
 // ── Sound effects ──────────────────────────────────────────────────
