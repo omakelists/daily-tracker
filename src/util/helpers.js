@@ -279,6 +279,20 @@ export function msUntilDeadline(dateStr, now, timeUtc) {
   return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0)) - now;
 }
 
+// ── Item order ────────────────────────────────────────────────────
+/**
+ * Returns items sorted by storedOrder (an array of ids), with any
+ * unrecognised ids appended in their original order at the end.
+ */
+export function applyOrder(items, storedOrder) {
+  const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
+  const unordered  = items.filter((x) => !orderedIds.includes(x.id));
+  return [
+    ...orderedIds.map((id) => items.find((x) => x.id === id)).filter(Boolean),
+    ...unordered,
+  ];
+}
+
 // ── Sound effects ──────────────────────────────────────────────────
 export function playCheckSound() {
   try {

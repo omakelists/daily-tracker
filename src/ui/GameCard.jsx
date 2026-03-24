@@ -1,8 +1,8 @@
-import { useState, useCallback, forwardRef } from 'react';
+import { useState, useCallback, useMemo, forwardRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
 import { EVENT_TYPES, DAY_MS } from '../constants';
-import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone } from '../util/helpers';
+import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone, applyOrder } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { GameHeader, PrevBar } from './UI';
 import { TaskRow } from './TaskRow.jsx';
@@ -10,46 +10,39 @@ import { TaskAddForm } from './TaskAddForm.jsx';
 import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
-import {TaskView} from "./TaskView.jsx";
+import { TaskView } from './TaskView.jsx';
 
+// ── Motion variants ───────────────────────────────────────────────
 const taskVariants = {
   initial: { opacity: 0, height: 0 },
   animate: { opacity: 1, height: 'auto', transition: { duration: 0.2 } },
   exit:    { opacity: 0, height: 0,    transition: { duration: 0.18 } },
 };
-
-// Wraps an add-form component in an animated motion.div for GameCard's addSlot.
-// Passing `false` as `form` lets AnimatePresence animate the exit cleanly.
-const animatedForm = (key, form) => (
-  <AnimatePresence initial={false}>
-    {form && (
-      <motion.div key={key} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-        {form}
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
 const bodyVariants = {
   initial: { height: 0, opacity: 0 },
   animate: { height: 'auto', opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } },
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-function applyOrder(items, storedOrder) {
-  const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
-  const unordered  = items.filter((x) => !orderedIds.includes(x.id));
-  return [
-    ...orderedIds.map((id) => items.find((x) => x.id === id)).filter(Boolean),
-    ...unordered,
-  ];
-}
+// ── Context menu item type definitions ────────────────────────────
+const FORM_MODE_TO_TYPE = {
+  addDaily:       'daily',
+  addWeekly:      'weekly',
+  addHalfmonthly: 'halfmonthly',
+  addMonthly:     'monthly',
+  addEvent:       'event',
+};
 
 // ── ItemRow ───────────────────────────────────────────────────────
 // Renders a single game item (task or event) inside GameCard.
 // forwardRef is required because AnimatePresence with mode="popLayout"
 // attaches a ref to each direct child to measure it during exit animations.
 // useAnimate is called unconditionally at the top level, satisfying Rules of Hooks.
-const ItemRow = forwardRef(function ItemRow({ item, game, now, checks, editingId, onToggle, onEditItem, onDeleteItem, confirmDeleteItem, handleItemContextMenu, closeEdit, prevChecked }, ref) {
+const ItemRow = forwardRef(function ItemRow({
+  item, game, now, checks, editingId,
+  onToggle, onEditItem, onDeleteItem, confirmDeleteItem,
+  handleItemContextMenu, closeEdit, prevChecked,
+}, ref) {
   const [cbScope, animateCb] = useAnimate();
 
   const isChecked  = !!checks[checkKey(item.id, getPeriodKey(item, game, now))];
@@ -85,14 +78,6 @@ const ItemRow = forwardRef(function ItemRow({ item, game, now, checks, editingId
   );
 });
 
-const FORM_MODE_TO_TYPE = {
-  addDaily:       'daily',
-  addWeekly:      'weekly',
-  addHalfmonthly: 'halfmonthly',
-  addMonthly:     'monthly',
-  addEvent:       'event',
-};
-
 // ─────────────────────────────────────────────────────────────────
 // forwardRef is required because AnimatePresence with mode="popLayout"
 // attaches a ref to the direct child to measure it during exit animation.
@@ -101,14 +86,17 @@ export const GameCard = forwardRef(function GameCard({
   collapsed, onToggleCollapse, bgDataUrl, bgOpacity = 0.5,
   onAddItem, onDeleteItem, onEditItem, showConfirm,
 }, ref) {
-  const cd = {d: t('cd.d'), h: t('cd.h'), m: t('cd.m')};
   const [cbScope, animateCb] = useAnimate();
   const [ctxMenu,   setCtxMenu]   = useState(null);
   const [formState, setFormState] = useState(null); // modes: addDaily | addWeekly | addHalfmonthly | addMonthly | addEvent
   const [editingId, setEditingId] = useState(null); // id of the task/event currently being edited inline
 
-  const closeCtx    = useCallback(() => setCtxMenu(null), []);
-  const closeEdit   = useCallback(() => setEditingId(null), []);
+  // Locale strings for countdown formatting — evaluated after locale is loaded,
+  // and memoized so t() is not called on every render.
+  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), []);
+
+  const closeCtx  = useCallback(() => setCtxMenu(null), []);
+  const closeEdit = useCallback(() => setEditingId(null), []);
 
   // Show confirm dialog before deleting.
   // Exception: expired events are deleted immediately without confirmation.
@@ -130,13 +118,24 @@ export const GameCard = forwardRef(function GameCard({
     setCtxMenu({ x, y, target: 'item', itemId: id });
   }, []);
 
+  const handleToggleCollapse = useCallback(() => {
+    if (document.startViewTransition) document.startViewTransition(() => onToggleCollapse(game.id));
+    else onToggleCollapse(game.id);
+  }, [game.id, onToggleCollapse]);
+
+  const handleMasterClick = useCallback((e) => {
+    e.stopPropagation();
+    animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
+    onToggle(null, game, true);
+  }, [animateCb, cbScope, onToggle, game]);
+
   // ── Item list ────────────────────────────────────────────────────
   const allItems = game.items ?? [];
 
   const isChecked   = (task) => !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
   const prevChecked = (task) => !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
 
-  // All items in user-defined order, collapsed state hides checked items.
+  // All items in user-defined order; collapsed state hides checked items.
   const allSortedItems = applyOrder(allItems, game.itemOrder);
   const visItems = collapsed
     ? allSortedItems.filter((it) => !isChecked(it) || it.id === editingId)
@@ -144,17 +143,18 @@ export const GameCard = forwardRef(function GameCard({
 
   const showBody = visItems.length > 0 || formState !== null;
 
+  // ── Header state ─────────────────────────────────────────────────
   const allTodayDone = calcAllDone(game, checks, now, `${game.id}_solo`);
-  const prevCount   = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
-  const prevAll     = dailyTasks.length > 0 && prevCount === dailyTasks.length;
-  const prevPartial = prevCount > 0 && prevCount < dailyTasks.length;
+  const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
+  const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
+  const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
 
   const ms = msUntilReset(now, game.resetTime);
 
   // When items exist: show nearest unchecked task deadline within 24h (null if none).
   // When no items (solo mode): show game reset countdown unless master is checked.
-  const urgentMs = (() => {
-    if (allItems.length === 0) return null;
+  let urgentMs = null;
+  if (allItems.length > 0) {
     let min = Infinity;
     for (const it of allItems) {
       if (isChecked(it)) continue;
@@ -167,68 +167,36 @@ export const GameCard = forwardRef(function GameCard({
       }
       if (m > 0 && m < DAY_MS) min = Math.min(min, m);
     }
-    return min < Infinity ? min : null;
-  })();
+    if (min < Infinity) urgentMs = min;
+  }
+
   // Solo mode (no items): display game reset cd when unchecked; items mode: display urgentMs only.
   const displayMs     = allItems.length === 0 ? (allTodayDone ? null : ms) : urgentMs;
   const headerCdColor = cdColor(displayMs ?? 0, 3, 6);
-  const visColor = ensureContrast(game.color);
-
-  const headerBg = bgDataUrl
+  const visColor      = ensureContrast(game.color);
+  const headerBg      = bgDataUrl
     ? `linear-gradient(90deg, ${game.color}40 0%, ${game.color}18 40%, rgba(13,17,23,0.60) 100%)`
     : `linear-gradient(90deg, ${game.color}28 0%, ${game.color}10 40%, rgba(22,27,34,0.92) 100%)`;
 
-  const handleToggleCollapse = useCallback(() => {
-    if (document.startViewTransition) document.startViewTransition(() => onToggleCollapse(game.id));
-    else onToggleCollapse(game.id);
-  }, [game.id, onToggleCollapse]);
-
-  // Master checkbox acts as daily substitute only when the game has no items at all.
   const isMasterClickable = allItems.length === 0;
 
-  const handleMasterClick = (e) => {
-    e.stopPropagation();
-    animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
-    onToggle(null, game, true);
-  };
-
-  // Returns a keyed ItemRow element for each item — no hooks called here.
-  const wrapItem = (item) => (
-    <ItemRow
-      key={item.id}
-      item={item}
-      game={game}
-      now={now}
-      checks={checks}
-      editingId={editingId}
-      onToggle={onToggle}
-      onEditItem={onEditItem}
-      onDeleteItem={onDeleteItem}
-      confirmDeleteItem={confirmDeleteItem}
-      handleItemContextMenu={handleItemContextMenu}
-      closeEdit={closeEdit}
-      prevChecked={prevChecked}
-    />
-  );
-
-  // ── Context menu ─────────────────────────────────────────────────
-  const ctxItems = ctxMenu
-    ? ctxMenu.target === 'header'
-      ? [
-          { label: t('types.daily'),        icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
-          { label: t('types.weekly'),       icon: '➕', onClick: () => setFormState({ mode: 'addWeekly' }) },
-          { label: t('types.halfmonthly'),  icon: '➕', onClick: () => setFormState({ mode: 'addHalfmonthly' }) },
-          { label: t('types.monthly'),      icon: '➕', onClick: () => setFormState({ mode: 'addMonthly' }) },
-          { label: t('types.event'),        icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
-        ]
-      : ctxMenu.target === 'item'
-        ? [
-            { label: t('ctxEditTask'), icon: '✏️', onClick: () => setEditingId(ctxMenu.itemId) },
-            { separator: true },
-            { label: t('ctxDeleteTask'), icon: '🗑️', danger: true, onClick: () => confirmDeleteItem(ctxMenu.itemId) },
-          ]
-        : []
-    : [];
+  // ── Context menu items ────────────────────────────────────────────
+  const ctxItems = useMemo(() => {
+    if (!ctxMenu) return [];
+    if (ctxMenu.target === 'header') return [
+      { label: t('types.daily'),       icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
+      { label: t('types.weekly'),      icon: '➕', onClick: () => setFormState({ mode: 'addWeekly' }) },
+      { label: t('types.halfmonthly'), icon: '➕', onClick: () => setFormState({ mode: 'addHalfmonthly' }) },
+      { label: t('types.monthly'),     icon: '➕', onClick: () => setFormState({ mode: 'addMonthly' }) },
+      { label: t('types.event'),       icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
+    ];
+    if (ctxMenu.target === 'item') return [
+      { label: t('ctxEditTask'),   icon: '✏️',  onClick: () => setEditingId(ctxMenu.itemId) },
+      { separator: true },
+      { label: t('ctxDeleteTask'), icon: '🗑️', danger: true, onClick: () => confirmDeleteItem(ctxMenu.itemId) },
+    ];
+    return [];
+  }, [ctxMenu, confirmDeleteItem]);
 
   return (
     <div
@@ -281,17 +249,37 @@ export const GameCard = forwardRef(function GameCard({
               <div className={`${s.gameBody}${bgDataUrl ? ` ${s.gameBodyWithBg}` : ''}`}>
 
                 <AnimatePresence mode="popLayout" initial={false}>
-                  {visItems.map(wrapItem)}
+                  {visItems.map((item) => (
+                    <ItemRow
+                      key={item.id}
+                      item={item}
+                      game={game}
+                      now={now}
+                      checks={checks}
+                      editingId={editingId}
+                      onToggle={onToggle}
+                      onEditItem={onEditItem}
+                      onDeleteItem={onDeleteItem}
+                      confirmDeleteItem={confirmDeleteItem}
+                      handleItemContextMenu={handleItemContextMenu}
+                      closeEdit={closeEdit}
+                      prevChecked={prevChecked}
+                    />
+                  ))}
                 </AnimatePresence>
 
-                {animatedForm('add-form', formState && (
-                  <TaskAddForm
-                    type={FORM_MODE_TO_TYPE[formState.mode]}
-                    game={game}
-                    onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
-                    onCancel={() => setFormState(null)}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {formState && (
+                    <motion.div key="add-form" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
+                      <TaskAddForm
+                        type={FORM_MODE_TO_TYPE[formState.mode]}
+                        game={game}
+                        onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
+                        onCancel={() => setFormState(null)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
               </div>
             </motion.div>
