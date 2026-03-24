@@ -3,6 +3,7 @@ import {useDragSort, useScopedDragSort} from '../util/useDragSort';
 import {AnimatePresence, motion} from 'motion/react';
 import {t} from '../util/i18n';
 import {localToUtcHHMM, uid, utcToLocalHHMM} from '../util/helpers';
+import {EVENT_TYPES} from '../constants';
 import {imgDelete, imgGet, imgSet} from '../util/imageStorage';
 import {useAppUpdate} from '../util/useAppUpdate';
 import {Modal} from './UI';
@@ -72,13 +73,21 @@ const TYPE_PICK_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
 // ── GameItemList ──────────────────────────────────────────────────
 // Renders all items of a game in a unified list with a single "+ Task" button.
 // Clicking the button pops a ContextMenu to pick a type; selecting opens TaskAddForm.
-function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
+function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd, showConfirm }) {
   const allItems  = game.items ?? [];
   const btnRef    = useRef(null);
   const [addType,    setAddType]    = useState(undefined); // undefined=hidden, string=form open
   const [pickerPos, setPickerPos] = useState(null); // {x, y} when picker is open
 
   const handleAdd = (item) => { onAdd(item); setAddType(undefined); };
+
+  // Events are deleted immediately; all other task types require confirmation.
+  const handleDelete = (iid) => {
+    const item = allItems.find((it) => it.id === iid);
+    if (!item || EVENT_TYPES.has(item.type)) { onDelete(iid); return; }
+    const name = item.name?.trim() || t(`types.${item.type}`);
+    showConfirm(t('deleteMsg', { name }), () => onDelete(iid), t('deleteBtn'));
+  };
 
   const openPicker = () => {
     const r = btnRef.current?.getBoundingClientRect();
@@ -101,7 +110,7 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd }) {
           const dndStyle = { ...itemDnd.dropStyle(game.id, ti), opacity: itemDnd.isDragging(game.id, ti) ? 0.4 : 1 };
           return (
             <motion.div key={item.id} variants={taskItemVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
-              <TaskRow task={item} showDragHandle={true} showDelete={true} onDelete={onDelete} dndProps={dndProps} dndStyle={dndStyle}>
+              <TaskRow task={item} showDragHandle={true} showDelete={true} onDelete={handleDelete} dndProps={dndProps} dndStyle={dndStyle}>
                 <TaskEdit item={item} onUpdate={onUpdate} />
               </TaskRow>
             </motion.div>
@@ -278,6 +287,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
                       onDelete={(iid) => delItem(game.id, iid)}
                       onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id ? { ...gm, items: [...(gm.items ?? []), { id: uid(), type: item.type, ...item }] } : gm))}
+                      showConfirm={showConfirm}
                     />
                   </div>
                 </div>
