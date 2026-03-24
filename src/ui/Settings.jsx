@@ -267,7 +267,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                       </div>
                     </div>
                     <div className={shared.deleteSlot}>
-                      <button onClick={() => delGame(game.id, game.name)} className={`${shared.btn} ${shared.btnDanger}`}>✕</button>
+                      <button onClick={() => delGame(game.id, game.name)} className={`${shared.btn} ${shared.btnDanger} ${shared.deleteBtn}`}>✕</button>
                     </div>
                   </div>
 

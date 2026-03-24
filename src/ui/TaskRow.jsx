@@ -31,7 +31,7 @@ export function TaskRow({
         {
           showDelete ? (
             <button
-              className={`${shared.btn} ${shared.btnDanger} ${s.deleteBtn}`}
+              className={`${shared.btn} ${shared.btnDanger} ${shared.deleteBtn}`}
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(task.id);
