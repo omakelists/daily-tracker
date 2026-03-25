@@ -1,9 +1,10 @@
-import {t} from "../util/i18n.js";
-import {cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM} from "../util/helpers.js";
-import s from "./TaskEdit.module.css";
-import shared from "./shared.module.css";
-import {Badge, BADGE_MAP} from "./UI.jsx";
-import {useEffect, useMemo, useRef} from "react";
+import {useEffect, useMemo, useRef} from 'react';
+import {t} from '../util/i18n.js';
+import {cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM} from '../util/helpers.js';
+import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants.js';
+import s from './TaskEdit.module.css';
+import shared from './shared.module.css';
+import {Badge, BADGE_MAP} from './UI.jsx';
 
 function addDaysToDate(dateStr, n) {
   const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
@@ -19,7 +20,7 @@ function addDaysToDate(dateStr, n) {
 export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
   // Countdown to currently-set deadline
   const timeUtcForCd    = (item.deadline && item.deadlineTime) ? localToUtcHHMM(item.deadlineTime) : undefined;
-  const deadlineMs      = item.type === 'event' && item.deadline ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd) : null;
+  const deadlineMs      = item.type === EVENT && item.deadline ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd) : null;
   const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
   const deadlineColor   = cdColor(deadlineMs ?? Infinity, 24, 48);
 
@@ -38,13 +39,13 @@ export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
     <div className={s.resetGroup}>
       <div className={s.resetLbl}>{t('resetLbl')}</div>
       {
-        item.type === 'daily' ? (
+        item.type === DAILY ? (
           <div className={s.resetInputGroup}>
             <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')}
                    onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))}
                    className={`${shared.inputCls} ${s.inputTime}`}/>
           </div>
-        ) : item.type === 'weekly' ? (
+        ) : item.type === WEEKLY ? (
           <div className={s.resetInputGroup}>
             <select value={item.weeklyResetDay ?? 1}
                     onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))}
@@ -52,21 +53,21 @@ export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
               {[0, 1, 2, 3, 4, 5, 6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
             </select>
           </div>
-        ) : item.type === 'halfmonthly' ? (
+        ) : item.type === HALFMONTHLY ? (
           <div className={s.resetInputGroup}>
             <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1}
                    onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
                    className={`${shared.inputCls} ${s.inputNumber}`}/>
             <span className={s.resetLbl}>{t('halfMonthSuffix', {b: (item.halfMonthlyStartDay ?? 1) + 15})}</span>
           </div>
-        ) : item.type === 'monthly' ? (
+        ) : item.type === MONTHLY ? (
           <div className={s.resetInputGroup}>
             <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1}
                    onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))}
                    className={`${shared.inputCls} ${s.inputNumber}`}/>
             <span className={s.resetLbl}>{t('dayUnit')}</span>
           </div>
-        ) : item.type === 'event' ? (
+        ) : item.type === EVENT ? (
           <div className={s.resetInputGroupLong}>
             <div className={s.resetInputBlock}>
               <div className={s.resetSupport}>

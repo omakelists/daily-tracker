@@ -1,4 +1,4 @@
-import { EVENT_TYPES } from '../constants';
+import { DAILY, EVENT } from '../constants';
 
 const GAMES_KEY  = 'dailytracker:games';
 const CHECKS_KEY = 'dailytracker:checks';
@@ -15,7 +15,7 @@ function migrateGame(g) {
       ...rest,
       items: [
         ...(tasks  ?? []),
-        ...(events ?? []).map((ev) => ({ ...ev, type: ev.type ?? 'event' })),
+        ...(events ?? []).map((ev) => ({ ...ev, type: ev.type ?? EVENT })),
       ],
     };
   }
@@ -24,7 +24,7 @@ function migrateGame(g) {
   return {
     ...g,
     items: g.items.map((it) => {
-      const { webResetTime, ...rest } = it.type === 'webdaily' ? { ...it, type: 'daily' } : it;
+      const { webResetTime, ...rest } = it.type === 'webdaily' ? { ...it, type: DAILY } : it;
       return webResetTime !== undefined ? { ...rest, resetTime: webResetTime } : rest;
     }),
   };
@@ -69,7 +69,7 @@ export function loadAll() {
     games = raw.map(migrateGame).map((g) => {
       const items = (g.items ?? []).map((it) => {
         // Phase 4: move item.done (event) into checks map
-        if (EVENT_TYPES.has(it.type) && 'done' in it) {
+        if (it.type === EVENT && 'done' in it) {
           if (it.done) checks[`${it.id}__done`] = true;
           const { done, ...rest } = it;
           migrated = true;

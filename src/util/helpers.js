@@ -1,4 +1,4 @@
-import { DAILY_TYPES, EVENT_TYPES, DAY_MS } from '../constants';
+import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT, DAY_MS } from '../constants';
 
 // ── Unique ID generator ───────────────────────────────────────────
 let _idCtr = Date.now();
@@ -135,21 +135,21 @@ export function prevHalfMonthKey(k, startDay = 1) {
 export const getTaskRT = (task, game) => task.resetTime || game.resetTime;
 
 export function getPeriodKey(task, game, now) {
-  if (EVENT_TYPES.has(task.type)) return 'done'; // events never reset
+  if (task.type === EVENT)       return 'done'; // events never reset
   const dk = getGameDateKey(now, getTaskRT(task, game));
-  if (task.type === 'weekly')      return dateToWeekKey(dk, task.weeklyResetDay ?? 1);
-  if (task.type === 'monthly')     return getMonthPeriodKey(dk, task.monthlyResetDay ?? 1);
-  if (task.type === 'halfmonthly') return dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1);
+  if (task.type === WEEKLY)      return dateToWeekKey(dk, task.weeklyResetDay ?? 1);
+  if (task.type === MONTHLY)     return getMonthPeriodKey(dk, task.monthlyResetDay ?? 1);
+  if (task.type === HALFMONTHLY) return dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1);
   return dk;
 }
 
 export function getPrevPeriodKey(task, game, now) {
-  if (EVENT_TYPES.has(task.type)) return 'done'; // events have no previous period
+  if (task.type === EVENT)       return 'done'; // events have no previous period
   const rt = getTaskRT(task, game);
   const dk = getGameDateKey(now, rt);
-  if (task.type === 'weekly')      return dateToWeekKey(shiftDate(dk, -7), task.weeklyResetDay ?? 1);
-  if (task.type === 'monthly')     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay ?? 1));
-  if (task.type === 'halfmonthly') return prevHalfMonthKey(dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1), task.halfMonthlyStartDay ?? 1);
+  if (task.type === WEEKLY)      return dateToWeekKey(shiftDate(dk, -7), task.weeklyResetDay ?? 1);
+  if (task.type === MONTHLY)     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay ?? 1));
+  if (task.type === HALFMONTHLY) return prevHalfMonthKey(dateToHalfMonthKey(dk, task.halfMonthlyStartDay ?? 1), task.halfMonthlyStartDay ?? 1);
   return getPrevGameDateKey(now, rt);
 }
 
@@ -205,9 +205,9 @@ export function msUntilNextWeek(now, rtUTC, rd = 1) {
 
 export function msUntilTaskReset(task, game, now) {
   const rt = getTaskRT(task, game);
-  if (task.type === 'monthly')     return msUntilNextMonth(now, rt, task.monthlyResetDay ?? 1);
-  if (task.type === 'halfmonthly') return msUntilNextHalfMonth(now, rt, task.halfMonthlyStartDay ?? 1);
-  if (task.type === 'weekly') return msUntilNextWeek(now, rt, task.weeklyResetDay ?? 1);
+  if (task.type === MONTHLY)     return msUntilNextMonth(now, rt, task.monthlyResetDay ?? 1);
+  if (task.type === HALFMONTHLY) return msUntilNextHalfMonth(now, rt, task.halfMonthlyStartDay ?? 1);
+  if (task.type === WEEKLY)      return msUntilNextWeek(now, rt, task.weeklyResetDay ?? 1);
   return msUntilReset(now, rt);
 }
 
@@ -250,14 +250,14 @@ export const checkKey = (id, pk) => `${id}__${pk}`;
  */
 export function calcAllDone(game, checks, now, soloId) {
   const allItems   = game.items ?? [];
-  const dailyItems = allItems.filter((it) => DAILY_TYPES.has(it.type));
+  const dailyItems = allItems.filter((it) => it.type === DAILY);
 
   if (allItems.length === 0) {
-    const solo = { id: soloId, type: 'daily' };
+    const solo = { id: soloId, type: DAILY };
     return !!checks[checkKey(solo.id, getPeriodKey(solo, game, now))];
   }
   if (dailyItems.length > 0) {
-    const urgent = allItems.filter((it) => !EVENT_TYPES.has(it.type) && msUntilTaskReset(it, game, now) > 0 && msUntilTaskReset(it, game, now) < DAY_MS);
+    const urgent = allItems.filter((it) => it.type !== EVENT && msUntilTaskReset(it, game, now) > 0 && msUntilTaskReset(it, game, now) < DAY_MS);
     return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }
   // No daily tasks: every item (task and event) is checked

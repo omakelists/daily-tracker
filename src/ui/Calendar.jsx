@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { t, ta } from '../util/i18n';
-import { DAILY_TYPES, EVENT_TYPES } from '../constants';
+import { DAILY, EVENT } from '../constants';
 import { getDaysInMonth, fmtDate, checkKey } from '../util/helpers';
 import { Modal } from './UI';
 import s from './Calendar.module.css';
@@ -19,10 +19,10 @@ export function CalendarModal({ games, checks, now, onClose }) {
   const [selTask, setSelTask] = useState(null);
 
   const game       = games.find((g) => g.id === selGame);
-  const rawTasks   = (game?.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
+  const rawTasks   = (game?.items ?? []).filter((it) => it.type !== EVENT);
   const dailyTasks = rawTasks.length
-    ? rawTasks.filter((tk) => DAILY_TYPES.has(tk.type))
-    : [{ id: `${game?.id}_solo`, type: 'daily', name: '' }];
+    ? rawTasks.filter((tk) => tk.type === DAILY)
+    : [{ id: `${game?.id}_solo`, type: DAILY, name: '' }];
 
   useEffect(() => { setSelTask(null); }, [selGame]);
 

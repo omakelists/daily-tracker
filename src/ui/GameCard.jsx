@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, forwardRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import { t } from '../util/i18n';
-import { EVENT_TYPES, DAY_MS } from '../constants';
+import { DAY_MS, DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
 import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone, applyOrder } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { GameHeader, PrevBar } from './UI';
@@ -24,15 +24,6 @@ const bodyVariants = {
   exit:    { height: 0, opacity: 0,    transition: { duration: 0.2,  ease: 'easeIn' } },
 };
 
-// ── Context menu item type definitions ────────────────────────────
-const FORM_MODE_TO_TYPE = {
-  addDaily:       'daily',
-  addWeekly:      'weekly',
-  addHalfmonthly: 'halfmonthly',
-  addMonthly:     'monthly',
-  addEvent:       'event',
-};
-
 // ── ItemRow ───────────────────────────────────────────────────────
 // Renders a single game item (task or event) inside GameCard.
 // forwardRef is required because AnimatePresence with mode="popLayout"
@@ -46,10 +37,8 @@ const ItemRow = forwardRef(function ItemRow({
   const [cbScope, animateCb] = useAnimate();
 
   const isChecked  = !!checks[checkKey(item.id, getPeriodKey(item, game, now))];
-  const showPrev   = item.type === 'daily';
-  const isEvent    = item.type === 'event';
   const isEditing  = editingId === item.id;
-  const showDelete = isEvent && isChecked && onDeleteItem;
+  const showDelete = item.type === EVENT && isChecked && onDeleteItem;
 
   return (
     <motion.div ref={ref} variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
@@ -57,7 +46,7 @@ const ItemRow = forwardRef(function ItemRow({
         ? <TaskAddForm game={game} item={item} onSave={(updates) => { onEditItem?.(game.id, item.id, updates); closeEdit(); }} onCancel={closeEdit} />
         : <TaskRow task={item} showDelete={showDelete} onContextMenu={handleItemContextMenu} onDelete={onDeleteItem ? confirmDeleteItem : undefined}>
             <div className={shared.barSlot}>
-              <PrevBar show={showPrev} checked={prevChecked(item)} />
+              <PrevBar show={item.type === DAILY} checked={prevChecked(item)} />
             </div>
             <div className={shared.cbWrap} onClick={(e) => e.stopPropagation()}>
               <button
@@ -102,7 +91,7 @@ export const GameCard = forwardRef(function GameCard({
   // Exception: expired events are deleted immediately without confirmation.
   const confirmDeleteItem = useCallback((itemId) => {
     const item = (game.items ?? []).find((it) => it.id === itemId);
-    const isExpiredEvent = EVENT_TYPES.has(item?.type) &&
+    const isExpiredEvent = item?.type === EVENT &&
       item?.deadline &&
       msUntilDeadline(item.deadline, now, item.deadlineTime ?? null) <= 0;
     const doDelete = () => onDeleteItem?.(game.id, itemId);
@@ -159,7 +148,7 @@ export const GameCard = forwardRef(function GameCard({
     for (const it of allItems) {
       if (isChecked(it)) continue;
       let m;
-      if (EVENT_TYPES.has(it.type)) {
+      if (it.type === EVENT) {
         if (!it.deadline) continue;
         m = msUntilDeadline(it.deadline, now, it.deadlineTime);
       } else {
@@ -184,11 +173,11 @@ export const GameCard = forwardRef(function GameCard({
   const ctxItems = useMemo(() => {
     if (!ctxMenu) return [];
     if (ctxMenu.target === 'header') return [
-      { label: t('types.daily'),       icon: '➕', onClick: () => setFormState({ mode: 'addDaily' }) },
-      { label: t('types.weekly'),      icon: '➕', onClick: () => setFormState({ mode: 'addWeekly' }) },
-      { label: t('types.halfmonthly'), icon: '➕', onClick: () => setFormState({ mode: 'addHalfmonthly' }) },
-      { label: t('types.monthly'),     icon: '➕', onClick: () => setFormState({ mode: 'addMonthly' }) },
-      { label: t('types.event'),       icon: '➕', onClick: () => setFormState({ mode: 'addEvent' }) },
+      { label: t('types.daily'),       icon: '➕', onClick: () => setFormState({ mode: DAILY }) },
+      { label: t('types.weekly'),      icon: '➕', onClick: () => setFormState({ mode: WEEKLY }) },
+      { label: t('types.halfmonthly'), icon: '➕', onClick: () => setFormState({ mode: HALFMONTHLY }) },
+      { label: t('types.monthly'),     icon: '➕', onClick: () => setFormState({ mode: MONTHLY }) },
+      { label: t('types.event'),       icon: '➕', onClick: () => setFormState({ mode: EVENT }) },
     ];
     if (ctxMenu.target === 'item') return [
       { label: t('ctxEditTask'),   icon: '✏️',  onClick: () => setEditingId(ctxMenu.itemId) },
@@ -272,7 +261,7 @@ export const GameCard = forwardRef(function GameCard({
                   {formState && (
                     <motion.div key="add-form" variants={taskVariants} initial="initial" animate="animate" exit="exit" className={shared.clipContents}>
                       <TaskAddForm
-                        type={FORM_MODE_TO_TYPE[formState.mode]}
+                        type={formState.mode}
                         game={game}
                         onAdd={(task) => { onAddItem?.(game.id, task); setFormState(null); }}
                         onCancel={() => setFormState(null)}

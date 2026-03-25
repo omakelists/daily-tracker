@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EVENT_TYPES } from '../constants';
+import { EVENT } from '../constants';
 import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './useLocalStoragePref';
 import { imgGet, imgPurgeOrphans } from './imageStorage';
 import { msUntilDeadline } from './helpers';
@@ -91,7 +91,7 @@ export function useAppSettings(games, setGames, now) {
     const thresholdMs = autoDeleteDays * 86_400_000;
     setGames((prev) => prev.map((g) => {
       const filtered = (g.items ?? []).filter((item) => {
-        if (!EVENT_TYPES.has(item.type)) return true; // never auto-delete tasks
+        if (item.type !== EVENT) return true; // never auto-delete tasks
         if (!item.deadline) return true;
         const ms = msUntilDeadline(item.deadline, now, item.deadlineTime ?? null);
         return ms > -thresholdMs; // keep if not yet past the grace threshold

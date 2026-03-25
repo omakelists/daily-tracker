@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
-import { DEFAULT_GAMES, DAILY_TYPES, EVENT_TYPES } from './constants';
+import { DEFAULT_GAMES, DAILY, EVENT } from './constants';
 import { loadAll, saveGames, saveChecks } from './util/storage';
 import { uid, getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
          msUntilTaskReset, calcAllDone } from './util/helpers';
@@ -49,8 +49,8 @@ export function App() {
     if (games) {
       games.forEach((game) => {
         // Cover all task types (daily + periodic); fall back to solo when game has no tasks.
-        const taskItems = (game.items ?? []).filter((it) => !EVENT_TYPES.has(it.type));
-        const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: 'daily' }];
+        const taskItems = (game.items ?? []).filter((it) => it.type !== EVENT);
+        const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: DAILY }];
         tasks.forEach((task) => {
           const ms = msUntilTaskReset(task, game, now);
           if (ms > 0 && ms < minMs) minMs = ms;
@@ -72,9 +72,9 @@ export function App() {
   const soloId = (game) => `${game.id}_solo`;
 
   const getDailyTasks = useCallback((game) => {
-    const dailyItems = (game.items ?? []).filter((it) => DAILY_TYPES.has(it.type));
+    const dailyItems = (game.items ?? []).filter((it) => it.type === DAILY);
     // If no daily items exist, use a virtual solo task so the master checkbox is functional.
-    return dailyItems.length ? dailyItems : [{ id: soloId(game), type: 'daily' }];
+    return dailyItems.length ? dailyItems : [{ id: soloId(game), type: DAILY }];
   }, []);
 
   const isAllDone = useCallback((game) => calcAllDone(game, checks, now, soloId(game)), [checks, now]);
@@ -88,7 +88,7 @@ export function App() {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
           const allItems   = game.items ?? [];
-          const allTasks   = allItems.length ? allItems : [{ id: soloId(game), type: 'daily' }];
+          const allTasks   = allItems.length ? allItems : [{ id: soloId(game), type: DAILY }];
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });

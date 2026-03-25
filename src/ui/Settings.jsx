@@ -3,7 +3,7 @@ import {useDragSort, useScopedDragSort} from '../util/useDragSort';
 import {AnimatePresence, motion} from 'motion/react';
 import {t} from '../util/i18n';
 import {localToUtcHHMM, uid, utcToLocalHHMM} from '../util/helpers';
-import {EVENT_TYPES} from '../constants';
+import {ALL_TASK_TYPES, EVENT} from '../constants';
 import {imgDelete, imgGet, imgSet} from '../util/imageStorage';
 import {useAppUpdate} from '../util/useAppUpdate';
 import {Modal} from './UI';
@@ -67,9 +67,6 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }) {
 }
 
 
-// ── TYPE_PICK_OPTS: type picker options ───────────────────────────
-const TYPE_PICK_OPTS = ['daily', 'weekly', 'monthly', 'halfmonthly', 'event'];
-
 // ── GameItemList ──────────────────────────────────────────────────
 // Renders all items of a game in a unified list with a single "+ Task" button.
 // Clicking the button pops a ContextMenu to pick a type; selecting opens TaskAddForm.
@@ -84,7 +81,7 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd, showConfirm })
   // Events are deleted immediately; all other task types require confirmation.
   const handleDelete = (iid) => {
     const item = allItems.find((it) => it.id === iid);
-    if (!item || EVENT_TYPES.has(item.type)) { onDelete(iid); return; }
+    if (!item || item.type === EVENT) { onDelete(iid); return; }
     const name = item.name?.trim() || t(`types.${item.type}`);
     showConfirm(t('deleteMsg', { name }), () => onDelete(iid), t('deleteBtn'));
   };
@@ -96,7 +93,7 @@ function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd, showConfirm })
 
   const closePicker = () => setPickerPos(null);
 
-  const pickerItems = TYPE_PICK_OPTS.map((ty) => ({
+  const pickerItems = ALL_TASK_TYPES.map((ty) => ({
     label: t(`types.${ty}`),
     onClick: () => { closePicker(); setAddType(ty); },
   }));

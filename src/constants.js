@@ -1,7 +1,12 @@
-// ── Task classification ────────────────────────────────────────────
-export const DAILY_TYPES  = new Set(['daily']);
-export const PERIOD_TYPES = new Set(['weekly', 'monthly', 'halfmonthly']);
-export const EVENT_TYPES  = new Set(['event']);
+// ── Task type constants ───────────────────────────────────────────
+export const DAILY       = 'daily';
+export const WEEKLY      = 'weekly';
+export const HALFMONTHLY = 'halfmonthly';
+export const MONTHLY     = 'monthly';
+export const EVENT       = 'event';
+
+// All selectable task types, in display order.
+export const ALL_TASK_TYPES = [DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT];
 
 // ── Time constants ────────────────────────────────────────────────
 export const DAY_MS = 24 * 3600_000;  // milliseconds in one day

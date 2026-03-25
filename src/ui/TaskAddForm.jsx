@@ -1,9 +1,10 @@
 import {useState} from 'react';
 import {t} from '../util/i18n';
 import {uid, utcToLocalHHMM} from '../util/helpers';
+import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants';
 import s from './TaskAddForm.module.css';
 import shared from './shared.module.css';
-import {TaskEdit} from "./TaskEdit.jsx";
+import {TaskEdit} from './TaskEdit.jsx';
 
 export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
   const isEdit      = !!item;
@@ -29,11 +30,11 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
   const handleSubmit = () => {
     const newTask = { id: uid(), type: task.type, name: task.name.trim() || t(`types.${task.type}`) };
     switch (task.type) {
-      case 'daily'      : newTask.resetTime           = task.resetTime; break;
-      case 'monthly'    : newTask.monthlyResetDay     = Number(task.monthlyResetDay); break;
-      case 'weekly'     : newTask.weeklyResetDay      = Number(task.weeklyResetDay); break;
-      case 'halfmonthly': newTask.halfMonthlyStartDay = Number(task.halfMonthlyStartDay); break;
-      case 'event':
+      case DAILY:       newTask.resetTime           = task.resetTime; break;
+      case MONTHLY:     newTask.monthlyResetDay     = Number(task.monthlyResetDay); break;
+      case WEEKLY:      newTask.weeklyResetDay      = Number(task.weeklyResetDay); break;
+      case HALFMONTHLY: newTask.halfMonthlyStartDay = Number(task.halfMonthlyStartDay); break;
+      case EVENT:
         newTask.deadline = task.deadline || null;
         newTask.deadlineTime = task.deadlineTime || null;
         break;
