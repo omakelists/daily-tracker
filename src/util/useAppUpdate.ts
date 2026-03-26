@@ -6,45 +6,53 @@ const VERSION_CHECK_URL = './version.json?check=1';
 const UPDATED_FLAG      = 'app-updated';
 const SKIP_WAITING_MSG  = { type: 'SKIP_WAITING' };
 
-// ── Helpers ───────────────────────────────────────────────────────
+interface VersionInfo {
+  version?: string;
+}
 
-async function fetchVersions() {
+interface VersionState {
+  current: string;
+  latest: string;
+  hasUpdate: boolean;
+  timedOut?: boolean;
+}
+
+type VerState =
+  | null
+  | 'checking'
+  | 'updating'
+  | 'reloading'
+  | 'error'
+  | VersionState;
+
+async function fetchVersions(): Promise<{ cached: VersionInfo; net: VersionInfo }> {
   const [cachedRes, netRes] = await Promise.all([
     fetch(VERSION_URL),
-    fetch(VERSION_CHECK_URL + '&t=' + Date.now()), // bust any intermediate caches
+    fetch(VERSION_CHECK_URL + '&t=' + Date.now()),
   ]);
   if (!cachedRes.ok || !netRes.ok) throw new Error('fetch failed');
-  const [cached, net] = await Promise.all([cachedRes.json(), netRes.json()]);
+  const [cached, net] = await Promise.all([
+    cachedRes.json() as Promise<VersionInfo>,
+    netRes.json() as Promise<VersionInfo>,
+  ]);
   return { cached, net };
 }
 
-// Registers the controllerchange listener BEFORE posting SKIP_WAITING so a
-// fast-responding SW cannot fire the event before the listener is in place.
-function activateAndReload(reg) {
+function activateAndReload(reg: ServiceWorkerRegistration): void {
   try { localStorage.setItem(UPDATED_FLAG, '1'); } catch { /* ignore */ }
   navigator.serviceWorker.addEventListener(
     'controllerchange',
     () => window.location.reload(),
     { once: true },
   );
-  reg.waiting.postMessage(SKIP_WAITING_MSG);
+  reg.waiting?.postMessage(SKIP_WAITING_MSG);
 }
 
-// ── useAppUpdate ──────────────────────────────────────────────────
-//
-// Returns:
-//   updateInfo   — null | { current, next }  (used by App for the ⬆️ badge)
-//   flashMsg     — null | string             (post-reload toast, auto-clears after 4 s)
-//   verState     — null | 'checking' | 'updating' | 'reloading' | 'error'
-//                  | { current, latest, hasUpdate, timedOut? }
-//   checkVersion — () => void  (Settings "check" button)
-//   doUpdate     — () => void  (Settings "update" button / App ⬆️ button)
 export function useAppUpdate() {
-  const [updateInfo, setUpdateInfo] = useState(null);
-  const [flashMsg,   setFlashMsg]   = useState(null);
-  const [verState,   setVerState]   = useState(null);
+  const [updateInfo, setUpdateInfo] = useState<{ current: string; next: string } | null>(null);
+  const [flashMsg,   setFlashMsg]   = useState<string | null>(null);
+  const [verState,   setVerState]   = useState<VerState>(null);
 
-  // ── Post-update toast (runs once on mount after a reload) ─────
   useEffect(() => {
     try {
       if (!localStorage.getItem(UPDATED_FLAG)) return;
@@ -55,7 +63,6 @@ export function useAppUpdate() {
     } catch { /* ignore */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Passive SW update detection (runs once on mount) ─────────
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
@@ -63,7 +70,7 @@ export function useAppUpdate() {
       try {
         const { cached, net } = await fetchVersions();
         if (net.version && net.version !== cached.version) {
-          setUpdateInfo({ current: cached.version, next: net.version });
+          setUpdateInfo({ current: cached.version ?? '?', next: net.version });
         }
       } catch { /* ignore */ }
     };
@@ -81,7 +88,6 @@ export function useAppUpdate() {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Active version check (Settings "check" button) ───────────
   const checkVersion = useCallback(async () => {
     setVerState('checking');
     try {
@@ -96,21 +102,18 @@ export function useAppUpdate() {
     }
   }, []);
 
-  // ── Apply update (Settings "update" button / App ⬆️ button) ──
   const doUpdate = useCallback(async () => {
     if (!('serviceWorker' in navigator)) return;
     setVerState('updating');
     try {
       const reg = await navigator.serviceWorker.ready;
 
-      // Fast path: new SW is already waiting.
       if (reg.waiting) {
         setVerState('reloading');
         activateAndReload(reg);
         return;
       }
 
-      // Slow path: force a SW update check and wait for it to reach 'installed'.
       await reg.update();
       let settled = false;
 
@@ -121,7 +124,7 @@ export function useAppUpdate() {
           ...(typeof prev === 'object' && prev !== null ? prev : {}),
           hasUpdate: true,
           timedOut:  true,
-        }));
+        } as VersionState));
       }, 20_000);
 
       reg.addEventListener('updatefound', () => {
@@ -137,7 +140,6 @@ export function useAppUpdate() {
         });
       }, { once: true });
 
-      // Race: another tab may have already advanced the SW to waiting.
       if (reg.waiting && !settled) {
         settled = true;
         clearTimeout(timeout);

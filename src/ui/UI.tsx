@@ -1,10 +1,12 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { t } from '../util/i18n';
+import type { ReactNode, CSSProperties } from 'react';
+import type { Game, Task } from '../types';
 import s from './UI.module.css';
 import shared from './shared.module.css';
 
 // ── Badge CSS class map ───────────────────────────────────────────
-export const BADGE_MAP = {
+export const BADGE_MAP: Record<string, string> = {
   daily:       s.badgeDaily,
   weekly:      s.badgeWeekly,
   monthly:     s.badgeMonthly,
@@ -30,10 +32,27 @@ const confirmBoxVariants = {
 };
 
 // ── GameHeader ────────────────────────────────────────────────────
-// Game-level header row. Used by both GameCard (main) and Settings.
-// Slot structure (left→right):
-//   barSlot | colorSlot | checkbox | handleSlot | contentSlot | metaSlot | deleteSlot
-export function GameHeader({ barSlot, headerTrigger, colorSlot, checkbox, handleSlot, contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps }) {
+interface GameHeaderProps {
+  barSlot?: ReactNode;
+  headerTrigger?: Record<string, unknown>;
+  colorSlot?: ReactNode;
+  checkbox?: ReactNode;
+  handleSlot?: ReactNode;
+  contentSlot?: ReactNode;
+  metaSlot?: ReactNode;
+  deleteSlot?: ReactNode;
+  bg?: string;
+  borderBottom?: string;
+  className?: string;
+  style?: CSSProperties;
+  onClick?: () => void;
+  rootProps?: Record<string, unknown>;
+}
+
+export function GameHeader({
+  barSlot, headerTrigger, colorSlot, checkbox, handleSlot,
+  contentSlot, metaSlot, deleteSlot, bg, borderBottom, className, style, onClick, rootProps,
+}: GameHeaderProps) {
   return (
     <div
       {...rootProps}
@@ -45,18 +64,23 @@ export function GameHeader({ barSlot, headerTrigger, colorSlot, checkbox, handle
       <div className={shared.barSlot}>{barSlot}</div>
       <div className={s.colorSlot}>{colorSlot}</div>
       {checkbox   != null && <div className={shared.cbWrap}     onClick={(e) => e.stopPropagation()}>{checkbox}</div>}
-      {handleSlot != null && <div className={shared.handleSlot} >{handleSlot}</div>}
+      {handleSlot != null && <div className={shared.handleSlot}>{handleSlot}</div>}
       <div className={shared.taskWrapSlot}>
         <div className={shared.taskLabelSlot}>{contentSlot}</div>
-        {metaSlot != null && (
-          <div className={shared.meta}>{metaSlot}</div>
-        )}
+        {metaSlot != null && <div className={shared.meta}>{metaSlot}</div>}
       </div>
       {deleteSlot != null && <div className={shared.deleteSlot}>{deleteSlot}</div>}
     </div>
   );
 }
-export function PrevBar({ show, checked, partial }) {
+
+interface PrevBarProps {
+  show: boolean;
+  checked?: boolean;
+  partial?: boolean;
+}
+
+export function PrevBar({ show, checked, partial }: PrevBarProps) {
   if (!show) return null;
   const color = checked ? 'var(--prev-done)' : partial ? 'var(--prev-partial)' : 'var(--prev-miss)';
   return (
@@ -68,7 +92,8 @@ export function PrevBar({ show, checked, partial }) {
     </div>
   );
 }
-export function Badge({item}) {
+
+export function Badge({ item }: { item: Pick<Task, 'type'> }) {
   return (
     <span className={`${s.taskBadge} ${BADGE_MAP[item.type]}`}>
       <span className={s.badgeText}>{t(`types.${item.type}`)}</span>
@@ -77,8 +102,14 @@ export function Badge({item}) {
 }
 
 // ── Modal ─────────────────────────────────────────────────────────
-// AnimatePresence must wrap the conditional render at the call site.
-export function Modal({ title, titleExtra, onClose, children }) {
+interface ModalProps {
+  title: string;
+  titleExtra?: ReactNode;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+export function Modal({ title, titleExtra, onClose, children }: ModalProps) {
   return (
     <motion.div
       className={s.overlay}
@@ -105,8 +136,14 @@ export function Modal({ title, titleExtra, onClose, children }) {
 }
 
 // ── ConfirmDialog ─────────────────────────────────────────────────
-// AnimatePresence must wrap the conditional render at the call site.
-export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
+interface ConfirmDialogProps {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  confirmLabel?: string;
+}
+
+export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }: ConfirmDialogProps) {
   return (
     <motion.div
       className={s.confirmOverlay}
@@ -128,3 +165,6 @@ export function ConfirmDialog({ message, onConfirm, onCancel, confirmLabel }) {
     </motion.div>
   );
 }
+
+// Re-export Game for components that import from UI
+export type { Game };

@@ -1,24 +1,37 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { PointerEvent } from "react";
 import { t } from '../util/i18n';
 import s from './CropModal.module.css';
 import shared from './shared.module.css';
 
 const MAX_DISPLAY = 700;
 
-export function CropModal({ file, onConfirm, onCancel }) {
-  const [transformedBitmap, setTransformedBitmap] = useState(null);
+interface CropRect { x: number; y: number; w: number; h: number; }
+interface DragState {
+  mode: 'draw' | 'move';
+  ox: number; oy: number;
+  cx?: number; cy?: number;
+}
+
+interface CropModalProps {
+  file: File;
+  onConfirm: (dataUrl: string, opacity: number) => void;
+  onCancel: () => void;
+}
+
+export function CropModal({ file, onConfirm, onCancel }: CropModalProps) {
+  const [transformedBitmap, setTransformedBitmap] = useState<ImageBitmap | null>(null);
   const [dispSize, setDispSize] = useState({ w: 0, h: 0 });
-  const [crop,    setCrop]    = useState(null);
+  const [crop,    setCrop]    = useState<CropRect | null>(null);
   const [flipH,   setFlipH]   = useState(false);
   const [flipV,   setFlipV]   = useState(false);
   const [rot,     setRot]     = useState(0);
   const [opacity, setOpacity] = useState(0.5);
 
-  const rawImgRef     = useRef(null);
-  const cropCanvasRef = useRef(null);
-  const dragRef       = useRef(null);
+  const rawImgRef     = useRef<HTMLImageElement | null>(null);
+  const cropCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const dragRef       = useRef<DragState | null>(null);
 
-  // ── 1. Load file ──────────────────────────────────────────────
   useEffect(() => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -26,14 +39,13 @@ export function CropModal({ file, onConfirm, onCancel }) {
     img.src = url;
   }, [file]);
 
-  // ── 2. Rebuild transformed bitmap ────────────────────────────
-  const rebuildBitmap = useCallback((imgEl, fH, fV, r) => {
+  const rebuildBitmap = useCallback((imgEl: HTMLImageElement, fH: boolean, fV: boolean, r: number) => {
     const nw = imgEl.naturalWidth, nh = imgEl.naturalHeight;
     const swapped = r === 90 || r === 270;
     const bw = swapped ? nh : nw, bh = swapped ? nw : nh;
     const tmp = document.createElement('canvas');
     tmp.width = bw; tmp.height = bh;
-    const ctx = tmp.getContext('2d');
+    const ctx = tmp.getContext('2d')!;
     ctx.save();
     ctx.translate(bw / 2, bh / 2);
     if (r)  ctx.rotate(r * Math.PI / 180);
@@ -56,12 +68,11 @@ export function CropModal({ file, onConfirm, onCancel }) {
     if (rawImgRef.current) rebuildBitmap(rawImgRef.current, flipH, flipV, rot);
   }, [flipH, flipV, rot, rebuildBitmap]);
 
-  // ── 3. Paint canvas ───────────────────────────────────────────
   useEffect(() => {
     const canvas = cropCanvasRef.current;
     if (!canvas || !transformedBitmap || !dispSize.w) return;
     canvas.width = dispSize.w; canvas.height = dispSize.h;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d')!;
     ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h);
     ctx.fillStyle = 'rgba(0,0,0,0.52)'; ctx.fillRect(0, 0, dispSize.w, dispSize.h);
     if (crop && crop.w > 2 && crop.h > 2) {
@@ -76,7 +87,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
         ctx.beginPath(); ctx.moveTo(x, y + h*i/3); ctx.lineTo(x+w, y + h*i/3); ctx.stroke();
       }
       const hs = 8; ctx.fillStyle = 'white';
-      [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy]) => ctx.fillRect(hx-hs/2, hy-hs/2, hs, hs));
+      ([[x,y],[x+w,y],[x,y+h],[x+w,y+h]] as [number,number][]).forEach(([hx,hy]) => ctx.fillRect(hx-hs/2, hy-hs/2, hs, hs));
       const cx2 = x+w/2, cy2 = y+h/2;
       ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.beginPath(); ctx.arc(cx2, cy2, 10, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -84,9 +95,9 @@ export function CropModal({ file, onConfirm, onCancel }) {
     }
   }, [transformedBitmap, dispSize, crop]);
 
-  // ── 4. Pointer helpers ────────────────────────────────────────
-  const getRelXY = useCallback((e) => {
-    const canvas = cropCanvasRef.current, rect = canvas.getBoundingClientRect();
+  const getRelXY = useCallback((e: PointerEvent) => {
+    const canvas = cropCanvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
     return {
       x: Math.max(0, Math.min(dispSize.w, (e.clientX - rect.left) * scaleX)),
@@ -94,44 +105,46 @@ export function CropModal({ file, onConfirm, onCancel }) {
     };
   }, [dispSize]);
 
-  const inMoveHandle = useCallback((px, py) => {
+  const inMoveHandle = useCallback((px: number, py: number) => {
     if (!crop || crop.w < 10 || crop.h < 10) return false;
     return Math.hypot(px - (crop.x + crop.w/2), py - (crop.y + crop.h/2)) <= 14;
   }, [crop]);
 
-  // ── 5. Pointer handlers ───────────────────────────────────────
-  const onPointerDown = useCallback((e) => {
+  const onPointerDown = useCallback((e: PointerEvent) => {
     e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId);
     const { x, y } = getRelXY(e);
     if (inMoveHandle(x, y)) {
-      dragRef.current = { mode: 'move', ox: x, oy: y, cx: crop.x, cy: crop.y };
+      dragRef.current = { mode: 'move', ox: x, oy: y, cx: crop!.x, cy: crop!.y };
     } else {
       dragRef.current = { mode: 'draw', ox: x, oy: y };
       setCrop({ x, y, w: 0, h: 0 });
     }
   }, [getRelXY, inMoveHandle, crop]);
 
-  const onPointerMove = useCallback((e) => {
+  const onPointerMove = useCallback((e: PointerEvent) => {
     if (!dragRef.current) return;
     const d = dragRef.current, { x, y } = getRelXY(e);
     if (d.mode === 'draw') {
       const nx = Math.min(d.ox, x), ny = Math.min(d.oy, y);
       setCrop({ x: nx, y: ny, w: Math.min(Math.abs(x-d.ox), dispSize.w-nx), h: Math.min(Math.abs(y-d.oy), dispSize.h-ny) });
     } else {
-      setCrop((prev) => prev ? { ...prev, x: Math.max(0, Math.min(dispSize.w-prev.w, d.cx+(x-d.ox))), y: Math.max(0, Math.min(dispSize.h-prev.h, d.cy+(y-d.oy))) } : prev);
+      setCrop((prev) => prev ? {
+        ...prev,
+        x: Math.max(0, Math.min(dispSize.w-prev.w, (d.cx ?? 0) + (x-d.ox))),
+        y: Math.max(0, Math.min(dispSize.h-prev.h, (d.cy ?? 0) + (y-d.oy))),
+      } : prev);
     }
   }, [getRelXY, dispSize]);
 
   const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
 
-  const onPointerMoveForCursor = useCallback((e) => {
+  const onPointerMoveForCursor = useCallback((e: PointerEvent) => {
     const canvas = cropCanvasRef.current; if (!canvas) return;
     const { x, y } = getRelXY(e);
     canvas.style.cursor = inMoveHandle(x, y) ? 'move' : 'crosshair';
     onPointerMove(e);
   }, [getRelXY, inMoveHandle, onPointerMove]);
 
-  // ── 6. Export ─────────────────────────────────────────────────
   const handleConfirm = () => {
     if (!crop || crop.w < 5 || crop.h < 5 || !transformedBitmap) { onCancel(); return; }
     const scaleX = transformedBitmap.width / dispSize.w, scaleY = transformedBitmap.height / dispSize.h;
@@ -140,7 +153,7 @@ export function CropModal({ file, onConfirm, onCancel }) {
     const ratio = Math.min(1, 1920 / Math.max(sw, sh));
     const out = document.createElement('canvas');
     out.width = Math.round(sw*ratio); out.height = Math.round(sh*ratio);
-    out.getContext('2d').drawImage(transformedBitmap, sx, sy, sw, sh, 0, 0, out.width, out.height);
+    out.getContext('2d')!.drawImage(transformedBitmap, sx, sy, sw, sh, 0, 0, out.width, out.height);
     onConfirm(out.toDataURL('image/jpeg', 0.85), opacity);
   };
 

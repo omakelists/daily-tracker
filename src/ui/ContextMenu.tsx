@@ -3,8 +3,23 @@ import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import s from './ContextMenu.module.css';
 
-export function ContextMenu({ x, y, items, onClose }) {
-  const menuRef = useRef(null);
+export interface ContextMenuItem {
+  separator?: boolean;
+  label?: string;
+  icon?: string;
+  danger?: boolean;
+  onClick?: () => void;
+}
+
+interface ContextMenuProps {
+  x: number;
+  y: number;
+  items: ContextMenuItem[];
+  onClose: () => void;
+}
+
+export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const el = menuRef.current;
@@ -17,10 +32,10 @@ export function ContextMenu({ x, y, items, onClose }) {
   }, [x, y]);
 
   useEffect(() => {
-    const onPointer = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) onClose();
+    const onPointer = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
     };
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('pointerdown', onPointer, true);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -45,7 +60,7 @@ export function ContextMenu({ x, y, items, onClose }) {
             <button
               key={i}
               className={`${s.item}${item.danger ? ` ${s.itemDanger}` : ''}`}
-              onClick={() => { item.onClick(); onClose(); }}
+              onClick={() => { item.onClick?.(); onClose(); }}
             >
               {item.icon && <span className={s.icon}>{item.icon}</span>}
               {item.label}

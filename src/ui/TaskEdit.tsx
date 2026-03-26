@@ -1,106 +1,111 @@
-import {useEffect, useMemo, useRef} from 'react';
-import {t} from '../util/i18n';
-import {cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM} from '../util/helpers';
-import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants';
+import { useEffect, useMemo, useRef } from 'react';
+import type { KeyboardEvent } from "react";
+import { t } from '../util/i18n';
+import { cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM } from '../util/helpers';
+import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
+import type { TaskDraft } from '../types';
+import { Badge } from './UI';
 import s from './TaskEdit.module.css';
 import shared from './shared.module.css';
-import {Badge, BADGE_MAP} from './UI';
 
-function addDaysToDate(dateStr, n) {
+function addDaysToDate(dateStr: string | null | undefined, n: number): string {
   const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
   base.setDate(base.getDate() + n);
   return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
 }
 
-/**
- * TaskEdit — Edit task row.
- * Symmetric structure to main-screen TaskRow:
- *   dragSlot | badgeSlot | content(.taskName) | meta(.resetGroup) | deleteSlot
- */
-export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
-  // Countdown to currently-set deadline
-  const timeUtcForCd    = (item.deadline && item.deadlineTime) ? localToUtcHHMM(item.deadlineTime) : undefined;
-  const deadlineMs      = item.type === EVENT && item.deadline ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd) : null;
+interface TaskEditProps {
+  item: TaskDraft;
+  onUpdate: (id: string, key: string, val: unknown) => void;
+  handleSubmit?: () => void;
+  onCancel?: () => void;
+}
+
+export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditProps) {
+  const timeUtcForCd = (item.deadline && item.deadlineTime) ? localToUtcHHMM(item.deadlineTime) : undefined;
+  const deadlineMs   = item.type === EVENT && item.deadline
+    ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd)
+    : null;
   const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
   const deadlineColor   = cdColor(deadlineMs ?? Infinity, 24, 48);
 
-  const inputRef = useRef(null);
-  // Use setTimeout to allow AnimatePresence to finish mounting before focusing
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 0); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), []);
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter')  handleSubmit();
-    if (e.key === 'Escape') onCancel();
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter')  handleSubmit?.();
+    if (e.key === 'Escape') onCancel?.();
   };
 
   const resetMeta = (
     <div className={s.resetGroup}>
       <div className={s.resetLbl}>{t('resetLbl')}</div>
-      {
-        item.type === DAILY ? (
-          <div className={s.resetInputGroup}>
-            <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')}
-                   onChange={(e) => onUpdate(item.id, 'resetTime', localToUtcHHMM(e.target.value))}
-                   className={`${shared.inputCls} ${s.inputTime}`}/>
-          </div>
-        ) : item.type === WEEKLY ? (
-          <div className={s.resetInputGroup}>
-            <select value={item.weeklyResetDay ?? 1}
-                    onChange={(e) => onUpdate(item.id, 'weeklyResetDay', Number(e.target.value))}
-                    className={`${shared.inputCls} ${s.inputDow}`}>
-              {[0, 1, 2, 3, 4, 5, 6].map((d) => <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>)}
-            </select>
-          </div>
-        ) : item.type === HALFMONTHLY ? (
-          <div className={s.resetInputGroup}>
-            <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1}
-                   onChange={(e) => onUpdate(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
-                   className={`${shared.inputCls} ${s.inputNumber}`}/>
-            <span className={s.resetLbl}>{t('halfMonthSuffix', {b: (item.halfMonthlyStartDay ?? 1) + 15})}</span>
-          </div>
-        ) : item.type === MONTHLY ? (
-          <div className={s.resetInputGroup}>
-            <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1}
-                   onChange={(e) => onUpdate(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))}
-                   className={`${shared.inputCls} ${s.inputNumber}`}/>
-            <span className={s.resetLbl}>{t('dayUnit')}</span>
-          </div>
-        ) : item.type === EVENT ? (
-          <div className={s.resetInputGroupLong}>
-            <div className={s.resetInputBlock}>
-              <div className={s.resetSupport}>
-                <input type="date" value={item.deadline ?? ''}
-                       onChange={(e) => onUpdate(item.id, 'deadline', e.target.value || null)}
-                       className={`${shared.inputCls} ${s.inputDate}`}/>
-              </div>
-              <div className={s.resetSupport}>
-                {item.deadline && deadlineMs !== null && (
-                  <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
-                    {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
-                  </span>
-                )}
-              </div>
-              <div className={s.resetSupport}>
-                {[1, 2, 5, 10].map((n) => (
-                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate(item.id, 'deadline', addDaysToDate(item.deadline, n))}>
-                    +{n}{t('cd.d')}
-                  </button>
-                ))}
-              </div>
+      {item.type === DAILY ? (
+        <div className={s.resetInputGroup}>
+          <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')}
+                   onChange={(e) => onUpdate?.(item.id, 'resetTime', localToUtcHHMM(e.target.value))}
+                 className={`${shared.inputCls} ${s.inputTime}`} />
+        </div>
+      ) : item.type === WEEKLY ? (
+        <div className={s.resetInputGroup}>
+          <select value={item.weeklyResetDay ?? 1}
+                    onChange={(e) => onUpdate?.(item.id, 'weeklyResetDay', Number(e.target.value))}
+                  className={`${shared.inputCls} ${s.inputDow}`}>
+            {[0, 1, 2, 3, 4, 5, 6].map((d) => (
+              <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>
+            ))}
+          </select>
+        </div>
+      ) : item.type === HALFMONTHLY ? (
+        <div className={s.resetInputGroup}>
+          <input type="number" min="1" max="15" value={item.halfMonthlyStartDay ?? 1}
+                   onChange={(e) => onUpdate?.(item.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
+                 className={`${shared.inputCls} ${s.inputNumber}`} />
+          <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (item.halfMonthlyStartDay ?? 1) + 15 })}</span>
+        </div>
+      ) : item.type === MONTHLY ? (
+        <div className={s.resetInputGroup}>
+          <input type="number" min="1" max="28" value={item.monthlyResetDay ?? 1}
+                   onChange={(e) => onUpdate?.(item.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))}
+                 className={`${shared.inputCls} ${s.inputNumber}`} />
+          <span className={s.resetLbl}>{t('dayUnit')}</span>
+        </div>
+      ) : item.type === EVENT ? (
+        <div className={s.resetInputGroupLong}>
+          <div className={s.resetInputBlock}>
+            <div className={s.resetSupport}>
+              <input type="date" value={item.deadline ?? ''}
+                       onChange={(e) => onUpdate?.(item.id, 'deadline', e.target.value || null)}
+                     className={`${shared.inputCls} ${s.inputDate}`} />
             </div>
-            <div className={s.resetInputBlock}>
-              <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''}
-                     onChange={(e) => onUpdate(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)}
-                     disabled={!item.deadline} className={`${shared.inputCls} ${s.inputTime}`}
-                     style={{opacity: item.deadline ? 1 : 0.35}}/>
+            <div className={s.resetSupport}>
+              {item.deadline && deadlineMs !== null && (
+                <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
+                  {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
+                </span>
+              )}
+            </div>
+            <div className={s.resetSupport}>
+              {[1, 2, 5, 10].map((n) => (
+                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate?.(item.id, 'deadline', addDaysToDate(item.deadline, n))}>
+                  +{n}{t('cd.d')}
+                </button>
+              ))}
             </div>
           </div>
-        ) : null
-      }
+          <div className={s.resetInputBlock}>
+            <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''}
+                     onChange={(e) => onUpdate?.(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)}
+                   disabled={!item.deadline}
+                   className={`${shared.inputCls} ${s.inputTime}`}
+                   style={{ opacity: item.deadline ? 1 : 0.35 }} />
+          </div>
+        </div>
+      ) : null}
     </div>
-  )
+  );
 
   return (
     <div className={shared.taskInfo}>
@@ -112,7 +117,7 @@ export function TaskEdit({item, onUpdate, handleSubmit, onCancel}) {
           <input
             ref={inputRef}
             value={item.name}
-            onChange={(e) => onUpdate(item.id, 'name', e.target.value)}
+            onChange={(e) => onUpdate?.(item.id, 'name', e.target.value)}
             onKeyDown={handleKeyDown}
             className={`${shared.inputCls} ${s.taskName}`}
             placeholder={t(`types.${item.type}`)}

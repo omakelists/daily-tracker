@@ -1,30 +1,34 @@
 import { useState, useRef, useCallback } from 'react';
+import type { HTMLAttributes, CSSProperties } from 'react';
+
+interface DragState {
+  from: number | null;
+  over: number | null;
+}
+
+type DragProps = Pick<
+  HTMLAttributes<HTMLElement>,
+  'draggable' | 'onDragStart' | 'onDragOver' | 'onDrop' | 'onDragEnd'
+>;
+
+interface DragSortHandle {
+  itemProps: (i: number) => DragProps;
+  dropStyle: (i: number) => CSSProperties;
+  isDragging: (i: number) => boolean;
+}
 
 // Shared drop-indicator style
-const dropStyle = (active) => ({
+const dropIndicatorStyle = (active: boolean): CSSProperties => ({
   borderTop: active ? '2px solid var(--link)' : '2px solid transparent',
   transition: 'border-color 0.12s',
 });
 
-/**
- * Drag-and-drop sort for a flat list.
- *
- * @param {function} onReorder  (fromIndex, toIndex) => void
- * @returns {{ itemProps, dropStyle, isDragging }}
- *
- * @example
- * const gameDnd = useDragSort((from, to) => reorderGames(from, to));
- * // In JSX:
- * <div {...gameDnd.itemProps(i)} style={{ ...gameDnd.dropStyle(i), opacity: gameDnd.isDragging(i) ? 0.4 : 1 }}>
- */
-export function useDragSort(onReorder) {
-  const [drag, setDrag] = useState({ from: null, over: null });
-
-  // Ref keeps handlers closure-free from stale state
+export function useDragSort(onReorder: (from: number, to: number) => void): DragSortHandle {
+  const [drag, setDrag] = useState<DragState>({ from: null, over: null });
   const dragRef = useRef(drag);
   dragRef.current = drag;
 
-  const itemProps = useCallback((i) => ({
+  const itemProps = useCallback((i: number): DragProps => ({
     draggable: true,
     onDragStart: (e) => {
       const next = { from: i, over: i };
@@ -47,32 +51,41 @@ export function useDragSort(onReorder) {
     onDragEnd: () => setDrag({ from: null, over: null }),
   }), [onReorder]);
 
-  const getDropStyle  = useCallback((i) => dropStyle(drag.from != null && drag.over === i && drag.from !== i), [drag]);
-  const getIsDragging = useCallback((i) => drag.from === i, [drag.from]);
+  const getDropStyle  = useCallback((i: number) =>
+    dropIndicatorStyle(drag.from != null && drag.over === i && drag.from !== i),
+    [drag]);
+  const getIsDragging = useCallback((i: number) => drag.from === i, [drag.from]);
 
   return { itemProps, dropStyle: getDropStyle, isDragging: getIsDragging };
 }
 
-/**
- * Drag-and-drop sort for a list that lives inside a parent scope (e.g. tasks inside a game).
- * Automatically calls stopPropagation to avoid interfering with parent-level D&D.
- *
- * @param {function} onReorder  (scope, fromIndex, toIndex) => void
- * @returns {{ itemProps, dropStyle, isDragging }}
- *
- * @example
- * const taskDnd = useScopedDragSort((gid, from, to) => reorderTasks(gid, from, to));
- * // In JSX:
- * <div {...taskDnd.itemProps(game.id, i)} style={{ ...taskDnd.dropStyle(game.id, i), opacity: taskDnd.isDragging(game.id, i) ? 0.4 : 1 }}>
- */
-export function useScopedDragSort(onReorder) {
-  const [drag, setDrag] = useState(null); // null | { scope, from, over }
+// ── Scoped variant ────────────────────────────────────────────────
 
-  // Ref keeps handlers closure-free from stale state
-  const dragRef = useRef(null);
+interface ScopedDragState {
+  scope: string;
+  from: number;
+  over: number;
+}
+
+type ScopedDragProps = Pick<
+  HTMLAttributes<HTMLElement>,
+  'draggable' | 'onDragStart' | 'onDragOver' | 'onDrop' | 'onDragEnd'
+>;
+
+interface ScopedDragSortHandle {
+  itemProps: (scope: string, i: number) => ScopedDragProps;
+  dropStyle: (scope: string, i: number) => CSSProperties;
+  isDragging: (scope: string, i: number) => boolean;
+}
+
+export function useScopedDragSort(
+  onReorder: (scope: string, from: number, to: number) => void,
+): ScopedDragSortHandle {
+  const [drag, setDrag] = useState<ScopedDragState | null>(null);
+  const dragRef = useRef<ScopedDragState | null>(null);
   dragRef.current = drag;
 
-  const itemProps = useCallback((scope, i) => ({
+  const itemProps = useCallback((scope: string, i: number): ScopedDragProps => ({
     draggable: true,
     onDragStart: (e) => {
       const next = { scope, from: i, over: i };
@@ -98,8 +111,12 @@ export function useScopedDragSort(onReorder) {
     onDragEnd: () => setDrag(null),
   }), [onReorder]);
 
-  const getDropStyle  = useCallback((scope, i) => dropStyle(drag?.scope === scope && drag.over === i && drag.from !== i), [drag]);
-  const getIsDragging = useCallback((scope, i) => drag?.scope === scope && drag.from === i, [drag]);
+  const getDropStyle  = useCallback((scope: string, i: number) =>
+    dropIndicatorStyle(drag?.scope === scope && drag.over === i && drag.from !== i),
+    [drag]);
+  const getIsDragging = useCallback((scope: string, i: number) =>
+    drag?.scope === scope && drag.from === i,
+    [drag]);
 
   return { itemProps, dropStyle: getDropStyle, isDragging: getIsDragging };
 }

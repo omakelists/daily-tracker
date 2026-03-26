@@ -1,40 +1,37 @@
-let _locale = null;
+type LocaleData = Record<string, unknown>;
 
-function detectLang() {
+let _locale: LocaleData | null = null;
+
+function detectLang(): string {
   const l = (navigator.language || 'en').toLowerCase();
   if (l.startsWith('ja')) return 'ja';
-  // Traditional Chinese: zh-hant, zh-tw, zh-hk, zh-mo
   if (l.includes('hant') || l === 'zh-tw' || l === 'zh-hk' || l === 'zh-mo') return 'zh-Hant';
-  // Simplified Chinese: zh-hans, zh-cn, zh-sg, zh (bare)
   if (l.includes('hans') || l.startsWith('zh')) return 'zh-Hans';
   if (l.startsWith('ko')) return 'ko';
   if (l.startsWith('es')) return 'es';
   return 'en';
 }
 
-export async function initI18n() {
+export async function initI18n(): Promise<LocaleData> {
   const lang = detectLang();
   try {
     const res = await fetch(`./locales/${lang}.json`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    _locale = await res.json();
+    _locale = await res.json() as LocaleData;
   } catch {
     const res = await fetch('./locales/en.json');
-    _locale = await res.json();
+    _locale = await res.json() as LocaleData;
   }
-  document.title = _locale.appTitle;
+  document.title = _locale.appTitle as string;
   document.documentElement.lang = lang;
 
-  // Set badge scaleX as a CSS custom property so only the inner text is compressed
-  // to fit within the fixed 4.5rem badge border. Scale = 4.5 / needed-width-in-rem.
-  // Locales whose longest label already fits in 4.5rem use 1 (no compression).
-  const badgeScaleX = {
-    'en':      (4.5 / 4.5).toFixed(4), // "Half-Monthly"
-    'es':      (4.5 / 3.5).toFixed(4), // "Quincenal"
-    'ja':      '1',                     // "ウィークリー" fits in 4.5rem
-    'ko':      '1',                     // "데일리" etc.  fits in 4.5rem
-    'zh-Hans': '1',                     // "每日" etc.    fits in 4.5rem
-    'zh-Hant': '1',                     // "每日" etc.    fits in 4.5rem
+  const badgeScaleX: Record<string, string> = {
+    'en':      (4.5 / 4.5).toFixed(4),
+    'es':      (4.5 / 3.5).toFixed(4),
+    'ja':      '1',
+    'ko':      '1',
+    'zh-Hans': '1',
+    'zh-Hant': '1',
   };
   document.documentElement.style.setProperty(
     '--badge-scale-x',
@@ -44,12 +41,13 @@ export async function initI18n() {
   return _locale;
 }
 
-export function t(key, vars = {}) {
-  const val = key.split('.').reduce((o, k) => o?.[k], _locale);
-  if (typeof val !== 'string') return val ?? key;
-  return val.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+export function t(key: string, vars: Record<string, string | number> = {}): string {
+  const val = key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], _locale);
+  if (typeof val !== 'string') return key;
+  return val.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
-export function ta(key) {
-  return key.split('.').reduce((o, k) => o?.[k], _locale) ?? [];
+export function ta(key: string): string[] {
+  const val = key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], _locale);
+  return Array.isArray(val) ? (val as string[]) : [];
 }

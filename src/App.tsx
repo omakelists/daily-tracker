@@ -1,33 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { flushSync } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
 import { DEFAULT_GAMES, DAILY, EVENT } from './constants';
 import { loadAll, saveGames, saveChecks } from './util/storage';
-import { uid, getPeriodKey, checkKey, playCheckSound, playAllDoneSound,
-         msUntilTaskReset, calcAllDone } from './util/helpers';
+import { getPeriodKey, checkKey, playCheckSound, playAllDoneSound, msUntilTaskReset, calcAllDone } from './util/helpers';
 import { useAppUpdate } from './util/useAppUpdate';
 import { useAppSettings } from './util/useAppSettings';
 import { ConfirmDialog } from './ui/UI';
 import { GameCard } from './ui/GameCard';
 import { SettingsModal } from './ui/Settings';
 import { CalendarModal } from './ui/Calendar';
+import type { Game, Task, DailyTask, ChecksMap, ConfirmState } from './types';
 import s from './App.module.css';
 
 export function App() {
-  const [games,        setGames]        = useState(null);
-  const [checks,       setChecks]       = useState({});
+  const [games,        setGames]        = useState<Game[] | null>(null);
+  const [checks,       setChecks]       = useState<ChecksMap>({});
   const [now,          setNow]          = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [confirm,      setConfirm]      = useState(null);
+  const [confirm,      setConfirm]      = useState<ConfirmState | null>(null);
 
   const { updateInfo, flashMsg, doUpdate } = useAppUpdate();
 
   const {
-    sortUncheckedFirst,  setSortUncheckedFirst,
-    autoDeleteExpired,   setAutoDeleteExpired,
-    autoDeleteDays,      setAutoDeleteDays,
+    sortUncheckedFirst, setSortUncheckedFirst,
+    autoDeleteExpired,  setAutoDeleteExpired,
+    autoDeleteDays,     setAutoDeleteDays,
     collapsed, toggleCollapse,
     appBg, gameBgs, refreshImages,
   } = useAppSettings(games, setGames, now);
@@ -42,15 +42,15 @@ export function App() {
     return () => wco.removeEventListener('geometrychange', handler);
   }, []);
 
-  // Unified clock: fires at whichever comes first — the next task reset or 30s fallback.
-  // This replaces a separate setInterval(30s) + setTimeout(nextReset) pair.
+  // Unified clock
   useEffect(() => {
     let minMs = 30_000;
     if (games) {
       games.forEach((game) => {
-        // Cover all task types (daily + periodic); fall back to solo when game has no tasks.
         const taskItems = (game.items ?? []).filter((it) => it.type !== EVENT);
-        const tasks = taskItems.length ? taskItems : [{ id: soloId(game), type: DAILY }];
+        const tasks: Task[] = taskItems.length
+          ? taskItems
+          : [{ id: soloId(game), type: DAILY, name: '', resetTime: game.resetTime } satisfies DailyTask];
         tasks.forEach((task) => {
           const ms = msUntilTaskReset(task, game, now);
           if (ms > 0 && ms < minMs) minMs = ms;
@@ -69,45 +69,40 @@ export function App() {
 
   useEffect(() => { if (games !== null) saveGames(games); }, [games]);
 
-  const soloId = (game) => `${game.id}_solo`;
+  const soloId = (game: Game): string => `${game.id}_solo`;
 
-  const getDailyTasks = useCallback((game) => {
+  const makeSoloTask = (game: Game): DailyTask =>
+    ({ id: soloId(game), type: DAILY, name: '', resetTime: game.resetTime });
+
+  const getDailyTasks = useCallback((game: Game): Task[] => {
     const dailyItems = (game.items ?? []).filter((it) => it.type === DAILY);
-    // If no daily items exist, use a virtual solo task so the master checkbox is functional.
-    return dailyItems.length ? dailyItems : [{ id: soloId(game), type: DAILY }];
+    return dailyItems.length ? dailyItems : [makeSoloTask(game)];
   }, []);
 
-  const isAllDone = useCallback((game) => calcAllDone(game, checks, now, soloId(game)), [checks, now]);
+  const isAllDone = useCallback((game: Game) =>
+    calcAllDone(game, checks, now, soloId(game)),
+    [checks, now]);
 
-
-  const toggle = useCallback((taskId, game, isMaster = false) => {
-    let sound = null;
+  const toggle = useCallback((taskId: string | null, game: Game, isMaster = false) => {
+    let sound: 'allDone' | 'check' | null = null;
     const applyUpdates = () => {
       flushSync(() => {
         setChecks((prev) => {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
           const allItems   = game.items ?? [];
-          const allTasks   = allItems.length ? allItems : [{ id: soloId(game), type: DAILY }];
+          const allTasks: Task[] = allItems.length ? allItems : [makeSoloTask(game)];
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
             dailyTasks.forEach((tk) => { next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone; });
-            // Play sound only; accordion state is not changed automatically
-            if (!allDone) sound = 'allDone';
-            else sound = 'check';
+            sound = !allDone ? 'allDone' : 'check';
           } else {
             const task = allTasks.find((tk) => tk.id === taskId);
             if (!task) return prev;
             const k   = checkKey(task.id, getPeriodKey(task, game, now));
             const was = !!prev[k];
             next[k]   = !was;
-            if (!was) {
-              // Fanfare when the master checkbox transitions to done after this check.
-              const fanfare = calcAllDone(game, next, now, soloId(game));
-              // Play fanfare sound only; accordion state is not changed automatically
-              if (fanfare) sound = 'allDone';
-              else sound = 'check';
-            }
+            if (!was) sound = calcAllDone(game, next, now, soloId(game)) ? 'allDone' : 'check';
           }
           saveChecks(next);
           return next;
@@ -120,32 +115,36 @@ export function App() {
     else applyUpdates();
   }, [now, getDailyTasks]);
 
-  const showConfirm = (msg, fn, lbl) => setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
+  const showConfirm = (msg: string, fn: () => void, lbl: string) =>
+    setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
-  // ── Unified item operations ──────────────────────────────────
-  const addItem = useCallback((gameId, item) => {
-    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, items: [...(g.items ?? []), { id: uid(), ...item }] } : g));
+  const addItem = useCallback((gameId: string, item: Task) => {
+    setGames((prev) => (prev ?? []).map((g) =>
+      g.id === gameId ? { ...g, items: [...(g.items ?? []), item] } : g
+    ));
   }, []);
 
-  const deleteItem = useCallback((gameId, itemId) => {
-    setGames((prev) => prev.map((g) => g.id === gameId ? { ...g, items: (g.items ?? []).filter((it) => it.id !== itemId) } : g));
+  const deleteItem = useCallback((gameId: string, itemId: string) => {
+    setGames((prev) => (prev ?? []).map((g) =>
+      g.id === gameId ? { ...g, items: (g.items ?? []).filter((it) => it.id !== itemId) } : g
+    ));
   }, []);
 
-const editItem = useCallback((gameId, itemId, updates) => {
-    setGames((prev) => prev.map((g) => g.id === gameId
-      ? { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, ...updates } : it) }
-      : g
+  const editItem = useCallback((gameId: string, itemId: string, updates: Partial<Task>) => {
+    setGames((prev) => (prev ?? []).map((g) =>
+      g.id === gameId
+        ? { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, ...updates } as Task : it) }
+        : g
     ));
   }, []);
 
   if (!games) return <div className={s.loading}>{t('loading')}</div>;
 
   return (
-    <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ""}`}>
+    <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}`}>
       {appBg && <div className={s.appBgImg} style={{ backgroundImage: `url(${appBg})` }} />}
       {appBg && <div className={s.appBgOverlay} />}
 
-      {/* Post-update toast */}
       {flashMsg && <div className={s.flashToast}>{flashMsg}</div>}
 
       {wcoVisible ? (
@@ -154,7 +153,8 @@ const editItem = useCallback((gameId, itemId, updates) => {
           <span className={s.wcoTitle}>{t('appTitle')}</span>
           <span className={s.wcoClock}>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           {updateInfo && (
-            <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), doUpdate, t('updateBtn'))} className={s.wcoBtn} title={t('updateAvail')}>⬆️</button>
+            <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), doUpdate, t('updateBtn'))}
+                    className={s.wcoBtn} title={t('updateAvail')}>⬆️</button>
           )}
           <button onClick={() => setShowCalendar(true)} className={s.wcoBtn} title={t('record')}>📅</button>
           <button onClick={() => setShowSettings(true)} className={s.wcoBtn} title={t('settings')}>⚙️</button>
@@ -168,7 +168,8 @@ const editItem = useCallback((gameId, itemId, updates) => {
             </div>
             <div className={s.actions}>
               {updateInfo && (
-                <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), doUpdate, t('updateBtn'))} className={s.btnUpdate} title={t('updateAvail')}>⬆️</button>
+                <button onClick={() => showConfirm(t('updateMsg', { current: updateInfo.current, next: updateInfo.next }), doUpdate, t('updateBtn'))}
+                        className={s.btnUpdate} title={t('updateAvail')}>⬆️</button>
               )}
               <button onClick={() => setShowCalendar(true)} className={s.btnRecord}   title={t('record')}>📅</button>
               <button onClick={() => setShowSettings(true)} className={s.btnSettings} title={t('settings')}>⚙️</button>
@@ -182,8 +183,8 @@ const editItem = useCallback((gameId, itemId, updates) => {
       <main className={s.main}>
         <AnimatePresence mode="popLayout" initial={false}>
           {(sortUncheckedFirst
-            ? [...(games ?? [])].sort((a, b) => (isAllDone(a) ? 1 : 0) - (isAllDone(b) ? 1 : 0))
-            : (games ?? [])
+            ? [...games].sort((a, b) => (isAllDone(a) ? 1 : 0) - (isAllDone(b) ? 1 : 0))
+            : games
           ).map((game) => (
             <GameCard
               key={`game-${game.id}`}
@@ -199,17 +200,26 @@ const editItem = useCallback((gameId, itemId, updates) => {
             />
           ))}
         </AnimatePresence>
-        {(games ?? []).length === 0 && <div className={s.noGames}>{t('noGames')}</div>}
+        {games.length === 0 && <div className={s.noGames}>{t('noGames')}</div>}
       </main>
 
       <AnimatePresence>
-        {showSettings && <SettingsModal key="settings" games={games} setGames={setGames} onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages}
+        {showSettings && (
+          <SettingsModal key="settings" games={games} setGames={setGames}
+            onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages}
             prefs={{ sortUncheckedFirst, autoDeleteExpired, autoDeleteDays }}
-            onPrefs={(key, val) => ({ sortUncheckedFirst: setSortUncheckedFirst, autoDeleteExpired: setAutoDeleteExpired, autoDeleteDays: setAutoDeleteDays })[key]?.(val)}
-          />}
+            onPrefs={(key, val) => ({
+              sortUncheckedFirst: setSortUncheckedFirst,
+              autoDeleteExpired:  setAutoDeleteExpired,
+              autoDeleteDays:     setAutoDeleteDays,
+            } as Record<string, (v: unknown) => void>)[key]?.(val)}
+          />
+        )}
       </AnimatePresence>
       <AnimatePresence>
-        {showCalendar && <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />}
+        {showCalendar && (
+          <CalendarModal key="calendar" games={games} checks={checks} now={now} onClose={() => setShowCalendar(false)} />
+        )}
       </AnimatePresence>
       <AnimatePresence>
         {confirm && (

@@ -1,54 +1,82 @@
-import {useState} from 'react';
-import {t} from '../util/i18n';
-import {uid, utcToLocalHHMM} from '../util/helpers';
-import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants';
+import { useState } from 'react';
+import { t } from '../util/i18n';
+import { uid, utcToLocalHHMM } from '../util/helpers';
+import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
+import type { Game, Task, TaskDraft, TaskType, TimeString, YMDString } from '../types';
+import { TaskEdit } from './TaskEdit';
 import s from './TaskAddForm.module.css';
 import shared from './shared.module.css';
-import {TaskEdit} from './TaskEdit';
 
-export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
+interface TaskAddFormProps {
+  game: Game;
+  item?: Task;
+  type?: TaskType;
+  onAdd?: (task: Task) => void;
+  onSave?: (task: Task) => void;
+  onCancel?: () => void;
+}
+
+export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }: TaskAddFormProps) {
   const isEdit      = !!item;
   const submitLabel = isEdit ? t('save') : undefined;
 
-  // ── State ────────────────────────────────────────────────────────
-  const [task, setTask] = useState({
-    type: item?.type ?? type,
-    name: item?.name ?? '',
-    resetTime: utcToLocalHHMM(item?.resetTime ?? game?.resetTime ?? '00:00'),
-    monthlyResetDay: item?.monthlyResetDay ?? 1,
-    weeklyResetDay: item?.weeklyResetDay ?? 1,
-    halfMonthlyStartDay: item?.halfMonthlyStartDay ?? 1,
-    deadline: item?.deadline ?? '',
-    deadlineTime:
-      item?.deadlineTime ? utcToLocalHHMM(item.deadlineTime)
-      : game?.resetTime ? game.resetTime
-      : '',
+  const [draft, setDraft] = useState<TaskDraft>({
+    id:                  item?.id ?? '',
+    type:                item?.type ?? type ?? DAILY,
+    name:                item?.name ?? '',
+    resetTime:           item?.resetTime ?? game?.resetTime,
+    weeklyResetDay:      item?.type === WEEKLY      ? item.weeklyResetDay      : undefined,
+    monthlyResetDay:     item?.type === MONTHLY     ? item.monthlyResetDay     : undefined,
+    halfMonthlyStartDay: item?.type === HALFMONTHLY ? item.halfMonthlyStartDay : undefined,
+    deadline:     item?.type === EVENT ? item.deadline     : undefined,
+    deadlineTime: item?.type === EVENT
+      ? utcToLocalHHMM(item.deadlineTime)
+      : game?.resetTime
+        ? game.resetTime
+        : undefined,
   });
-  const updateTask = (id, key, val) => setTask(prev => ({ ...prev, [key]: val}));
 
-  // ── Submit ───────────────────────────────────────────────────────
+  const updateDraft = (_id: string, key: string, val: unknown) =>
+    setDraft((prev) => ({ ...prev, [key]: val }));
+
   const handleSubmit = () => {
-    const newTask = { id: uid(), type: task.type, name: task.name.trim() || t(`types.${task.type}`) };
-    switch (task.type) {
-      case DAILY:       newTask.resetTime           = task.resetTime; break;
-      case MONTHLY:     newTask.monthlyResetDay     = Number(task.monthlyResetDay); break;
-      case WEEKLY:      newTask.weeklyResetDay      = Number(task.weeklyResetDay); break;
-      case HALFMONTHLY: newTask.halfMonthlyStartDay = Number(task.halfMonthlyStartDay); break;
-      case EVENT:
-        newTask.deadline = task.deadline || null;
-        newTask.deadlineTime = task.deadlineTime || null;
+    const name = draft.name.trim() || t(`types.${draft.type}`);
+    let newTask: Task;
+    switch (draft.type) {
+      case DAILY:
+        newTask = { id: uid(), type: DAILY, name, resetTime: (draft.resetTime ?? game.resetTime) as TimeString };
         break;
+      case WEEKLY:
+        newTask = { id: uid(), type: WEEKLY, name, weeklyResetDay: Number(draft.weeklyResetDay ?? 1) };
+        break;
+      case HALFMONTHLY:
+        newTask = { id: uid(), type: HALFMONTHLY, name, halfMonthlyStartDay: Number(draft.halfMonthlyStartDay ?? 1) };
+        break;
+      case MONTHLY:
+        newTask = { id: uid(), type: MONTHLY, name, monthlyResetDay: Number(draft.monthlyResetDay ?? 1) };
+        break;
+      case EVENT:
+        newTask = {
+          id: uid(), type: EVENT, name,
+          deadline:     (draft.deadline     || new Date().toISOString().slice(0, 10)) as YMDString,
+          deadlineTime: (draft.deadlineTime || game.resetTime) as TimeString,
+        };
+        break;
+      default:
+        return;
     }
-    if (onSave) onSave(newTask); else onAdd(newTask);
+    if (onSave) onSave(newTask); else onAdd?.(newTask);
   };
 
   return (
     <div className={s.form}>
       <div className={s.mainRow}>
-        <TaskEdit item={task} onUpdate={updateTask} handleSubmit={handleSubmit} onCancel={onCancel} />
+        <TaskEdit item={draft} onUpdate={updateDraft} handleSubmit={handleSubmit} onCancel={onCancel} />
       </div>
       <div className={s.btnRow}>
-        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit}>{submitLabel ?? t('add')}</button>
+        <button className={`${shared.btn} ${shared.btnConfirm}`} onClick={handleSubmit}>
+          {submitLabel ?? t('add')}
+        </button>
         <button className={shared.btn} onClick={onCancel}>{t('cancel')}</button>
       </div>
     </div>
