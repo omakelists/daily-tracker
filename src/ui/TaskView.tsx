@@ -1,4 +1,4 @@
-import {t} from '../util/i18n.js';
+import {t} from '../util/i18n';
 import {
   cdColor,
   fmtDeadlineDate,
@@ -6,11 +6,11 @@ import {
   msUntilDeadline,
   msUntilTaskReset,
   utcToLocalHHMM,
-} from '../util/helpers.js';
-import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT, DAY_MS} from '../constants.js';
+} from '../util/helpers';
+import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT, DAY_MS} from '../constants';
 import s from './TaskView.module.css';
 import shared from './shared.module.css';
-import {Badge, BADGE_MAP} from './UI.jsx';
+import {Badge, BADGE_MAP} from './UI';
 import {useMemo} from 'react';
 
 export function TaskView({game, task, now, isChecked, showDeadline}) {

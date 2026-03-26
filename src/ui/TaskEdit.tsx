@@ -1,10 +1,10 @@
 import {useEffect, useMemo, useRef} from 'react';
-import {t} from '../util/i18n.js';
-import {cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM} from '../util/helpers.js';
-import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants.js';
+import {t} from '../util/i18n';
+import {cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM} from '../util/helpers';
+import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants';
 import s from './TaskEdit.module.css';
 import shared from './shared.module.css';
-import {Badge, BADGE_MAP} from './UI.jsx';
+import {Badge, BADGE_MAP} from './UI';
 
 function addDaysToDate(dateStr, n) {
   const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();

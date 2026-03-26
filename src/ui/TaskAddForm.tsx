@@ -4,7 +4,7 @@ import {uid, utcToLocalHHMM} from '../util/helpers';
 import {DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT} from '../constants';
 import s from './TaskAddForm.module.css';
 import shared from './shared.module.css';
-import {TaskEdit} from './TaskEdit.jsx';
+import {TaskEdit} from './TaskEdit';
 
 export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }) {
   const isEdit      = !!item;

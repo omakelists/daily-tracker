@@ -5,12 +5,12 @@ import { DAY_MS, DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants
 import { ensureContrast, utcToLocalHHMM, getPeriodKey, getPrevPeriodKey, msUntilReset, msUntilTaskReset, msUntilDeadline, formatCountdown, cdColor, checkKey, calcAllDone, applyOrder } from '../util/helpers';
 import { useContextTrigger } from '../util/useContextTrigger';
 import { GameHeader, PrevBar } from './UI';
-import { TaskRow } from './TaskRow.jsx';
-import { TaskAddForm } from './TaskAddForm.jsx';
+import { TaskRow } from './TaskRow';
+import { TaskAddForm } from './TaskAddForm';
 import { ContextMenu } from './ContextMenu';
 import s from './GameCard.module.css';
 import shared from './shared.module.css';
-import { TaskView } from './TaskView.jsx';
+import { TaskView } from './TaskView';
 
 // ── Motion variants ───────────────────────────────────────────────
 const taskVariants = {

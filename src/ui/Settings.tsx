@@ -9,11 +9,11 @@ import {useAppUpdate} from '../util/useAppUpdate';
 import {Modal} from './UI';
 import {ContextMenu} from './ContextMenu';
 import {CropModal} from './CropModal';
-import {TaskAddForm} from './TaskAddForm.jsx';
+import {TaskAddForm} from './TaskAddForm';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
-import {TaskRow} from "./TaskRow.jsx";
-import {TaskEdit} from "./TaskEdit.jsx";
+import {TaskRow} from "./TaskRow";
+import {TaskEdit} from "./TaskEdit";
 
 
 // Shared item variants for game/task rows
