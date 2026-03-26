@@ -1,5 +1,5 @@
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT, DAY_MS } from '../constants';
-import type { Game, Task, DailyTask, ChecksMap, CountdownLabels, TimeString, YMDString } from '../types';
+import type {Game, Task, DailyTask, ChecksMap, CountdownLabels, TimeString, YMDString, HexColor} from '../types';
 
 // ── Unique ID generator ───────────────────────────────────────────
 let _idCtr = Date.now();
@@ -13,7 +13,7 @@ export const getDaysInMonth = (y: number, m: number): number =>
   new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 
 // ── Timezone conversion ───────────────────────────────────────────
-export function utcToLocalHHMM(utcHHMM: string | undefined): string {
+export function utcToLocalHHMM(utcHHMM: TimeString): TimeString {
   if (!utcHHMM || !utcHHMM.includes(':')) return '00:00';
   const [h, m] = utcHHMM.split(':').map(Number);
   const d = new Date();
@@ -21,7 +21,7 @@ export function utcToLocalHHMM(utcHHMM: string | undefined): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-export function localToUtcHHMM(localHHMM: string): TimeString {
+export function localToUtcHHMM(localHHMM: TimeString): TimeString {
   if (!localHHMM || !localHHMM.includes(':')) return '00:00';
   const [h, m] = localHHMM.split(':').map(Number);
   const d = new Date();
@@ -30,7 +30,7 @@ export function localToUtcHHMM(localHHMM: string): TimeString {
 }
 
 // ── Luminance / contrast ──────────────────────────────────────────
-export function ensureContrast(hex: string): string {
+export function ensureContrast(hex: HexColor): string {
   if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -43,7 +43,7 @@ export function ensureContrast(hex: string): string {
   return hex;
 }
 
-export const parseHHMM = (s: string): number => {
+export const parseHHMM = (s: TimeString): number => {
   const [h, m] = (s || '00:00').split(':').map(Number);
   return h * 60 + m;
 };
@@ -52,7 +52,7 @@ const localFmtDate = (d: Date): YMDString =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` as YMDString;
 
 // ── Local-date-based game day key ─────────────────────────────────
-export function getGameDateKey(now: Date, resetTimeUTC: string): YMDString {
+export function getGameDateKey(now: Date, resetTimeUTC: TimeString): YMDString {
   const [rh, rm] = (resetTimeUTC || '00:00').split(':').map(Number);
   const tmp = new Date(now);
   tmp.setUTCHours(rh, rm, 0, 0);
@@ -69,7 +69,7 @@ export function shiftDate(dateKey: string, days: number): YMDString {
   return fmtDate(d);
 }
 
-export const getPrevGameDateKey = (now: Date, rt: string): YMDString =>
+export const getPrevGameDateKey = (now: Date, rt: TimeString): YMDString =>
   shiftDate(getGameDateKey(now, rt), -1);
 
 // ── Period key helpers ────────────────────────────────────────────
@@ -139,7 +139,7 @@ export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
 }
 
 // ── Countdown helpers (all UTC) ───────────────────────────────────
-export function msUntilReset(now: Date, rtUTC: string): number {
+export function msUntilReset(now: Date, rtUTC: TimeString): number {
   const r = parseHHMM(rtUTC);
   const n = now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60;
   let d = r - n;
@@ -147,7 +147,7 @@ export function msUntilReset(now: Date, rtUTC: string): number {
   return d * 60 * 1000;
 }
 
-export function msUntilNextMonth(now: Date, rtUTC: string, rd = 1): number {
+export function msUntilNextMonth(now: Date, rtUTC: TimeString, rd = 1): number {
   const r   = parseHHMM(rtUTC);
   const day = rd;
   const utcDay = now.getUTCDate();
@@ -158,7 +158,7 @@ export function msUntilNextMonth(now: Date, rtUTC: string, rd = 1): number {
   return tgt.getTime() - now.getTime();
 }
 
-export function msUntilNextHalfMonth(now: Date, rtUTC: string, startDay = 1): number {
+export function msUntilNextHalfMonth(now: Date, rtUTC: TimeString, startDay = 1): number {
   const r    = parseHHMM(rtUTC);
   const b    = startDay + 15;
   const rh   = Math.floor(r / 60), rm = r % 60;
@@ -173,7 +173,7 @@ export function msUntilNextHalfMonth(now: Date, rtUTC: string, startDay = 1): nu
   return (tgt ?? candidates[2]).getTime() - now.getTime();
 }
 
-export function msUntilNextWeek(now: Date, rtUTC: string, rd = 1): number {
+export function msUntilNextWeek(now: Date, rtUTC: TimeString, rd = 1): number {
   const rtMin = parseHHMM(rtUTC);
   const dow   = now.getUTCDay();
   const tgt   = new Date(now);
@@ -207,15 +207,15 @@ export function cdColor(ms: number, urgentH: number, warnH: number): string {
   return 'var(--muted)';
 }
 
-export const checkKey = (id: string, pk: string): string => `${id}__${pk}`;
+export const checkKey = (taskId: string, periodKey: string): string => `${taskId}__${periodKey}`;
 
 export function calcAllDone(game: Game, checks: ChecksMap, now: Date, soloId: string): boolean {
-  const allItems   = game.items ?? [];
+  const allItems   = game.items;
   const dailyItems = allItems.filter((it): it is DailyTask => it.type === DAILY);
 
   if (allItems.length === 0) {
     const solo: DailyTask = { id: soloId, name: '', type: DAILY, resetTime: game.resetTime };
-    return !!checks[checkKey(solo.id, getPeriodKey(solo, game, now))];
+    return checks[checkKey(solo.id, getPeriodKey(solo, game, now))];
   }
   if (dailyItems.length > 0) {
     const urgent = allItems.filter(
@@ -223,12 +223,12 @@ export function calcAllDone(game: Game, checks: ChecksMap, now: Date, soloId: st
       msUntilTaskReset(it, game, now) > 0 &&
       msUntilTaskReset(it, game, now) < DAY_MS
     );
-    return urgent.length > 0 && urgent.every((tk) => !!checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
+    return urgent.length > 0 && urgent.every((tk) => checks[checkKey(tk.id, getPeriodKey(tk, game, now))]);
   }
-  return allItems.every((it) => !!checks[checkKey(it.id, getPeriodKey(it, game, now))]);
+  return allItems.every((it) => checks[checkKey(it.id, getPeriodKey(it, game, now))]);
 }
 
-export function msUntilDeadline(dateStr: string, now: Date, timeUtc?: string | null): number {
+export function msUntilDeadline(dateStr: string, now: Date, timeUtc: TimeString): number {
   const [y, m, d] = dateStr.split('-').map(Number);
   if (timeUtc && timeUtc.includes(':')) {
     const [th, tm] = timeUtc.split(':').map(Number);
@@ -238,8 +238,8 @@ export function msUntilDeadline(dateStr: string, now: Date, timeUtc?: string | n
 }
 
 // ── Item order ────────────────────────────────────────────────────
-export function applyOrder<T extends { id: string }>(items: T[], storedOrder: string[] | undefined): T[] {
-  const orderedIds = (storedOrder ?? []).filter((id) => items.some((x) => x.id === id));
+export function applyOrder<T extends { id: string }>(items: T[], storedOrder: string[] = []): T[] {
+  const orderedIds = storedOrder.filter((id) => items.some((x) => x.id === id));
   const unordered  = items.filter((x) => !orderedIds.includes(x.id));
   return [
     ...orderedIds.map((id) => items.find((x) => x.id === id)).filter((x): x is T => x !== undefined),
@@ -279,7 +279,7 @@ export function playAllDoneSound(): void {
   } catch { /* ignore */ }
 }
 
-export function fmtDeadlineDate(dateStr: string, tFn: (key: string, vars: Record<string, number>) => string): string {
+export function fmtDeadlineDate(dateStr: YMDString, tFn: (key: string, vars: Record<string, number>) => string): string {
   if (!dateStr) return '';
   const [, m, d] = dateStr.split('-').map(Number);
   return tFn('dateFmt', { m, d });

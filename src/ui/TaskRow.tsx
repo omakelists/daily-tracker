@@ -11,8 +11,8 @@ interface TaskRowProps {
   showDelete?: boolean | null;
   dndProps?: Record<string, unknown>;
   dndStyle?: CSSProperties;
-  onContextMenu?: (id: string, x: number, y: number) => void;
-  onDelete?: (id: string) => void;
+  onContextMenu?: (taskId: string, x: number, y: number) => void;
+  onDelete?: (taskId: string) => void;
   children?: ReactNode;
 }
 

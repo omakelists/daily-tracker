@@ -36,28 +36,28 @@ const bodyVariants = {
 
 // ── ItemRow ───────────────────────────────────────────────────────
 interface ItemRowProps {
-  item: Task;
   game: Game;
+  item: Task;
   now: Date;
   checks: ChecksMap;
   editingId: string | null;
-  onToggle: (id: string | null, game: Game) => void;
-  onEditItem?: (gameId: string, itemId: string, updates: Partial<Task>) => void;
-  onDeleteItem?: (gameId: string, itemId: string) => void;
-  confirmDeleteItem?: (itemId: string) => void;
-  handleItemContextMenu?: (id: string, x: number, y: number) => void;
+  onToggle: (game: Game, taskId: string | null) => void;
+  onEditItem?: (gameId: string, taskId: string, updates: Partial<Task>) => void;
+  onDeleteItem?: (gameId: string, taskId: string) => void;
+  confirmDeleteItem?: (taskId: string) => void;
+  handleItemContextMenu?: (taskId: string, x: number, y: number) => void;
   closeEdit?: () => void;
   prevChecked?: (task: Task) => boolean;
 }
 
 const ItemRow = forwardRef<HTMLDivElement, ItemRowProps>(function ItemRow({
-  item, game, now, checks, editingId,
+  game, item, now, checks, editingId,
   onToggle, onEditItem, onDeleteItem, confirmDeleteItem,
   handleItemContextMenu, closeEdit, prevChecked,
 }, ref) {
   const [cbScope, animateCb] = useAnimate();
 
-  const isChecked  = !!checks[checkKey(item.id, getPeriodKey(item, game, now))];
+  const isChecked  = checks[checkKey(item.id, getPeriodKey(item, game, now))];
   const isEditing  = editingId === item.id;
   const showDelete = item.type === EVENT && isChecked && !!onDeleteItem;
 
@@ -78,7 +78,7 @@ const ItemRow = forwardRef<HTMLDivElement, ItemRowProps>(function ItemRow({
                 ref={cbScope}
                 onClick={() => {
                   animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
-                  onToggle(item.id, game);
+                  onToggle(game, item.id);
                 }}
                 className={`${s.cb}${isChecked ? ` ${s.cbChecked}` : ''}`}
               >
@@ -104,16 +104,16 @@ export interface GameCardProps {
   game: Game;
   checks: ChecksMap;
   now: Date;
-  onToggle: (id: string | null, game: Game, isMaster?: boolean) => void;
+  onToggle: (game: Game, taskId: string | null, isMaster?: boolean) => void;
   allDone: boolean;
   dailyTasks: Task[];
   collapsed: boolean;
-  onToggleCollapse: (id: string) => void;
+  onToggleCollapse: (taskId: string) => void;
   bgDataUrl?: string | null;
   bgOpacity?: number;
-  onAddItem: (gameId: string, item: Task) => void;
-  onDeleteItem: (gameId: string, itemId: string) => void;
-  onEditItem: (gameId: string, itemId: string, updates: Partial<Task>) => void;
+  onAddItem: (gameId: string, task: Task) => void;
+  onDeleteItem: (gameId: string, taskId: string) => void;
+  onEditItem: (gameId: string, taskId: string, updates: Partial<Task>) => void;
   showConfirm: (msg: string, fn: () => void, lbl: string) => void;
 }
 
@@ -132,22 +132,21 @@ export const GameCard = forwardRef<HTMLDivElement, GameCardProps>(function GameC
   const closeCtx  = useCallback(() => setCtxMenu(null), []);
   const closeEdit = useCallback(() => setEditingId(null), []);
 
-  const confirmDeleteItem = useCallback((itemId: string) => {
-    const item = (game.items ?? []).find((it) => it.id === itemId);
-    const isExpiredEvent = item?.type === EVENT &&
-      item?.deadline &&
-      msUntilDeadline(item.deadline, now, item.deadlineTime ?? null) <= 0;
-    const doDelete = () => onDeleteItem?.(game.id, itemId);
+  const confirmDeleteItem = useCallback((taskId: string) => {
+    const task = game.items.find((it) => it.id === taskId);
+    const isExpiredEvent = task?.type === EVENT &&
+      msUntilDeadline(task.deadline, now, task.deadlineTime) <= 0;
+    const doDelete = () => onDeleteItem?.(game.id, taskId);
     if (isExpiredEvent || !showConfirm) { doDelete(); return; }
-    const name = item?.name?.trim() || t(`types.${item?.type}`);
+    const name = task?.name?.trim() || t(`types.${task?.type}`);
     showConfirm(t('deleteMsg', { name }), doDelete, t('deleteBtn'));
   }, [game, now, onDeleteItem, showConfirm]);
 
   const headerTrigger = useContextTrigger(
     useCallback((x, y) => setCtxMenu({ x, y, target: 'header' }), [])
   );
-  const handleItemContextMenu = useCallback((id: string, x: number, y: number) => {
-    setCtxMenu({ x, y, target: 'item', itemId: id });
+  const handleItemContextMenu = useCallback((taskId: string, x: number, y: number) => {
+    setCtxMenu({ x, y, target: 'item', itemId: taskId });
   }, []);
 
   const handleToggleCollapse = useCallback(() => {
@@ -158,13 +157,13 @@ export const GameCard = forwardRef<HTMLDivElement, GameCardProps>(function GameC
   const handleMasterClick = useCallback((e: MouseEvent) => {
     e.stopPropagation();
     animateCb(cbScope.current, { scale: [1, 1.3, 0.92, 1.08, 1] }, { duration: 0.22 });
-    onToggle(null, game, true);
+    onToggle(game, null, true);
   }, [animateCb, cbScope, onToggle, game]);
 
-  const allItems = game.items ?? [];
+  const allItems = game.items;
 
-  const isChecked   = (task: Task) => !!checks[checkKey(task.id, getPeriodKey(task, game, now))];
-  const prevChecked = (task: Task) => !!checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
+  const isChecked   = (task: Task) => checks[checkKey(task.id, getPeriodKey(task, game, now))];
+  const prevChecked = (task: Task) => checks[checkKey(task.id, getPrevPeriodKey(task, game, now))];
 
   const allSortedItems = applyOrder(allItems, game.itemOrder);
   const visItems = collapsed
@@ -174,7 +173,7 @@ export const GameCard = forwardRef<HTMLDivElement, GameCardProps>(function GameC
   const showBody = visItems.length > 0 || formState !== null;
 
   const allTodayDone = calcAllDone(game, checks, now, `${game.id}_solo`);
-  const prevCount    = dailyTasks.filter((tk) => !!checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
+  const prevCount    = dailyTasks.filter((tk) => checks[checkKey(tk.id, getPrevPeriodKey(tk, game, now))]).length;
   const prevAll      = dailyTasks.length > 0 && prevCount === dailyTasks.length;
   const prevPartial  = prevCount > 0 && prevCount < dailyTasks.length;
 
@@ -187,7 +186,6 @@ export const GameCard = forwardRef<HTMLDivElement, GameCardProps>(function GameC
       if (isChecked(it)) continue;
       let m: number;
       if (it.type === EVENT) {
-        if (!it.deadline) continue;
         m = msUntilDeadline(it.deadline, now, it.deadlineTime);
       } else {
         m = msUntilTaskReset(it, game, now);

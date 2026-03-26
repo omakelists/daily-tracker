@@ -65,7 +65,7 @@ export function loadAll(): { games: Game[] | null; checks: ChecksMap } {
 
     let migrated = false;
     games = (raw as LegacyGame[]).map(migrateGame).map((g) => {
-      const items = (g.items ?? []).map((it: Task & { done?: boolean }) => {
+      const items = g.items.map((it: Task & { done?: boolean }) => {
         // Phase 4: move item.done (event) into checks map
         if (it.type === EVENT && 'done' in it) {
           if (it.done) checks[`${it.id}__done`] = true;

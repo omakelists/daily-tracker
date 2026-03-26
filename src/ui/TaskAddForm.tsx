@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM } from '../util/helpers';
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
-import type { Game, Task, TaskDraft, TaskType, TimeString, YMDString } from '../types';
+import type { Game, Task, TaskType, TimeString, YMDString } from '../types';
 import { TaskEdit } from './TaskEdit';
 import s from './TaskAddForm.module.css';
 import shared from './shared.module.css';
@@ -20,23 +20,23 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }: TaskA
   const isEdit      = !!item;
   const submitLabel = isEdit ? t('save') : undefined;
 
-  const [draft, setDraft] = useState<TaskDraft>({
+  const [draft, setDraft] = useState<Task>({
     id:                  item?.id ?? '',
     type:                item?.type ?? type ?? DAILY,
     name:                item?.name ?? '',
     resetTime:           item?.resetTime ?? game?.resetTime,
-    weeklyResetDay:      item?.type === WEEKLY      ? item.weeklyResetDay      : undefined,
-    monthlyResetDay:     item?.type === MONTHLY     ? item.monthlyResetDay     : undefined,
-    halfMonthlyStartDay: item?.type === HALFMONTHLY ? item.halfMonthlyStartDay : undefined,
-    deadline:     item?.type === EVENT ? item.deadline     : undefined,
+    weeklyResetDay:      item?.type === WEEKLY      ? item.weeklyResetDay      : 1,
+    monthlyResetDay:     item?.type === MONTHLY     ? item.monthlyResetDay     : 1,
+    halfMonthlyStartDay: item?.type === HALFMONTHLY ? item.halfMonthlyStartDay : 1,
+    deadline:     item?.type === EVENT ? item.deadline : new Date().toISOString().slice(0, 10) as YMDString,
     deadlineTime: item?.type === EVENT
       ? utcToLocalHHMM(item.deadlineTime)
       : game?.resetTime
         ? game.resetTime
-        : undefined,
+        : '00:00' as TimeString,
   });
 
-  const updateDraft = (_id: string, key: string, val: unknown) =>
+  const updateDraft = (_: string, key: string, val: unknown) =>
     setDraft((prev) => ({ ...prev, [key]: val }));
 
   const handleSubmit = () => {
@@ -44,23 +44,19 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }: TaskA
     let newTask: Task;
     switch (draft.type) {
       case DAILY:
-        newTask = { id: uid(), type: DAILY, name, resetTime: (draft.resetTime ?? game.resetTime) as TimeString };
+        newTask = { id: uid(), type: DAILY, name, resetTime: draft.resetTime };
         break;
       case WEEKLY:
-        newTask = { id: uid(), type: WEEKLY, name, weeklyResetDay: Number(draft.weeklyResetDay ?? 1) };
+        newTask = { id: uid(), type: WEEKLY, name, weeklyResetDay: Number(draft.weeklyResetDay) };
         break;
       case HALFMONTHLY:
-        newTask = { id: uid(), type: HALFMONTHLY, name, halfMonthlyStartDay: Number(draft.halfMonthlyStartDay ?? 1) };
+        newTask = { id: uid(), type: HALFMONTHLY, name, halfMonthlyStartDay: Number(draft.halfMonthlyStartDay) };
         break;
       case MONTHLY:
-        newTask = { id: uid(), type: MONTHLY, name, monthlyResetDay: Number(draft.monthlyResetDay ?? 1) };
+        newTask = { id: uid(), type: MONTHLY, name, monthlyResetDay: Number(draft.monthlyResetDay) };
         break;
       case EVENT:
-        newTask = {
-          id: uid(), type: EVENT, name,
-          deadline:     (draft.deadline     || new Date().toISOString().slice(0, 10)) as YMDString,
-          deadlineTime: (draft.deadlineTime || game.resetTime) as TimeString,
-        };
+        newTask = { id: uid(), type: EVENT, name, deadline: draft.deadline, deadlineTime: draft.deadlineTime };
         break;
       default:
         return;

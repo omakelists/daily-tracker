@@ -43,7 +43,7 @@ export function CalendarModal({ games, checks, now, onClose }: CalendarModalProp
     if (!game) return 'none';
     const tt   = selTask ? dailyTasks.filter((tk) => tk.id === selTask) : dailyTasks;
     if (!tt.length) return 'none';
-    const done = tt.filter((tk) => !!checks[checkKey(tk.id, dk)]).length;
+    const done = tt.filter((tk) => checks[checkKey(tk.id, dk)]).length;
     if (done === 0)         return 'none';
     if (done === tt.length) return 'all';
     return 'partial';

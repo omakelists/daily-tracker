@@ -3,7 +3,7 @@ import type { KeyboardEvent } from "react";
 import { t } from '../util/i18n';
 import { cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM } from '../util/helpers';
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
-import type { TaskDraft } from '../types';
+import type {Task, TimeString} from '../types';
 import { Badge } from './UI';
 import s from './TaskEdit.module.css';
 import shared from './shared.module.css';
@@ -15,15 +15,15 @@ function addDaysToDate(dateStr: string | null | undefined, n: number): string {
 }
 
 interface TaskEditProps {
-  item: TaskDraft;
-  onUpdate: (id: string, key: string, val: unknown) => void;
+  item: Task;
+  onUpdate: (taskId: string, key: string, val: unknown) => void;
   handleSubmit?: () => void;
   onCancel?: () => void;
 }
 
 export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditProps) {
-  const timeUtcForCd = (item.deadline && item.deadlineTime) ? localToUtcHHMM(item.deadlineTime) : undefined;
-  const deadlineMs   = item.type === EVENT && item.deadline
+  const timeUtcForCd = item.type === EVENT ? localToUtcHHMM(item.deadlineTime) : undefined;
+  const deadlineMs   = item.type === EVENT && timeUtcForCd
     ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd)
     : null;
   const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
@@ -45,7 +45,7 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
       {item.type === DAILY ? (
         <div className={s.resetInputGroup}>
           <input type="time" value={utcToLocalHHMM(item.resetTime ?? '00:00')}
-                   onChange={(e) => onUpdate?.(item.id, 'resetTime', localToUtcHHMM(e.target.value))}
+                   onChange={(e) => onUpdate?.(item.id, 'resetTime', localToUtcHHMM(e.target.value as TimeString))}
                  className={`${shared.inputCls} ${s.inputTime}`} />
         </div>
       ) : item.type === WEEKLY ? (
@@ -97,7 +97,7 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
           </div>
           <div className={s.resetInputBlock}>
             <input type="time" value={item.deadlineTime ? utcToLocalHHMM(item.deadlineTime) : ''}
-                     onChange={(e) => onUpdate?.(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value) : null)}
+                     onChange={(e) => onUpdate?.(item.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value as TimeString) : null)}
                    disabled={!item.deadline}
                    className={`${shared.inputCls} ${s.inputTime}`}
                    style={{ opacity: item.deadline ? 1 : 0.35 }} />

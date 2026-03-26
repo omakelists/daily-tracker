@@ -15,7 +15,7 @@ import type { Game, Task, DailyTask, ChecksMap, ConfirmState } from './types';
 import s from './App.module.css';
 
 export function App() {
-  const [games,        setGames]        = useState<Game[] | null>(null);
+  const [games,        setGames]        = useState<Game[]>([]);
   const [checks,       setChecks]       = useState<ChecksMap>({});
   const [now,          setNow]          = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
@@ -45,18 +45,16 @@ export function App() {
   // Unified clock
   useEffect(() => {
     let minMs = 30_000;
-    if (games) {
-      games.forEach((game) => {
-        const taskItems = (game.items ?? []).filter((it) => it.type !== EVENT);
-        const tasks: Task[] = taskItems.length
-          ? taskItems
-          : [{ id: soloId(game), type: DAILY, name: '', resetTime: game.resetTime } satisfies DailyTask];
-        tasks.forEach((task) => {
-          const ms = msUntilTaskReset(task, game, now);
-          if (ms > 0 && ms < minMs) minMs = ms;
-        });
+    games.forEach((game) => {
+      const taskItems = game.items.filter((it) => it.type !== EVENT);
+      const tasks: Task[] = taskItems.length
+        ? taskItems
+        : [{ id: soloId(game), type: DAILY, name: '', resetTime: game.resetTime } satisfies DailyTask];
+      tasks.forEach((task) => {
+        const ms = msUntilTaskReset(task, game, now);
+        if (ms > 0 && ms < minMs) minMs = ms;
       });
-    }
+    });
     const id = setTimeout(() => setNow(new Date()), minMs + 200);
     return () => clearTimeout(id);
   }, [now, games]);
@@ -67,7 +65,7 @@ export function App() {
     setChecks(loadedChecks);
   }, []);
 
-  useEffect(() => { if (games !== null) saveGames(games); }, [games]);
+  useEffect(() => { saveGames(games); }, [games]);
 
   const soloId = (game: Game): string => `${game.id}_solo`;
 
@@ -75,7 +73,7 @@ export function App() {
     ({ id: soloId(game), type: DAILY, name: '', resetTime: game.resetTime });
 
   const getDailyTasks = useCallback((game: Game): Task[] => {
-    const dailyItems = (game.items ?? []).filter((it) => it.type === DAILY);
+    const dailyItems = game.items.filter((it) => it.type === DAILY);
     return dailyItems.length ? dailyItems : [makeSoloTask(game)];
   }, []);
 
@@ -83,14 +81,14 @@ export function App() {
     calcAllDone(game, checks, now, soloId(game)),
     [checks, now]);
 
-  const toggle = useCallback((taskId: string | null, game: Game, isMaster = false) => {
+  const toggle = useCallback((game: Game, taskId: string | null, isMaster = false) => {
     let sound: 'allDone' | 'check' | null = null;
     const applyUpdates = () => {
       flushSync(() => {
         setChecks((prev) => {
           const next       = { ...prev };
           const dailyTasks = getDailyTasks(game);
-          const allItems   = game.items ?? [];
+          const allItems   = game.items;
           const allTasks: Task[] = allItems.length ? allItems : [makeSoloTask(game)];
           if (isMaster) {
             const allDone = dailyTasks.every((tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]);
@@ -119,26 +117,26 @@ export function App() {
     setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
   const addItem = useCallback((gameId: string, item: Task) => {
-    setGames((prev) => (prev ?? []).map((g) =>
-      g.id === gameId ? { ...g, items: [...(g.items ?? []), item] } : g
+    setGames((prev) => prev.map((g) =>
+      g.id === gameId ? { ...g, items: [...g.items, item] } : g
     ));
   }, []);
 
   const deleteItem = useCallback((gameId: string, itemId: string) => {
-    setGames((prev) => (prev ?? []).map((g) =>
-      g.id === gameId ? { ...g, items: (g.items ?? []).filter((it) => it.id !== itemId) } : g
+    setGames((prev) => prev.map((g) =>
+      g.id === gameId ? { ...g, items: g.items.filter((it) => it.id !== itemId) } : g
     ));
   }, []);
 
   const editItem = useCallback((gameId: string, itemId: string, updates: Partial<Task>) => {
-    setGames((prev) => (prev ?? []).map((g) =>
+    setGames((prev) => prev.map((g) =>
       g.id === gameId
-        ? { ...g, items: (g.items ?? []).map((it) => it.id === itemId ? { ...it, ...updates } as Task : it) }
+        ? { ...g, items: g.items.map((it) => it.id === itemId ? { ...it, ...updates } as Task : it) }
         : g
     ));
   }, []);
 
-  if (!games) return <div className={s.loading}>{t('loading')}</div>;
+  if (games.length === 0) return <div className={s.loading}>{t('loading')}</div>;
 
   return (
     <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}`}>

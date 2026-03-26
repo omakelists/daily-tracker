@@ -7,8 +7,8 @@ import { msUntilDeadline } from './helpers';
 import type { Game, GameBgEntry } from '../types';
 
 export function useAppSettings(
-  games: Game[] | null,
-  setGames: Dispatch<SetStateAction<Game[] | null>>,
+  games: Game[],
+  setGames: Dispatch<SetStateAction<Game[]>>,
   now: Date,
 ) {
   const [sortUncheckedFirst, setSortUncheckedFirst] = useLocalStoragePref('dt:sortUncheckedFirst', true,  BOOL_PREF);
@@ -41,7 +41,6 @@ export function useAppSettings(
   const refreshImages = useCallback(() => setImgVer((v) => v + 1), []);
 
   useEffect(() => {
-    if (!games) return;
     let cancelled = false;
     (async () => {
       const ab = await imgGet('app-bg');
@@ -58,19 +57,19 @@ export function useAppSettings(
   }, [imgVer, games]);
 
   useEffect(() => {
-    if (games) imgPurgeOrphans(games.map((g) => g.id));
+    imgPurgeOrphans(games.map((g) => g.id));
   }, [games]);
 
   useEffect(() => {
-    if (!autoDeleteExpired || !games) return;
+    if (!autoDeleteExpired) return;
     const thresholdMs = autoDeleteDays * 86_400_000;
-    setGames((prev) => (prev ?? []).map((g) => {
-      const filtered = (g.items ?? []).filter((item) => {
+    setGames((prev) => prev.map((g) => {
+      const filtered = g.items.filter((item) => {
         if (item.type !== EVENT) return true;
-        const ms = msUntilDeadline(item.deadline, now, item.deadlineTime ?? null);
+        const ms = msUntilDeadline(item.deadline, now, item.deadlineTime);
         return ms > -thresholdMs;
       });
-      return filtered.length === (g.items ?? []).length ? g : { ...g, items: filtered };
+      return filtered.length === g.items.length ? g : { ...g, items: filtered };
     }));
   }, [now, autoDeleteExpired, autoDeleteDays]); // eslint-disable-line react-hooks/exhaustive-deps
 

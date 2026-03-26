@@ -92,14 +92,14 @@ function ImageDropZone({ currentDataUrl, onFile, onRemove, mode = 'large' }: Ima
 interface GameItemListProps {
   game: Game;
   itemDnd: ReturnType<typeof useScopedDragSort>;
-  onUpdate: (iid: string, f: string, v: unknown) => void;
+  onUpdate: (taskId: string, key: string, val: unknown) => void;
   onDelete: (iid: string) => void;
   onAdd: (item: Task) => void;
   showConfirm: (msg: string, fn: () => void, lbl: string) => void;
 }
 
 function GameItemList({ game, itemDnd, onUpdate, onDelete, onAdd, showConfirm }: GameItemListProps) {
-  const allItems = game.items ?? [];
+  const allItems = game.items;
   const btnRef   = useRef<HTMLButtonElement>(null);
   const [addType,    setAddType]    = useState<TaskType | undefined>(undefined);
   const [pickerPos, setPickerPos]  = useState<{ x: number; y: number } | null>(null);
@@ -160,7 +160,7 @@ interface Prefs {
 
 interface SettingsModalProps {
   games: Game[];
-  setGames: Dispatch<SetStateAction<Game[] | null>>;
+  setGames: Dispatch<SetStateAction<Game[]>>;
   onClose: () => void;
   showConfirm: (msg: string, fn: () => void, lbl: string) => void;
   refreshImages: () => void;
@@ -169,7 +169,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, prefs, onPrefs }: SettingsModalProps) {
-  const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff', resetTime: '00:00' });
+  const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff' as HexColor, resetTime: '00:00' as TimeString });
   const [showNG,   setShowNG]   = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -227,7 +227,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
         if (!Array.isArray(imported)) throw new Error('invalid');
         const fresh = imported.map((g: unknown) => {
           const game = g as Game;
-          return { ...game, id: uid(), items: (game.items ?? []).map((it) => ({ ...it, id: uid() })) };
+          return { ...game, id: uid(), items: game.items.map((it) => ({ ...it, id: uid() })) };
         });
         showConfirm(t('importConfirm', { n: fresh.length }), () => setGames(fresh), t('loadBtn'));
       } catch { alert(t('importError')); }
@@ -237,7 +237,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
 
   const gameDnd = useDragSort(useCallback((from, to) =>
     setGames((g) => {
-      const a = [...(g ?? [])];
+      const a = [...g];
       const [it] = a.splice(from, 1);
       a.splice(to, 0, it);
       return a;
@@ -245,9 +245,9 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   []));
 
   const itemDnd = useScopedDragSort(useCallback((gid, from, to) =>
-    setGames((g) => (g ?? []).map((gm) => {
+    setGames((g) => g.map((gm) => {
       if (gm.id !== gid) return gm;
-      const items = [...(gm.items ?? [])];
+      const items = [...gm.items];
       const [it] = items.splice(from, 1);
       items.splice(to, 0, it);
       return { ...gm, items };
@@ -255,17 +255,17 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
   []));
 
   const upGame  = (id: string, f: string, v: unknown) =>
-    setGames((g) => (g ?? []).map((gm) => gm.id === id ? { ...gm, [f]: v } : gm));
+    setGames((g) => g.map((gm) => gm.id === id ? { ...gm, [f]: v } : gm));
   const delGame = (id: string, name: string) =>
     showConfirm(t('deleteMsg', { name }), async () => {
       await imgDelete(`game-${id}`);
       setGameBgThumbs((prev) => { const n = { ...prev }; delete n[id]; return n; });
-      setGames((g) => (g ?? []).filter((gm) => gm.id !== id));
+      setGames((g) => g.filter((gm) => gm.id !== id));
       refreshImages();
     }, t('deleteBtn'));
   const addGame = () => {
     if (!newGame.name.trim()) return;
-    setGames((g) => [...(g ?? []), {
+    setGames((g) => [...g, {
       id: uid(),
       name: newGame.name,
       color: newGame.color as HexColor,
@@ -275,13 +275,13 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
     setNewGame({ name: '', color: '#4a9eff', resetTime: '00:00' }); setShowNG(false);
   };
 
-  const upItem  = (gid: string, iid: string, f: string, v: unknown) =>
-    setGames((g) => (g ?? []).map((gm) => gm.id === gid
-      ? { ...gm, items: (gm.items ?? []).map((it) => it.id === iid ? { ...it, [f]: v } : it) }
+  const upItem  = (gid: string, taskId: string, key: string, val: unknown) =>
+    setGames((g) => g.map((gm) => gm.id === gid
+      ? { ...gm, items: gm.items.map((it) => it.id === taskId ? { ...it, [key]: val } : it) }
       : gm));
   const delItem = (gid: string, iid: string) =>
-    setGames((g) => (g ?? []).map((gm) => gm.id === gid
-      ? { ...gm, items: (gm.items ?? []).filter((it) => it.id !== iid) }
+    setGames((g) => g.map((gm) => gm.id === gid
+      ? { ...gm, items: gm.items.filter((it) => it.id !== iid) }
       : gm));
 
   // Narrow verState for template rendering
@@ -324,7 +324,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                         <div className={s.gameResetGroup}>
                           <span className={s.resetLbl}>{t('resetLbl')}</span>
                           <input type="time" value={utcToLocalHHMM(game.resetTime)}
-                                 onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value))}
+                                 onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value as TimeString))}
                                  className={`${shared.inputCls} ${s.resetTime}`} />
                           <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null}
                                          onFile={(file) => openCrop(`game-${game.id}`, file)}
@@ -340,10 +340,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                   <div className={s.gameBody}>
                     <GameItemList
                       game={game} itemDnd={itemDnd}
-                      onUpdate={(iid, f, v) => upItem(game.id, iid, f, v)}
+                      onUpdate={(taskId, key, val) => upItem(game.id, taskId, key, val)}
                       onDelete={(iid) => delItem(game.id, iid)}
-                      onAdd={(item) => setGames((g) => (g ?? []).map((gm) => gm.id === game.id
-                        ? { ...gm, items: [...(gm.items ?? []), { ...item, id: uid() } as Task] }
+                      onAdd={(item) => setGames((g) => g.map((gm) => gm.id === game.id
+                        ? { ...gm, items: [...gm.items, { ...item, id: uid() } as Task] }
                         : gm))}
                       showConfirm={showConfirm}
                     />
@@ -361,12 +361,12 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                           className={shared.clipContents}>
                 <div className={s.newGameBox}>
                   <div className={s.newGameHeader}>
-                    <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value }))} className={s.colorInput} />
+                    <input type="color" value={newGame.color} onChange={(e) => setNewGame((g) => ({ ...g, color: e.target.value as HexColor }))} className={s.colorInput} />
                     <input value={newGame.name} onChange={(e) => setNewGame((g) => ({ ...g, name: e.target.value }))}
                            onKeyDown={(e) => e.key === 'Enter' && addGame()}
                            className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('gameName')} autoFocus />
                     <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value }))}
+                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value as TimeString }))}
                            className={`${shared.inputCls} ${s.resetTime}`} />
                   </div>
                   <div className={s.newGameActions}>
