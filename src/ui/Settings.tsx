@@ -752,7 +752,7 @@ export function SettingsModal({
           <label className={s.prefRow}>
             <input
               type="checkbox"
-              checked={!!prefs.sortUncheckedFirst}
+              checked={prefs.sortUncheckedFirst}
               onChange={(e) => onPrefs('sortUncheckedFirst', e.target.checked)}
               className={s.prefCheck}
             />
@@ -762,7 +762,7 @@ export function SettingsModal({
           <label className={s.prefRow}>
             <input
               type="checkbox"
-              checked={!!prefs.autoDeleteExpired}
+              checked={prefs.autoDeleteExpired}
               onChange={(e) => onPrefs('autoDeleteExpired', e.target.checked)}
               className={s.prefCheck}
             />

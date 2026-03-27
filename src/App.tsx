@@ -132,7 +132,7 @@ export function App() {
               allItems.length ? allItems : [makeSoloTask(game)]
             if (isMaster) {
               const allDone = dailyTasks.every(
-                (tk) => !!prev[checkKey(tk.id, getPeriodKey(tk, game, now))]
+                (tk) => prev[checkKey(tk.id, getPeriodKey(tk, game, now))]
               )
               dailyTasks.forEach((tk) => {
                 next[checkKey(tk.id, getPeriodKey(tk, game, now))] = !allDone
@@ -142,7 +142,7 @@ export function App() {
               const task = allTasks.find((tk) => tk.id === taskId)
               if (!task) return prev
               const k = checkKey(task.id, getPeriodKey(task, game, now))
-              const was = !!prev[k]
+              const was = prev[k]
               next[k] = !was
               if (!was)
                 sound =
