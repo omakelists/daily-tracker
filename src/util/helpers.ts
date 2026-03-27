@@ -1,3 +1,4 @@
+import { match } from 'ts-pattern';
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT, DAY_MS } from '../constants';
 import type {Game, Task, DailyTask, ChecksMap, CountdownLabels, TimeString, YMDString, HexColor} from '../types';
 
@@ -120,22 +121,23 @@ export const getTaskRT = (task: Task, game: Game): TimeString =>
   (task.resetTime || game.resetTime) as TimeString;
 
 export function getPeriodKey(task: Task, game: Game, now: Date): string {
-  if (task.type === EVENT)       return 'done';
-  const dk = getGameDateKey(now, getTaskRT(task, game));
-  if (task.type === WEEKLY)      return dateToWeekKey(dk, task.weeklyResetDay);
-  if (task.type === MONTHLY)     return getMonthPeriodKey(dk, task.monthlyResetDay);
-  if (task.type === HALFMONTHLY) return dateToHalfMonthKey(dk, task.halfMonthlyStartDay);
-  return dk;
+  return match(task)
+    .with({ type: DAILY       }, (t) => getGameDateKey(now, getTaskRT(t, game)))
+    .with({ type: WEEKLY      }, (t) => dateToWeekKey(getGameDateKey(now, getTaskRT(t, game)), t.weeklyResetDay))
+    .with({ type: HALFMONTHLY }, (t) => dateToHalfMonthKey(getGameDateKey(now, getTaskRT(t, game)), t.halfMonthlyStartDay))
+    .with({ type: MONTHLY     }, (t) => getMonthPeriodKey(getGameDateKey(now, getTaskRT(t, game)), t.monthlyResetDay))
+    .with({ type: EVENT       }, ()  => 'done')
+    .exhaustive();
 }
 
 export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
-  if (task.type === EVENT)       return 'done';
-  const rt = getTaskRT(task, game);
-  const dk = getGameDateKey(now, rt);
-  if (task.type === WEEKLY)      return dateToWeekKey(shiftDate(dk, -7), task.weeklyResetDay);
-  if (task.type === MONTHLY)     return getPrevMonthPeriodKey(getMonthPeriodKey(dk, task.monthlyResetDay));
-  if (task.type === HALFMONTHLY) return prevHalfMonthKey(dateToHalfMonthKey(dk, task.halfMonthlyStartDay), task.halfMonthlyStartDay);
-  return getPrevGameDateKey(now, rt);
+  return match(task)
+    .with({ type: DAILY       }, (t) => getPrevGameDateKey(now, getTaskRT(t, game)))
+    .with({ type: WEEKLY      }, (t) => dateToWeekKey(shiftDate(getGameDateKey(now, getTaskRT(t, game)), -7), t.weeklyResetDay))
+    .with({ type: HALFMONTHLY }, (t) => { const dk = getGameDateKey(now, getTaskRT(t, game)); return prevHalfMonthKey(dateToHalfMonthKey(dk, t.halfMonthlyStartDay), t.halfMonthlyStartDay); })
+    .with({ type: MONTHLY     }, (t) => getPrevMonthPeriodKey(getMonthPeriodKey(getGameDateKey(now, getTaskRT(t, game)), t.monthlyResetDay)))
+    .with({ type: EVENT       }, ()  => 'done')
+    .exhaustive();
 }
 
 // ── Countdown helpers (all UTC) ───────────────────────────────────
@@ -185,11 +187,13 @@ export function msUntilNextWeek(now: Date, rtUTC: TimeString, rd = 1): number {
 }
 
 export function msUntilTaskReset(task: Task, game: Game, now: Date): number {
-  const rt = getTaskRT(task, game);
-  if (task.type === MONTHLY)     return msUntilNextMonth(now, rt, task.monthlyResetDay);
-  if (task.type === HALFMONTHLY) return msUntilNextHalfMonth(now, rt, task.halfMonthlyStartDay);
-  if (task.type === WEEKLY)      return msUntilNextWeek(now, rt, task.weeklyResetDay);
-  return msUntilReset(now, rt);
+  return match(task)
+    .with({ type: MONTHLY     }, (t) => msUntilNextMonth(now, getTaskRT(t, game), t.monthlyResetDay))
+    .with({ type: HALFMONTHLY }, (t) => msUntilNextHalfMonth(now, getTaskRT(t, game), t.halfMonthlyStartDay))
+    .with({ type: WEEKLY      }, (t) => msUntilNextWeek(now, getTaskRT(t, game), t.weeklyResetDay))
+    .with({ type: DAILY       }, (t) => msUntilReset(now, getTaskRT(t, game)))
+    .with({ type: EVENT       }, ()  => Infinity)
+    .exhaustive();
 }
 
 export function formatCountdown(ms: number, cd: CountdownLabels): string {

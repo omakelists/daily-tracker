@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { match } from 'ts-pattern';
 import { t } from '../util/i18n';
 import { uid, utcToLocalHHMM } from '../util/helpers';
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
@@ -40,27 +41,14 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }: TaskA
     setDraft((prev) => ({ ...prev, [key]: val }));
 
   const handleSubmit = () => {
-    const name = draft.name.trim() || t(`types.${draft.type}`);
-    let newTask: Task;
-    switch (draft.type) {
-      case DAILY:
-        newTask = { id: uid(), type: DAILY, name, resetTime: draft.resetTime };
-        break;
-      case WEEKLY:
-        newTask = { id: uid(), type: WEEKLY, name, weeklyResetDay: Number(draft.weeklyResetDay) };
-        break;
-      case HALFMONTHLY:
-        newTask = { id: uid(), type: HALFMONTHLY, name, halfMonthlyStartDay: Number(draft.halfMonthlyStartDay) };
-        break;
-      case MONTHLY:
-        newTask = { id: uid(), type: MONTHLY, name, monthlyResetDay: Number(draft.monthlyResetDay) };
-        break;
-      case EVENT:
-        newTask = { id: uid(), type: EVENT, name, deadline: draft.deadline, deadlineTime: draft.deadlineTime };
-        break;
-      default:
-        return;
-    }
+    const name    = draft.name.trim() || t(`types.${draft.type}`);
+    const newTask = match(draft)
+      .with({ type: DAILY       }, (d) => ({ id: uid(), type: DAILY,        name, resetTime:           d.resetTime                          } satisfies Task))
+      .with({ type: WEEKLY      }, (d) => ({ id: uid(), type: WEEKLY,       name, weeklyResetDay:      Number(d.weeklyResetDay)              } satisfies Task))
+      .with({ type: HALFMONTHLY }, (d) => ({ id: uid(), type: HALFMONTHLY,  name, halfMonthlyStartDay: Number(d.halfMonthlyStartDay)         } satisfies Task))
+      .with({ type: MONTHLY     }, (d) => ({ id: uid(), type: MONTHLY,      name, monthlyResetDay:     Number(d.monthlyResetDay)             } satisfies Task))
+      .with({ type: EVENT       }, (d) => ({ id: uid(), type: EVENT,        name, deadline:            d.deadline, deadlineTime: d.deadlineTime } satisfies Task))
+      .exhaustive();
     if (onSave) onSave(newTask); else onAdd?.(newTask);
   };
 
