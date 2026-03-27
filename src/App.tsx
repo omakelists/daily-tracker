@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { flushSync } from 'react-dom';
 import { AnimatePresence } from 'motion/react';
 import { t } from './util/i18n';
@@ -15,12 +16,19 @@ import type { Game, Task, DailyTask, ChecksMap, ConfirmState } from './types';
 import s from './App.module.css';
 
 export function App() {
-  const [games,        setGames]        = useState<Game[]>([]);
+  const [games,        setGames]        = useState<Game[] | null>(null);
   const [checks,       setChecks]       = useState<ChecksMap>({});
   const [now,          setNow]          = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [confirm,      setConfirm]      = useState<ConfirmState | null>(null);
+
+  const setSafeGames: Dispatch<SetStateAction<Game[]>> = (param) => {
+    setGames(prev => {
+      const next = prev ?? [];
+      return (typeof param === "function") ? param(next) : param;
+    });
+  };
 
   const { updateInfo, flashMsg, doUpdate } = useAppUpdate();
 
@@ -30,7 +38,7 @@ export function App() {
     autoDeleteDays,     setAutoDeleteDays,
     collapsed, toggleCollapse,
     appBg, gameBgs, refreshImages,
-  } = useAppSettings(games, setGames, now);
+  } = useAppSettings(games ?? [], setSafeGames, now);
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
   const [wcoVisible, setWcoVisible] = useState(() => !!(navigator.windowControlsOverlay?.visible));
@@ -45,7 +53,7 @@ export function App() {
   // Unified clock
   useEffect(() => {
     let minMs = 30_000;
-    games.forEach((game) => {
+    (games ?? []).forEach((game) => {
       const taskItems = game.items.filter((it) => it.type !== EVENT);
       const tasks: Task[] = taskItems.length
         ? taskItems
@@ -65,7 +73,7 @@ export function App() {
     setChecks(loadedChecks);
   }, []);
 
-  useEffect(() => { saveGames(games); }, [games]);
+  useEffect(() => { if (games !== null) saveGames(games); }, [games]);
 
   const soloId = (game: Game): string => `${game.id}_solo`;
 
@@ -117,26 +125,26 @@ export function App() {
     setConfirm({ message: msg, onConfirm: fn, confirmLabel: lbl });
 
   const addItem = useCallback((gameId: string, item: Task) => {
-    setGames((prev) => prev.map((g) =>
+    setSafeGames((prev) => prev.map((g) =>
       g.id === gameId ? { ...g, items: [...g.items, item] } : g
     ));
   }, []);
 
   const deleteItem = useCallback((gameId: string, itemId: string) => {
-    setGames((prev) => prev.map((g) =>
+    setSafeGames((prev) => prev.map((g) =>
       g.id === gameId ? { ...g, items: g.items.filter((it) => it.id !== itemId) } : g
     ));
   }, []);
 
   const editItem = useCallback((gameId: string, itemId: string, updates: Partial<Task>) => {
-    setGames((prev) => prev.map((g) =>
+    setSafeGames((prev) => prev.map((g) =>
       g.id === gameId
         ? { ...g, items: g.items.map((it) => it.id === itemId ? { ...it, ...updates } as Task : it) }
         : g
     ));
   }, []);
 
-  if (games.length === 0) return <div className={s.loading}>{t('loading')}</div>;
+  if (games === null) return <div className={s.loading}>{t('loading')}</div>;
 
   return (
     <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}`}>
@@ -203,7 +211,7 @@ export function App() {
 
       <AnimatePresence>
         {showSettings && (
-          <SettingsModal key="settings" games={games} setGames={setGames}
+          <SettingsModal key="settings" games={games} setGames={setSafeGames}
             onClose={() => setShowSettings(false)} showConfirm={showConfirm} refreshImages={refreshImages}
             prefs={{ sortUncheckedFirst, autoDeleteExpired, autoDeleteDays }}
             onPrefs={(key, val) => ({
