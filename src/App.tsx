@@ -37,7 +37,8 @@ export function App() {
     })
   }
 
-  const { updateInfo, flashMsg, doUpdate } = useAppUpdate()
+  const { updateInfo, flashMsg, doUpdate, verState, checkVersion } =
+    useAppUpdate()
 
   const {
     sortUncheckedFirst,
@@ -357,6 +358,9 @@ export function App() {
                 }) as Record<string, (v: unknown) => void>
               )[key]?.(val)
             }
+            verState={verState}
+            checkVersion={checkVersion}
+            doUpdate={doUpdate}
           />
         )}
       </AnimatePresence>

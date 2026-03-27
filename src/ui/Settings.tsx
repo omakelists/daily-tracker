@@ -6,7 +6,7 @@ import { t } from '../util/i18n'
 import { uid, asLocal } from '../util/helpers'
 import { ALL_TASK_TYPES, EVENT } from '../constants'
 import { imgDelete, imgGet, imgSet } from '../util/imageStorage'
-import { useAppUpdate } from '../util/useAppUpdate'
+import type { VerState } from '../util/useAppUpdate'
 import { Modal } from './UI'
 import { ContextMenu } from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
@@ -291,6 +291,9 @@ interface SettingsModalProps {
   refreshImages: () => void
   prefs: Prefs
   onPrefs: (key: string, val: unknown) => void
+  verState: VerState
+  checkVersion: () => void
+  doUpdate: () => void
 }
 
 export function SettingsModal({
@@ -301,6 +304,9 @@ export function SettingsModal({
   refreshImages,
   prefs,
   onPrefs,
+  verState,
+  checkVersion,
+  doUpdate,
 }: SettingsModalProps) {
   const [newGame, setNewGame] = useState({
     name: '',
@@ -309,8 +315,6 @@ export function SettingsModal({
   })
   const [showNG, setShowNG] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
-
-  const { verState, checkVersion, doUpdate } = useAppUpdate()
 
   const [cropFile, setCropFile] = useState<File | null>(null)
   const [cropTarget, setCropTarget] = useState<string | null>(null)
@@ -465,11 +469,7 @@ export function SettingsModal({
         items: [],
       },
     ])
-    setNewGame({
-      name: '',
-      color: '#4a9eff',
-      resetTime: asLocal('00:00'),
-    })
+    setNewGame({ name: '', color: '#4a9eff', resetTime: asLocal('00:00') })
     setShowNG(false)
   }
 

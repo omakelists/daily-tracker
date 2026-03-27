@@ -17,7 +17,7 @@ interface VersionState {
   timedOut?: boolean
 }
 
-type VerState =
+export type VerState =
   | null
   | 'checking'
   | 'updating'
@@ -41,7 +41,11 @@ async function fetchVersions(): Promise<{
   return { cached, net }
 }
 
-function activateAndReload(reg: ServiceWorkerRegistration): void {
+// Accept the worker reference directly instead of reading reg.waiting at call time.
+// reg.waiting may not be synchronously populated yet when called from within a
+// statechange handler (nw.state === 'installed'), causing the postMessage to be
+// silently skipped via optional chaining and the page to never reload.
+function activateAndReload(worker: ServiceWorker): void {
   try {
     localStorage.setItem(UPDATED_FLAG, '1')
   } catch {
@@ -52,7 +56,7 @@ function activateAndReload(reg: ServiceWorkerRegistration): void {
     () => window.location.reload(),
     { once: true }
   )
-  reg.waiting?.postMessage(SKIP_WAITING_MSG)
+  worker.postMessage(SKIP_WAITING_MSG)
 }
 
 export function useAppUpdate() {
@@ -123,9 +127,11 @@ export function useAppUpdate() {
     try {
       const reg = await navigator.serviceWorker.ready
 
+      // Pass reg.waiting (ServiceWorker) directly — not reg (ServiceWorkerRegistration),
+      // which has no postMessage and would silently drop the SKIP_WAITING message.
       if (reg.waiting) {
         setVerState('reloading')
-        activateAndReload(reg)
+        activateAndReload(reg.waiting)
         return
       }
 
@@ -150,23 +156,26 @@ export function useAppUpdate() {
         () => {
           const nw = reg.installing
           if (!nw) return
+          // Capture nw in the closure so we can pass it directly to activateAndReload.
+          // reg.waiting may not yet be populated when statechange fires.
           nw.addEventListener('statechange', () => {
             if (nw.state === 'installed' && !settled) {
               settled = true
               clearTimeout(timeout)
               setVerState('reloading')
-              activateAndReload(reg)
+              activateAndReload(nw)
             }
           })
         },
         { once: true }
       )
 
+      // Race: worker may have moved to waiting between reg.update() and updatefound.
       if (reg.waiting && !settled) {
         settled = true
         clearTimeout(timeout)
         setVerState('reloading')
-        activateAndReload(reg)
+        activateAndReload(reg.waiting)
       }
     } catch {
       setVerState('error')
