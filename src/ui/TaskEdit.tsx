@@ -10,7 +10,7 @@ import {
   parseYYYYMMDD,
 } from '../util/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
-import type { LocalYMDString, Task } from '../types'
+import type { Game, LocalYMDString, Task } from '../types'
 import { Badge } from './UI'
 import s from './TaskEdit.module.css'
 import shared from './shared.module.css'
@@ -24,6 +24,7 @@ function addDaysToDate(dateStr: LocalYMDString, n: number): LocalYMDString {
 }
 
 interface TaskEditProps {
+  game: Game
   item: Task
   onUpdate: (taskId: string, key: string, val: unknown) => void
   handleSubmit?: () => void
@@ -31,6 +32,7 @@ interface TaskEditProps {
 }
 
 export function TaskEdit({
+  game,
   item,
   onUpdate,
   handleSubmit,
@@ -64,7 +66,7 @@ export function TaskEdit({
           <div className={s.resetInputGroup}>
             <input
               type="time"
-              value={it.resetTime}
+              value={it.resetTime ?? game.resetTime}
               onChange={(e) =>
                 onUpdate?.(it.id, 'resetTime', asLocal(e.target.value))
               }

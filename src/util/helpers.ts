@@ -167,7 +167,7 @@ export function prevHalfMonthKey(k: string, startDay = 1): string {
 
 // Task-level resetTime takes precedence over game resetTime.
 export const getTaskRT = (task: Task, game: Game): LocalTimeString =>
-  task.resetTime || game.resetTime
+  task.resetTime ?? game.resetTime
 
 export function getPeriodKey(task: Task, game: Game, now: Date): string {
   return match(task)

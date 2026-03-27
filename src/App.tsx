@@ -345,6 +345,8 @@ export function App() {
             key="settings"
             games={games}
             setGames={setSafeGames}
+            checks={checks}
+            setChecks={setChecks}
             onClose={() => setShowSettings(false)}
             showConfirm={showConfirm}
             refreshImages={refreshImages}

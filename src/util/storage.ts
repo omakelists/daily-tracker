@@ -29,9 +29,14 @@ const CHECKS_KEY = 'dailytracker:checks'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LegacyGame = any
 
-function migrateGame(g: LegacyGame): Game {
+export function migrateGame(
+  g: LegacyGame,
+  setChecks: (key: string, val: boolean) => void
+): [Game, boolean] {
+  let migrated = false
   // Phase 1: legacy { tasks, events } → { items }
   if (!g.items) {
+    migrated = true
     const {
       tasks,
       events,
@@ -53,22 +58,70 @@ function migrateGame(g: LegacyGame): Game {
   }
   // Phase 2: webdaily → daily
   // Phase 3: webResetTime → resetTime
-  return {
+  g = {
     ...g,
     items: (g.items as LegacyGame[]).map((it: LegacyGame) => {
       const { webResetTime, ...rest } =
         it.type === 'webdaily' ? { ...it, type: 'daily' } : it
-      return webResetTime !== undefined ?
-          { ...rest, resetTime: webResetTime }
-        : rest
+      if (webResetTime !== undefined) {
+        migrated = true
+        return { ...rest, resetTime: webResetTime }
+      } else {
+        return rest
+      }
     }),
   } as Game
+  const items = g.items
+    .map((it: Task & { done?: boolean }) => {
+      // Phase 4: move item.done (event) into checks map
+      if (it.type === EVENT && 'done' in it) {
+        migrated = true
+        if (it.done) setChecks(`${it.id}__done`, true)
+        const { done: _done, ...rest } = it
+        return rest as Task
+      }
+      return it
+    })
+    .map((it: Task) => {
+      // Phase 5: default values for each task type
+      if (it.type === DAILY) {
+        if (!('resetTime' in it)) {
+          migrated = true
+          return { ...(it as DailyTask), resetTime: g.resetTime } as DailyTask
+        }
+      } else if (it.type === WEEKLY) {
+        if (!('weeklyResetDay' in it)) {
+          migrated = true
+          return { ...(it as WeeklyTask), weeklyResetDay: 1 } as WeeklyTask
+        }
+      } else if (it.type === HALFMONTHLY) {
+        if (!('halfMonthlyStartDay' in it)) {
+          migrated = true
+          return {
+            ...(it as HalfMonthlyTask),
+            halfMonthlyStartDay: 1,
+          } as HalfMonthlyTask
+        }
+      } else if (it.type === MONTHLY) {
+        if (!('monthlyResetDay' in it)) {
+          migrated = true
+          return { ...(it as MonthlyTask), monthlyResetDay: 1 } as MonthlyTask
+        }
+      }
+      return it
+    })
+  g = { ...g, items }
+  return [g as Game, migrated]
 }
 
 function localToUtcTask(task: Task): object {
   return match(task)
     .with({ type: DAILY }, (tk) => {
-      return { ...tk, resetTime: localToUtcHHMM(tk.resetTime) }
+      if (tk.resetTime) {
+        return { ...tk, resetTime: localToUtcHHMM(tk.resetTime) }
+      } else {
+        return { ...tk }
+      }
     })
     .with({ type: EVENT }, (tk) => {
       const [y, mt, d] = parseYYYYMMDD(tk.deadline)
@@ -118,11 +171,14 @@ export function saveChecks(c: ChecksMap): void {
 function utcToLocalTask(task: unknown): Task {
   return match(task)
     .with({ type: DAILY }, (tk) => {
-      if (!('resetTime' in tk)) throw new Error('invalid data')
-      return {
-        ...tk,
-        resetTime: utcToLocalHHMM(tk.resetTime as UtcTimeString),
-      } as DailyTask
+      if ('resetTime' in tk) {
+        return {
+          ...tk,
+          resetTime: utcToLocalHHMM(tk.resetTime as UtcTimeString),
+        } as DailyTask
+      } else {
+        return { ...tk } as DailyTask
+      }
     })
     .with({ type: WEEKLY }, (tk) => tk as WeeklyTask)
     .with({ type: HALFMONTHLY }, (tk) => tk as HalfMonthlyTask)
@@ -143,7 +199,8 @@ function utcToLocalTask(task: unknown): Task {
     .run()
 }
 
-export function utcToLocalGame(game: Record<string, unknown>): Game {
+export function utcToLocalGame(game: unknown): Game {
+  if (game === null || typeof game !== 'object') throw new Error('invalid data')
   if (!('resetTime' in game)) throw new Error('invalid data')
   if (!('items' in game && game.items instanceof Array))
     throw new Error('invalid data')
@@ -165,19 +222,12 @@ export function loadAll(): { games: Game[] | null; checks: ChecksMap } {
 
     let migrated = false
     games = (raw as LegacyGame[])
-      .map(migrateGame)
       .map((g) => {
-        const items = g.items.map((it: Task & { done?: boolean }) => {
-          // Phase 4: move item.done (event) into checks map
-          if (it.type === EVENT && 'done' in it) {
-            if (it.done) checks[`${it.id}__done`] = true
-            const { done: _done, ...rest } = it
-            migrated = true
-            return rest as Task
-          }
-          return it
+        const [games, _migrated] = migrateGame(g, (key, val) => {
+          checks[key] = val
         })
-        return { ...g, items }
+        migrated = migrated || _migrated
+        return games
       })
       .map(utcToLocalGame)
 

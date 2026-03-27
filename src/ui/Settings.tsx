@@ -14,9 +14,10 @@ import { CropModal } from './CropModal'
 import { TaskAddForm } from './TaskAddForm'
 import { TaskRow } from './TaskRow'
 import { TaskEdit } from './TaskEdit'
-import type { Game, Task, TaskType, HexColor } from '../types'
+import type { Game, Task, TaskType, HexColor, ChecksMap } from '../types'
 import s from './Settings.module.css'
 import shared from './shared.module.css'
+import { migrateGame, utcToLocalGame } from '../util/storage.ts'
 
 // Shared item variants for game/task rows
 const itemVariants = {
@@ -240,7 +241,7 @@ function GameItemList({
                 dndProps={dndProps}
                 dndStyle={dndStyle}
               >
-                <TaskEdit item={item} onUpdate={onUpdate} />
+                <TaskEdit game={game} item={item} onUpdate={onUpdate} />
               </TaskRow>
             </motion.div>
           )
@@ -286,6 +287,8 @@ interface Prefs {
 interface SettingsModalProps {
   games: Game[]
   setGames: Dispatch<SetStateAction<Game[]>>
+  checks: ChecksMap
+  setChecks: Dispatch<SetStateAction<ChecksMap>>
   onClose: () => void
   showConfirm: (msg: string, fn: () => void, lbl: string) => void
   refreshImages: () => void
@@ -299,6 +302,8 @@ interface SettingsModalProps {
 export function SettingsModal({
   games,
   setGames,
+  checks,
+  setChecks,
   onClose,
   showConfirm,
   refreshImages,
@@ -390,20 +395,31 @@ export function SettingsModal({
         const parsed = JSON.parse(ev.target?.result as string)
         const imported: unknown[] = parsed.games ?? parsed
         if (!Array.isArray(imported)) throw new Error('invalid')
-        const fresh = imported.map((g: unknown) => {
-          const game = g as Game
-          return {
-            ...game,
-            id: uid(),
-            items: game.items.map((it) => ({ ...it, id: uid() })),
-          }
-        })
+        let migrated = false
+        const fresh = imported
+          .map((g: unknown) => {
+            const [game, _migrated] = migrateGame(g, (key, val) => {
+              checks[key] = val
+            })
+            migrated = migrated || _migrated
+            return {
+              ...game,
+              id: uid(),
+              items: game.items.map((it) => ({ ...it, id: uid() })),
+            }
+          })
+          .map(utcToLocalGame)
+
         showConfirm(
           t('importConfirm', { n: fresh.length }),
-          () => setGames(fresh),
+          () => {
+            setGames(fresh)
+            setChecks(checks)
+          },
           t('loadBtn')
         )
-      } catch {
+      } catch (error: unknown) {
+        console.error(error)
         alert(t('importError'))
       }
     }

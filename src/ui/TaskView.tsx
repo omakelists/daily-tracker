@@ -83,8 +83,10 @@ export function TaskView({
             </span>
           )}
           {match(task)
-            .with({ type: DAILY }, (_) => (
-              <span className={s.resetLbl}>{task.resetTime}</span>
+            .with({ type: DAILY }, (tk) => (
+              <span className={s.resetLbl}>
+                {tk.resetTime ?? game.resetTime}
+              </span>
             ))
             .with({ type: WEEKLY }, (tk) => (
               <span className={s.resetLbl}>
