@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { t } from '../util/i18n'
-import type { ReactNode, CSSProperties } from 'react'
+import type { ReactNode } from 'react'
 import type { Game, Task } from '../types'
 import s from './UI.module.css'
 import shared from './shared.module.css'
@@ -44,7 +44,6 @@ interface GameHeaderProps {
   bg?: string
   borderBottom?: string
   className?: string
-  style?: CSSProperties
   onClick?: () => void
   rootProps?: Record<string, unknown>
 }
@@ -61,19 +60,15 @@ export function GameHeader({
   bg,
   borderBottom,
   className,
-  style,
   onClick,
-  rootProps,
 }: GameHeaderProps) {
   return (
     <div
-      {...rootProps}
       {...headerTrigger}
       className={`${s.gameHeaderRow}${className ? ` ${className}` : ''}`}
       style={{
         background: bg ?? 'transparent',
         borderBottom: borderBottom ?? 'none',
-        ...style,
       }}
       onClick={onClick}
     >
