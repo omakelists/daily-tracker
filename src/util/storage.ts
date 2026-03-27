@@ -143,7 +143,7 @@ function utcToLocalTask(task: unknown): Task {
     .run()
 }
 
-function utcToLocalGame(game: Record<string, unknown>): Game {
+export function utcToLocalGame(game: Record<string, unknown>): Game {
   if (!('resetTime' in game)) throw new Error('invalid data')
   if (!('items' in game && game.items instanceof Array))
     throw new Error('invalid data')

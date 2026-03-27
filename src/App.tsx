@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import { AnimatePresence } from 'motion/react'
 import { t } from './util/i18n'
 import { DEFAULT_GAMES, DAILY, EVENT } from './constants'
-import { loadAll, saveGames, saveChecks } from './util/storage'
+import { loadAll, saveGames, saveChecks, utcToLocalGame } from './util/storage'
 import {
   getPeriodKey,
   checkKey,
@@ -93,7 +93,7 @@ export function App() {
 
   useEffect(() => {
     const { games: loaded, checks: loadedChecks } = loadAll()
-    setGames(loaded ?? DEFAULT_GAMES)
+    setGames(loaded ?? DEFAULT_GAMES.map(utcToLocalGame))
     setChecks(loadedChecks)
   }, [])
 
