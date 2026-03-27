@@ -32,8 +32,8 @@ export function CalendarModal({
   now,
   onClose,
 }: CalendarModalProps) {
-  const [year, setYear] = useState(now.getUTCFullYear())
-  const [month, setMonth] = useState(now.getUTCMonth())
+  const [year, setYear] = useState(now.getFullYear())
+  const [month, setMonth] = useState(now.getMonth())
   const [selGame, setSelGame] = useState<string | null>(games[0]?.id ?? null)
   const [selTask, setSelTask] = useState<string | null>(null)
 
@@ -58,7 +58,7 @@ export function CalendarModal({
   }, [selGame])
 
   const daysInMonth = getDaysInMonth(year, month)
-  const firstDay = new Date(Date.UTC(year, month, 1)).getUTCDay()
+  const firstDay = new Date(year, month, 1).getDay()
   const today = localFmtDate(now)
 
   const getStatus = (dk: string): 'all' | 'partial' | 'none' => {
@@ -73,9 +73,9 @@ export function CalendarModal({
   }
 
   const nav = (delta: number) => {
-    const d = new Date(Date.UTC(year, month + delta, 1))
-    setYear(d.getUTCFullYear())
-    setMonth(d.getUTCMonth())
+    const d = new Date(year, month + delta, 1)
+    setYear(d.getFullYear())
+    setMonth(d.getMonth())
   }
 
   const dayNames = ta('dayNames')
@@ -116,7 +116,7 @@ export function CalendarModal({
             ‹
           </button>
           <span className={s.month}>
-            {new Date(Date.UTC(year, month, 1)).toLocaleDateString([], {
+            {new Date(year, month, 1).toLocaleDateString([], {
               year: 'numeric',
               month: 'long',
             })}

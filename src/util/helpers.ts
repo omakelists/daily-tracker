@@ -39,7 +39,7 @@ export const utcFmtTime = (d: Date): UtcTimeString =>
   `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` as UtcTimeString
 
 export const getDaysInMonth = (y: number, m: number): number =>
-  new Date(Date.UTC(y, m + 1, 0)).getUTCDate()
+  new Date(y, m + 1, 0).getDate()
 
 // ── Timezone conversion ───────────────────────────────────────────
 export function utcToLocalHHMM(utcHHMM?: UtcTimeString): LocalTimeString {
