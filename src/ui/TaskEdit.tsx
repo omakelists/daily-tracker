@@ -7,17 +7,19 @@ import {
   formatCountdown,
   msUntilDeadline,
   asLocal,
+  parseYYYYMMDD,
 } from '../util/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
-import type { Task } from '../types'
+import type { LocalYMDString, Task } from '../types'
 import { Badge } from './UI'
 import s from './TaskEdit.module.css'
 import shared from './shared.module.css'
 
-function addDaysToDate(dateStr: string | null | undefined, n: number): string {
-  const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date()
+function addDaysToDate(dateStr: LocalYMDString, n: number): LocalYMDString {
+  const [y, m, d] = parseYYYYMMDD(dateStr)
+  const base = new Date(y, m, d)
   base.setDate(base.getDate() + n)
-  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}` as LocalYMDString
 }
 
 interface TaskEditProps {
@@ -33,7 +35,6 @@ export function TaskEdit({
   handleSubmit,
   onCancel,
 }: TaskEditProps) {
-  // item.deadlineTime is UtcTimeString — pass directly without re-converting
   const timeUtcForCd = item.type === EVENT ? item.deadlineTime : undefined
   const deadlineMs =
     item.type === EVENT && timeUtcForCd ?
