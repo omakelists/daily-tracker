@@ -61,17 +61,6 @@ export type Task =
 
 // ── Mutable draft used by TaskAddForm / TaskEdit ──────────────────
 // Looser than Task — fields are optional to allow partial editing.
-export interface TaskDraft {
-  id: string
-  name: string
-  type: TaskType
-  resetTime?: UtcTimeString
-  weeklyResetDay?: number
-  monthlyResetDay?: number
-  halfMonthlyStartDay?: number
-  deadline?: string | null
-  deadlineTime?: UtcTimeString | null
-}
 
 // ── Game ──────────────────────────────────────────────────────────
 export interface Game {
