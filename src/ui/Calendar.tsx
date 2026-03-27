@@ -5,7 +5,6 @@ import {
   getDaysInMonth,
   checkKey,
   asLocal,
-  localToUtcHHMM,
   localFmtDate,
 } from '../util/helpers'
 import type { Game, Task, DailyTask, ChecksMap } from '../types'
@@ -50,7 +49,7 @@ export function CalendarModal({
           id: `${game?.id}_solo`,
           type: DAILY,
           name: '',
-          resetTime: game?.resetTime ?? localToUtcHHMM(asLocal('00:00')),
+          resetTime: game?.resetTime ?? asLocal('00:00'),
         } as DailyTask,
       ]
 
