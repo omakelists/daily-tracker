@@ -20,6 +20,7 @@ import type { Game, Task } from '../types'
 import { Badge } from './UI'
 import s from './TaskView.module.css'
 import shared from './shared.module.css'
+import { match } from 'ts-pattern'
 
 interface TaskViewProps {
   game: Game
@@ -57,8 +58,6 @@ export function TaskView({
 
   const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), [])
   const taskCdColor = cdColor(taskMs ?? 0, urgentH, warnH)
-  const localResetTime =
-    task.type === DAILY ? utcToLocalHHMM(task.resetTime) : null
 
   return (
     <div className={shared.taskInfo}>
@@ -84,40 +83,46 @@ export function TaskView({
               {isExpired ? t('expired') : `⏱${formatCountdown(taskMs, cd)}`}
             </span>
           )}
-          {task.type === DAILY && localResetTime && (
-            <span className={s.resetLbl}>{localResetTime}</span>
-          )}
-          {task.type === WEEKLY && (
-            <span className={s.resetLbl}>
-              {t('everyWeek', {
-                day: t('dayNamesFull.' + task.weeklyResetDay),
-              })}
-            </span>
-          )}
-          {task.type === HALFMONTHLY && (
-            <span className={s.resetLbl}>
-              {t('everyHalfMonth', {
-                a: task.halfMonthlyStartDay,
-                b: task.halfMonthlyStartDay + 15,
-              })}
-            </span>
-          )}
-          {task.type === MONTHLY && (
-            <span className={s.resetLbl}>
-              {t('everyDay', { day: task.monthlyResetDay })}
-            </span>
-          )}
-          {task.type === EVENT && showDeadline && (
-            <span className={s.resetLbl}>
-              {deadlineMs !== null
-                && (deadlineMs >= DAY_MS || isExpired)
-                && fmtDeadlineDate(task.deadline, t)}
-              {deadlineMs !== null
-                && deadlineMs < DAY_MS
-                && !isExpired
-                && utcToLocalHHMM(task.deadlineTime)}
-            </span>
-          )}
+          {match(task)
+            .with({ type: DAILY }, (_) => (
+              <span className={s.resetLbl}>
+                {utcToLocalHHMM(task.resetTime)}
+              </span>
+            ))
+            .with({ type: WEEKLY }, (tk) => (
+              <span className={s.resetLbl}>
+                {t('everyWeek', {
+                  day: t('dayNamesFull.' + tk.weeklyResetDay),
+                })}
+              </span>
+            ))
+            .with({ type: HALFMONTHLY }, (tk) => (
+              <span className={s.resetLbl}>
+                {t('everyHalfMonth', {
+                  a: tk.halfMonthlyStartDay,
+                  b: tk.halfMonthlyStartDay + 15,
+                })}
+              </span>
+            ))
+            .with({ type: MONTHLY }, (tk) => (
+              <span className={s.resetLbl}>
+                {t('everyDay', { day: tk.monthlyResetDay })}
+              </span>
+            ))
+            .with({ type: EVENT }, (tk) =>
+              showDeadline ?
+                <span className={s.resetLbl}>
+                  {deadlineMs !== null
+                    && (deadlineMs >= DAY_MS || isExpired)
+                    && fmtDeadlineDate(tk.deadline, t)}
+                  {deadlineMs !== null
+                    && deadlineMs < DAY_MS
+                    && !isExpired
+                    && utcToLocalHHMM(tk.deadlineTime)}
+                </span>
+              : null
+            )
+            .exhaustive()}
         </div>
       </div>
     </div>
