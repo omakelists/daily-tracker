@@ -286,16 +286,16 @@ export function msUntilNextWeek(
 
 export function msUntilTaskReset(task: Task, game: Game, now: Date): number {
   return match(task)
-    .with({ type: MONTHLY }, (t) =>
-      msUntilNextMonth(now, getTaskRT(t, game), t.monthlyResetDay)
+    .with({ type: DAILY }, (t) => msUntilReset(now, getTaskRT(t, game)))
+    .with({ type: WEEKLY }, (t) =>
+      msUntilNextWeek(now, getTaskRT(t, game), t.weeklyResetDay)
     )
     .with({ type: HALFMONTHLY }, (t) =>
       msUntilNextHalfMonth(now, getTaskRT(t, game), t.halfMonthlyStartDay)
     )
-    .with({ type: WEEKLY }, (t) =>
-      msUntilNextWeek(now, getTaskRT(t, game), t.weeklyResetDay)
+    .with({ type: MONTHLY }, (t) =>
+      msUntilNextMonth(now, getTaskRT(t, game), t.monthlyResetDay)
     )
-    .with({ type: DAILY }, (t) => msUntilReset(now, getTaskRT(t, game)))
     .with({ type: EVENT }, () => Infinity)
     .exhaustive()
 }
