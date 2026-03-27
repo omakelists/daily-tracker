@@ -17,6 +17,9 @@ import type {
   LocalTimeString,
   YMDString,
   HexColor,
+  LocalYMDString,
+  UtcYMDString,
+  TimeString,
 } from '../types'
 
 // ── Unique ID generator ───────────────────────────────────────────
@@ -29,8 +32,11 @@ export const asUtc = (s: string): UtcTimeString => s as UtcTimeString
 export const asLocal = (s: string): LocalTimeString => s as LocalTimeString
 
 // ── UTC date helpers ──────────────────────────────────────────────
-export const fmtDate = (d: Date): YMDString =>
-  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}` as YMDString
+export const utcFmtDate = (d: Date): UtcYMDString =>
+  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}` as UtcYMDString
+
+export const utcFmtTime = (d: Date): UtcTimeString =>
+  `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` as UtcTimeString
 
 export const getDaysInMonth = (y: number, m: number): number =>
   new Date(Date.UTC(y, m + 1, 0)).getUTCDate()
@@ -71,48 +77,60 @@ export function ensureContrast(hex: HexColor): string {
   return hex
 }
 
-export const parseHHMM = (s: UtcTimeString): number => {
-  const [h, m] = (s || '00:00').split(':').map(Number)
-  return h * 60 + m
+export const parseYYYYMMDD = (s: YMDString): [number, number, number] => {
+  const [y, m, d] = s.split('-').map(Number)
+  return [y, m, d]
 }
 
-const localFmtDate = (d: Date): YMDString =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` as YMDString
+export const parseHHMM = (s: TimeString): [number, number] => {
+  const [h, m] = s.split(':').map(Number)
+  return [h, m]
+}
+
+export const localFmtDate = (d: Date): LocalYMDString =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` as LocalYMDString
+
+export const localFmtTime = (d: Date): LocalTimeString =>
+  `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` as LocalTimeString
 
 // ── Local-date-based game day key ─────────────────────────────────
 export function getGameDateKey(
   now: Date,
-  resetTimeUTC: UtcTimeString
-): YMDString {
-  const [rh, rm] = (resetTimeUTC || '00:00').split(':').map(Number)
+  resetTime: LocalTimeString
+): UtcYMDString {
+  const [rh, rm] = (resetTime || '00:00').split(':').map(Number)
   const tmp = new Date(now)
-  tmp.setUTCHours(rh, rm, 0, 0)
+  tmp.setHours(rh, rm, 0, 0)
   const localResetMin = tmp.getHours() * 60 + tmp.getMinutes()
   const localNowMin = now.getHours() * 60 + now.getMinutes()
   const base = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  if (localNowMin < localResetMin) base.setDate(base.getDate() - 1)
-  return localFmtDate(base)
+  if (localNowMin < localResetMin) base.setUTCDate(base.getUTCDate() - 1)
+  return utcFmtDate(base)
 }
 
-export function shiftDate(dateKey: string, days: number): YMDString {
-  const d = new Date(dateKey + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() + days)
-  return fmtDate(d)
+export function shiftDate(dateKey: UtcYMDString, days: number): UtcYMDString {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m, d))
+  date.setUTCDate(date.getUTCDate() + days)
+  return utcFmtDate(date)
 }
 
-export const getPrevGameDateKey = (now: Date, rt: UtcTimeString): YMDString =>
-  shiftDate(getGameDateKey(now, rt), -1)
+export const getPrevGameDateKey = (
+  now: Date,
+  rt: LocalTimeString
+): UtcYMDString => shiftDate(getGameDateKey(now, rt), -1)
 
 // ── Period key helpers ────────────────────────────────────────────
-export function dateToWeekKey(dk: string, rd = 1): string {
-  const d = new Date(dk + 'T00:00:00Z')
-  const day = d.getUTCDay()
+export function dateToWeekKey(dk: UtcYMDString, rd = 1): string {
+  const [h, m, s] = dk.split('-').map(Number)
+  const date = new Date(Date.UTC(h, m, s))
+  const day = date.getUTCDay()
   const daysBack = (day - rd + 7) % 7
-  d.setUTCDate(d.getUTCDate() - daysBack)
-  return 'W' + fmtDate(d)
+  date.setUTCDate(date.getUTCDate() - daysBack)
+  return 'W' + utcFmtDate(date)
 }
 
-export function getMonthPeriodKey(dk: string, rd = 1): string {
+export function getMonthPeriodKey(dk: UtcYMDString, rd = 1): string {
   const r = rd
   const day = parseInt(dk.slice(8))
   const y = parseInt(dk.slice(0, 4))
@@ -148,7 +166,7 @@ export function prevHalfMonthKey(k: string, startDay = 1): string {
 }
 
 // Task-level resetTime takes precedence over game resetTime.
-export const getTaskRT = (task: Task, game: Game): UtcTimeString =>
+export const getTaskRT = (task: Task, game: Game): LocalTimeString =>
   task.resetTime || game.resetTime
 
 export function getPeriodKey(task: Task, game: Game, now: Date): string {
@@ -202,68 +220,55 @@ export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
 }
 
 // ── Countdown helpers (all UTC) ───────────────────────────────────
-export function msUntilReset(now: Date, rtUTC: UtcTimeString): number {
-  const r = parseHHMM(rtUTC)
-  const n =
-    now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60
-  let d = r - n
+export function msUntilReset(now: Date, rt: LocalTimeString): number {
+  const [rh, rm] = parseHHMM(rt)
+  const n = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60
+  let d = rh * 60 + rm - n
   if (d <= 0) d += 24 * 60
   return d * 60 * 1000
 }
 
 export function msUntilNextMonth(
   now: Date,
-  rtUTC: UtcTimeString,
-  rd = 1
+  spTime: LocalTimeString,
+  spDay = 1
 ): number {
-  const r = parseHHMM(rtUTC)
-  const day = rd
-  const utcDay = now.getUTCDate()
-  const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes()
+  const [rh, rm] = parseHHMM(spTime)
+  const r = rh * 60 + rm
+  const day = now.getDate()
+  const min = now.getHours() * 60 + now.getMinutes()
   const tgt =
-    utcDay < day || (utcDay === day && utcMin < r) ?
+    day < spDay || (day === spDay && min < r) ?
       new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          day,
-          Math.floor(r / 60),
-          r % 60
-        )
+        now.getFullYear(),
+        now.getMonth(),
+        spDay,
+        Math.floor(r / 60),
+        r % 60
       )
     : new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth() + 1,
-          day,
-          Math.floor(r / 60),
-          r % 60
-        )
+        now.getFullYear(),
+        now.getMonth() + 1,
+        spDay,
+        Math.floor(r / 60),
+        r % 60
       )
   return tgt.getTime() - now.getTime()
 }
 
 export function msUntilNextHalfMonth(
   now: Date,
-  rtUTC: UtcTimeString,
+  rt: LocalTimeString,
   startDay = 1
 ): number {
-  const r = parseHHMM(rtUTC)
+  const [rh, rm] = parseHHMM(rt)
   const b = startDay + 15
-  const rh = Math.floor(r / 60),
-    rm = r % 60
   const candidates: Date[] = [
-    new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), startDay, rh, rm)
-    ),
+    new Date(now.getFullYear(), now.getMonth(), startDay, rh, rm),
     b <= 28 ?
-      new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), b, rh, rm))
-    : new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, startDay, rh, rm)
-      ),
-    new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, startDay, rh, rm)
-    ),
+      new Date(now.getFullYear(), now.getMonth(), b, rh, rm)
+    : new Date(now.getFullYear(), now.getMonth() + 1, startDay, rh, rm),
+    new Date(now.getFullYear(), now.getMonth() + 1, startDay, rh, rm),
   ]
   const tgt = candidates.find((c) => c > now)
   return (tgt ?? candidates[2]).getTime() - now.getTime()
@@ -271,16 +276,16 @@ export function msUntilNextHalfMonth(
 
 export function msUntilNextWeek(
   now: Date,
-  rtUTC: UtcTimeString,
+  rt: LocalTimeString,
   rd = 1
 ): number {
-  const rtMin = parseHHMM(rtUTC)
-  const dow = now.getUTCDay()
+  const [rh, rm] = parseHHMM(rt)
+  const dow = now.getDay()
   const tgt = new Date(now)
-  tgt.setUTCHours(Math.floor(rtMin / 60), rtMin % 60, 0, 0)
+  tgt.setHours(rh, rm, 0, 0)
   if (dow === rd && now < tgt) return tgt.getTime() - now.getTime()
   const days = (rd - dow + 7) % 7 || 7
-  tgt.setUTCDate(tgt.getUTCDate() + days)
+  tgt.setDate(tgt.getDate() + days)
   return tgt.getTime() - now.getTime()
 }
 
@@ -357,18 +362,16 @@ export function calcAllDone(
 }
 
 export function msUntilDeadline(
-  dateStr: string,
+  dateStr: LocalYMDString,
   now: Date,
-  timeUtc: UtcTimeString
+  timeUtc: LocalTimeString
 ): number {
   const [y, m, d] = dateStr.split('-').map(Number)
   if (timeUtc && timeUtc.includes(':')) {
     const [th, tm] = timeUtc.split(':').map(Number)
-    return (
-      new Date(Date.UTC(y, m - 1, d, th, tm, 0, 0)).getTime() - now.getTime()
-    )
+    return new Date(y, m - 1, d, th, tm, 0, 0).getTime() - now.getTime()
   }
-  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0)).getTime() - now.getTime()
+  return new Date(y, m - 1, d, 0, 0, 0, 0).getTime() - now.getTime()
 }
 
 // ── Item order ────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import type { Game } from './types'
-import { asUtc } from './util/helpers'
+import { asUtc, utcToLocalHHMM } from './util/helpers'
 
 // ── Task type constants ───────────────────────────────────────────
 export const DAILY = 'daily' as const
@@ -27,17 +27,27 @@ export const DEFAULT_GAMES: Game[] = [
     id: 'g1',
     name: 'Blue Archive',
     color: '#4a9eff',
-    resetTime: asUtc('19:00'),
+    resetTime: utcToLocalHHMM(asUtc('19:00')),
     items: [],
   },
   {
     id: 'g2',
     name: 'Genshin Impact',
     color: '#c8a96e',
-    resetTime: asUtc('20:00'),
+    resetTime: utcToLocalHHMM(asUtc('20:00')),
     items: [
-      { id: 't1', name: '', type: 'daily', resetTime: asUtc('20:00') },
-      { id: 't2', name: 'HoYoLAB', type: 'daily', resetTime: asUtc('16:00') },
+      {
+        id: 't1',
+        name: '',
+        type: 'daily',
+        resetTime: utcToLocalHHMM(asUtc('20:00')),
+      },
+      {
+        id: 't2',
+        name: 'HoYoLAB',
+        type: 'daily',
+        resetTime: utcToLocalHHMM(asUtc('16:00')),
+      },
       { id: 't3', name: 'Weekly Boss', type: 'weekly', weeklyResetDay: 1 },
       { id: 't4', name: 'Serenitea Pot', type: 'weekly', weeklyResetDay: 1 },
       {
@@ -53,10 +63,20 @@ export const DEFAULT_GAMES: Game[] = [
     id: 'g3',
     name: 'Zenless Zone Zero',
     color: '#000000',
-    resetTime: asUtc('20:00'),
+    resetTime: utcToLocalHHMM(asUtc('20:00')),
     items: [
-      { id: 't7', name: '', type: 'daily', resetTime: asUtc('20:00') },
-      { id: 't8', name: 'HoYoLAB', type: 'daily', resetTime: asUtc('16:00') },
+      {
+        id: 't7',
+        name: '',
+        type: 'daily',
+        resetTime: utcToLocalHHMM(asUtc('20:00')),
+      },
+      {
+        id: 't8',
+        name: 'HoYoLAB',
+        type: 'daily',
+        resetTime: utcToLocalHHMM(asUtc('16:00')),
+      },
       { id: 't9', name: 'Notorious Hunt', type: 'weekly', weeklyResetDay: 1 },
       { id: 't10', name: 'Hollow Zero', type: 'weekly', weeklyResetDay: 1 },
     ],
@@ -65,10 +85,20 @@ export const DEFAULT_GAMES: Game[] = [
     id: 'g4',
     name: 'Arknight: Endfield',
     color: '#FF6666',
-    resetTime: asUtc('20:00'),
+    resetTime: utcToLocalHHMM(asUtc('20:00')),
     items: [
-      { id: 't11', name: '', type: 'daily', resetTime: asUtc('20:00') },
-      { id: 't12', name: 'SKPORT', type: 'daily', resetTime: asUtc('16:00') },
+      {
+        id: 't11',
+        name: '',
+        type: 'daily',
+        resetTime: utcToLocalHHMM(asUtc('20:00')),
+      },
+      {
+        id: 't12',
+        name: 'SKPORT',
+        type: 'daily',
+        resetTime: utcToLocalHHMM(asUtc('16:00')),
+      },
     ],
   },
 ]

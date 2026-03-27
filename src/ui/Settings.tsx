@@ -3,7 +3,7 @@ import type { ChangeEvent, DragEvent, Dispatch, SetStateAction } from 'react'
 import { useDragSort, useScopedDragSort } from '../util/useDragSort'
 import { AnimatePresence, motion } from 'motion/react'
 import { t } from '../util/i18n'
-import { localToUtcHHMM, uid, utcToLocalHHMM, asLocal } from '../util/helpers'
+import { uid, asLocal } from '../util/helpers'
 import { ALL_TASK_TYPES, EVENT } from '../constants'
 import { imgDelete, imgGet, imgSet } from '../util/imageStorage'
 import { useAppUpdate } from '../util/useAppUpdate'
@@ -305,7 +305,7 @@ export function SettingsModal({
   const [newGame, setNewGame] = useState({
     name: '',
     color: '#4a9eff' as HexColor,
-    resetTime: localToUtcHHMM(asLocal('00:00')),
+    resetTime: asLocal('00:00'),
   })
   const [showNG, setShowNG] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
@@ -468,7 +468,7 @@ export function SettingsModal({
     setNewGame({
       name: '',
       color: '#4a9eff',
-      resetTime: localToUtcHHMM(asLocal('00:00')),
+      resetTime: asLocal('00:00'),
     })
     setShowNG(false)
   }
@@ -597,12 +597,12 @@ export function SettingsModal({
                           <span className={s.resetLbl}>{t('resetLbl')}</span>
                           <input
                             type="time"
-                            value={utcToLocalHHMM(game.resetTime)}
+                            value={game.resetTime}
                             onChange={(e) =>
                               upGame(
                                 game.id,
                                 'resetTime',
-                                localToUtcHHMM(asLocal(e.target.value))
+                                asLocal(e.target.value)
                               )
                             }
                             className={`${shared.inputCls} ${s.resetTime}`}
@@ -700,7 +700,7 @@ export function SettingsModal({
                       onChange={(e) =>
                         setNewGame((g) => ({
                           ...g,
-                          resetTime: localToUtcHHMM(asLocal(e.target.value)),
+                          resetTime: asLocal(e.target.value),
                         }))
                       }
                       className={`${shared.inputCls} ${s.resetTime}`}

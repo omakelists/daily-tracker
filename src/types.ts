@@ -1,18 +1,18 @@
 // ── Template literal types ────────────────────────────────────────
 export type HexColor = `#${string}`
-export type TimeString = `${string}:${string}`
 
 // ── Branded (phantom) types for timezone safety ───────────────────
 // Zero runtime cost — brand exists at the type level only.
 // Equivalent to Scala's tagged types (@@).
 type Brand<T, B> = T & { readonly _brand: B }
 
-/** HH:MM string stored/calculated in UTC (data model, all helpers). */
+export type TimeString = `${string}:${string}`
 export type UtcTimeString = Brand<TimeString, 'utc'>
-
-/** HH:MM string in the user's local timezone (<input type="time"> values only). */
 export type LocalTimeString = Brand<TimeString, 'local'>
+
 export type YMDString = `${string}-${string}-${string}`
+export type UtcYMDString = Brand<YMDString, 'utc'>
+export type LocalYMDString = Brand<YMDString, 'local'>
 
 // ── Task type ─────────────────────────────────────────────────────
 export type TaskType = 'daily' | 'weekly' | 'halfmonthly' | 'monthly' | 'event'
@@ -23,12 +23,12 @@ export interface BaseTask {
   id: string
   name: string
   type: TaskType
-  resetTime?: UtcTimeString
+  resetTime?: LocalTimeString
 }
 
 export interface DailyTask extends BaseTask {
   type: 'daily'
-  resetTime: UtcTimeString
+  resetTime: LocalTimeString
 }
 
 export interface WeeklyTask extends BaseTask {
@@ -48,8 +48,8 @@ export interface MonthlyTask extends BaseTask {
 
 export interface EventTask extends BaseTask {
   type: 'event'
-  deadline: YMDString
-  deadlineTime: UtcTimeString
+  deadline: LocalYMDString
+  deadlineTime: LocalTimeString
 }
 
 export type Task =
@@ -67,7 +67,7 @@ export interface Game {
   id: string
   name: string
   color: HexColor
-  resetTime: UtcTimeString
+  resetTime: LocalTimeString
   items: Task[]
   itemOrder?: string[]
 }

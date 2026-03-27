@@ -5,9 +5,7 @@ import { t } from '../util/i18n'
 import {
   cdColor,
   formatCountdown,
-  localToUtcHHMM,
   msUntilDeadline,
-  utcToLocalHHMM,
   asLocal,
 } from '../util/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
@@ -64,13 +62,9 @@ export function TaskEdit({
           <div className={s.resetInputGroup}>
             <input
               type="time"
-              value={utcToLocalHHMM(it.resetTime)}
+              value={it.resetTime}
               onChange={(e) =>
-                onUpdate?.(
-                  it.id,
-                  'resetTime',
-                  localToUtcHHMM(asLocal(e.target.value))
-                )
+                onUpdate?.(it.id, 'resetTime', asLocal(e.target.value))
               }
               className={`${shared.inputCls} ${s.inputTime}`}
             />
@@ -180,14 +174,12 @@ export function TaskEdit({
             <div className={s.resetInputBlock}>
               <input
                 type="time"
-                value={it.deadlineTime ? utcToLocalHHMM(it.deadlineTime) : ''}
+                value={it.deadlineTime ? it.deadlineTime : ''}
                 onChange={(e) =>
                   onUpdate?.(
                     it.id,
                     'deadlineTime',
-                    e.target.value ?
-                      localToUtcHHMM(asLocal(e.target.value))
-                    : null
+                    e.target.value ? asLocal(e.target.value) : null
                   )
                 }
                 disabled={!it.deadline}

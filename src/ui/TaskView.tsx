@@ -6,7 +6,6 @@ import {
   formatCountdown,
   msUntilDeadline,
   msUntilTaskReset,
-  utcToLocalHHMM,
 } from '../util/helpers'
 import {
   DAILY,
@@ -85,9 +84,7 @@ export function TaskView({
           )}
           {match(task)
             .with({ type: DAILY }, (_) => (
-              <span className={s.resetLbl}>
-                {utcToLocalHHMM(task.resetTime)}
-              </span>
+              <span className={s.resetLbl}>{task.resetTime}</span>
             ))
             .with({ type: WEEKLY }, (tk) => (
               <span className={s.resetLbl}>
@@ -118,7 +115,7 @@ export function TaskView({
                   {deadlineMs !== null
                     && deadlineMs < DAY_MS
                     && !isExpired
-                    && utcToLocalHHMM(tk.deadlineTime)}
+                    && tk.deadlineTime}
                 </span>
               : null
             )

@@ -13,7 +13,6 @@ import {
 import type { TaskType } from '../types'
 import {
   ensureContrast,
-  utcToLocalHHMM,
   getPeriodKey,
   getPrevPeriodKey,
   msUntilReset,
@@ -435,9 +434,7 @@ export const GameCard = forwardRef<HTMLDivElement, GameCardProps>(
                     ⏱{formatCountdown(displayMs, cd)}
                   </span>
                 )}
-                <span className={s.resetTime}>
-                  {utcToLocalHHMM(game.resetTime)}
-                </span>
+                <span className={s.resetTime}>{game.resetTime}</span>
               </>
             }
           />
