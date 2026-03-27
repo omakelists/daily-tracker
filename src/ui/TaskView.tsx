@@ -1,44 +1,64 @@
-import { useMemo } from 'react';
-import { t } from '../util/i18n';
+import { useMemo } from 'react'
+import { t } from '../util/i18n'
 import {
-  cdColor, fmtDeadlineDate, formatCountdown,
-  msUntilDeadline, msUntilTaskReset, utcToLocalHHMM,
-} from '../util/helpers';
-import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT, DAY_MS } from '../constants';
-import type { Game, Task } from '../types';
-import { Badge } from './UI';
-import s from './TaskView.module.css';
-import shared from './shared.module.css';
+  cdColor,
+  fmtDeadlineDate,
+  formatCountdown,
+  msUntilDeadline,
+  msUntilTaskReset,
+  utcToLocalHHMM,
+} from '../util/helpers'
+import {
+  DAILY,
+  WEEKLY,
+  HALFMONTHLY,
+  MONTHLY,
+  EVENT,
+  DAY_MS,
+} from '../constants'
+import type { Game, Task } from '../types'
+import { Badge } from './UI'
+import s from './TaskView.module.css'
+import shared from './shared.module.css'
 
 interface TaskViewProps {
-  game: Game;
-  task: Task;
-  now: Date;
-  isChecked: boolean;
-  showDeadline?: boolean;
+  game: Game
+  task: Task
+  now: Date
+  isChecked: boolean
+  showDeadline?: boolean
 }
 
-export function TaskView({ game, task, now, isChecked, showDeadline }: TaskViewProps) {
-  const isEvent = task.type === EVENT;
+export function TaskView({
+  game,
+  task,
+  now,
+  isChecked,
+  showDeadline,
+}: TaskViewProps) {
+  const isEvent = task.type === EVENT
 
-  const deadlineMs = isEvent ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null;
-  const isExpired  = deadlineMs !== null && deadlineMs <= 0;
+  const deadlineMs =
+    isEvent ? msUntilDeadline(task.deadline, now, task.deadlineTime) : null
+  const isExpired = deadlineMs !== null && deadlineMs <= 0
 
-  const taskMs = !isEvent
-    ? msUntilTaskReset(task, game, now)
-    : msUntilDeadline(task.deadline, now, task.deadlineTime);
+  const taskMs =
+    !isEvent ?
+      msUntilTaskReset(task, game, now)
+    : msUntilDeadline(task.deadline, now, task.deadlineTime)
 
   const [urgentH, warnH] =
-    task.type === DAILY       ? [3, 6]    :
-    task.type === WEEKLY      ? [24, 48]  :
-    task.type === HALFMONTHLY ? [48, 120] :
-    task.type === MONTHLY     ? [72, 168] :
-    task.type === EVENT       ? [72, 168] :
-    [3, 6];
+    task.type === DAILY ? [3, 6]
+    : task.type === WEEKLY ? [24, 48]
+    : task.type === HALFMONTHLY ? [48, 120]
+    : task.type === MONTHLY ? [72, 168]
+    : task.type === EVENT ? [72, 168]
+    : [3, 6]
 
-  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), []);
-  const taskCdColor   = cdColor(taskMs ?? 0, urgentH, warnH);
-  const localResetTime = task.type === DAILY ? utcToLocalHHMM(task.resetTime) : null;
+  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), [])
+  const taskCdColor = cdColor(taskMs ?? 0, urgentH, warnH)
+  const localResetTime =
+    task.type === DAILY ? utcToLocalHHMM(task.resetTime) : null
 
   return (
     <div className={shared.taskInfo}>
@@ -68,22 +88,38 @@ export function TaskView({ game, task, now, isChecked, showDeadline }: TaskViewP
             <span className={s.resetLbl}>{localResetTime}</span>
           )}
           {task.type === WEEKLY && (
-            <span className={s.resetLbl}>{t('everyWeek', { day: t('dayNamesFull.' + task.weeklyResetDay) })}</span>
+            <span className={s.resetLbl}>
+              {t('everyWeek', {
+                day: t('dayNamesFull.' + task.weeklyResetDay),
+              })}
+            </span>
           )}
           {task.type === HALFMONTHLY && (
-            <span className={s.resetLbl}>{t('everyHalfMonth', { a: task.halfMonthlyStartDay, b: task.halfMonthlyStartDay + 15 })}</span>
+            <span className={s.resetLbl}>
+              {t('everyHalfMonth', {
+                a: task.halfMonthlyStartDay,
+                b: task.halfMonthlyStartDay + 15,
+              })}
+            </span>
           )}
           {task.type === MONTHLY && (
-            <span className={s.resetLbl}>{t('everyDay', { day: task.monthlyResetDay })}</span>
+            <span className={s.resetLbl}>
+              {t('everyDay', { day: task.monthlyResetDay })}
+            </span>
           )}
           {task.type === EVENT && showDeadline && (
             <span className={s.resetLbl}>
-              {(deadlineMs !== null && (deadlineMs >= DAY_MS || isExpired)) && fmtDeadlineDate(task.deadline, t)}
-              {(deadlineMs !== null && deadlineMs < DAY_MS && !isExpired) && utcToLocalHHMM(task.deadlineTime)}
+              {deadlineMs !== null
+                && (deadlineMs >= DAY_MS || isExpired)
+                && fmtDeadlineDate(task.deadline, t)}
+              {deadlineMs !== null
+                && deadlineMs < DAY_MS
+                && !isExpired
+                && utcToLocalHHMM(task.deadlineTime)}
             </span>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }

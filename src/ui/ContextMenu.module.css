@@ -8,7 +8,9 @@
   border-radius: 8px;
   padding: 4px;
   min-width: 160px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), 0 2px 8px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.85),
+    0 2px 8px rgba(0, 0, 0, 0.6);
   outline: none;
   isolation: isolate;
 }
@@ -30,12 +32,21 @@
   white-space: nowrap;
   transition: background 0.1s;
 }
-.item:hover { background: rgba(255, 255, 255, 0.08); }
+.item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
-.itemDanger       { color: var(--danger); }
-.itemDanger:hover { background: rgba(248, 81, 73, 0.12); }
+.itemDanger {
+  color: var(--danger);
+}
+.itemDanger:hover {
+  background: rgba(248, 81, 73, 0.12);
+}
 
-.icon { font-size: 12px; flex-shrink: 0; }
+.icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
 
 .separator {
   height: 1px;

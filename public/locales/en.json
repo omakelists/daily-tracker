@@ -45,15 +45,7 @@
     "Friday",
     "Saturday"
   ],
-  "dayNames": [
-    "Su",
-    "Mo",
-    "Tu",
-    "We",
-    "Th",
-    "Fr",
-    "Sa"
-  ],
+  "dayNames": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
   "updateAvail": "App update available",
   "updateBtn": "Update",
   "updateMsg": "Update the app?\n\nCurrent: {current}\nNew:     {next}",

@@ -1,45 +1,60 @@
-import { useEffect, useMemo, useRef } from 'react';
-import type { KeyboardEvent } from "react";
-import { match } from 'ts-pattern';
-import { t } from '../util/i18n';
-import { cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM, asLocal } from '../util/helpers';
-import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
-import type { Task } from '../types';
-import { Badge } from './UI';
-import s from './TaskEdit.module.css';
-import shared from './shared.module.css';
+import { useEffect, useMemo, useRef } from 'react'
+import type { KeyboardEvent } from 'react'
+import { match } from 'ts-pattern'
+import { t } from '../util/i18n'
+import {
+  cdColor,
+  formatCountdown,
+  localToUtcHHMM,
+  msUntilDeadline,
+  utcToLocalHHMM,
+  asLocal,
+} from '../util/helpers'
+import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
+import type { Task } from '../types'
+import { Badge } from './UI'
+import s from './TaskEdit.module.css'
+import shared from './shared.module.css'
 
 function addDaysToDate(dateStr: string | null | undefined, n: number): string {
-  const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
-  base.setDate(base.getDate() + n);
-  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+  const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date()
+  base.setDate(base.getDate() + n)
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`
 }
 
 interface TaskEditProps {
-  item: Task;
-  onUpdate: (taskId: string, key: string, val: unknown) => void;
-  handleSubmit?: () => void;
-  onCancel?: () => void;
+  item: Task
+  onUpdate: (taskId: string, key: string, val: unknown) => void
+  handleSubmit?: () => void
+  onCancel?: () => void
 }
 
-export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditProps) {
+export function TaskEdit({
+  item,
+  onUpdate,
+  handleSubmit,
+  onCancel,
+}: TaskEditProps) {
   // item.deadlineTime is UtcTimeString — pass directly without re-converting
-  const timeUtcForCd = item.type === EVENT ? item.deadlineTime : undefined;
-  const deadlineMs   = item.type === EVENT && timeUtcForCd
-    ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd)
-    : null;
-  const deadlineExpired = deadlineMs !== null && deadlineMs <= 0;
-  const deadlineColor   = cdColor(deadlineMs ?? Infinity, 24, 48);
+  const timeUtcForCd = item.type === EVENT ? item.deadlineTime : undefined
+  const deadlineMs =
+    item.type === EVENT && timeUtcForCd ?
+      msUntilDeadline(item.deadline, new Date(), timeUtcForCd)
+    : null
+  const deadlineExpired = deadlineMs !== null && deadlineMs <= 0
+  const deadlineColor = cdColor(deadlineMs ?? Infinity, 24, 48)
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 0); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const inputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), []);
+  const cd = useMemo(() => ({ d: t('cd.d'), h: t('cd.h'), m: t('cd.m') }), [])
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter')  handleSubmit?.();
-    if (e.key === 'Escape') onCancel?.();
-  };
+    if (e.key === 'Enter') handleSubmit?.()
+    if (e.key === 'Escape') onCancel?.()
+  }
 
   const resetMeta = (
     <div className={s.resetGroup}>
@@ -47,35 +62,74 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
       {match(item)
         .with({ type: DAILY }, (it) => (
           <div className={s.resetInputGroup}>
-            <input type="time" value={utcToLocalHHMM(it.resetTime)}
-                     onChange={(e) => onUpdate?.(it.id, 'resetTime', localToUtcHHMM(asLocal(e.target.value)))}
-                   className={`${shared.inputCls} ${s.inputTime}`} />
+            <input
+              type="time"
+              value={utcToLocalHHMM(it.resetTime)}
+              onChange={(e) =>
+                onUpdate?.(
+                  it.id,
+                  'resetTime',
+                  localToUtcHHMM(asLocal(e.target.value))
+                )
+              }
+              className={`${shared.inputCls} ${s.inputTime}`}
+            />
           </div>
         ))
         .with({ type: WEEKLY }, (it) => (
           <div className={s.resetInputGroup}>
-            <select value={it.weeklyResetDay ?? 1}
-                      onChange={(e) => onUpdate?.(it.id, 'weeklyResetDay', Number(e.target.value))}
-                    className={`${shared.inputCls} ${s.inputDow}`}>
+            <select
+              value={it.weeklyResetDay ?? 1}
+              onChange={(e) =>
+                onUpdate?.(it.id, 'weeklyResetDay', Number(e.target.value))
+              }
+              className={`${shared.inputCls} ${s.inputDow}`}
+            >
               {[0, 1, 2, 3, 4, 5, 6].map((d) => (
-                <option key={d} value={d}>{t('dayNamesFull.' + d)}</option>
+                <option key={d} value={d}>
+                  {t('dayNamesFull.' + d)}
+                </option>
               ))}
             </select>
           </div>
         ))
         .with({ type: HALFMONTHLY }, (it) => (
           <div className={s.resetInputGroup}>
-            <input type="number" min="1" max="15" value={it.halfMonthlyStartDay ?? 1}
-                     onChange={(e) => onUpdate?.(it.id, 'halfMonthlyStartDay', Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
-                   className={`${shared.inputCls} ${s.inputNumber}`} />
-            <span className={s.resetLbl}>{t('halfMonthSuffix', { b: (it.halfMonthlyStartDay ?? 1) + 15 })}</span>
+            <input
+              type="number"
+              min="1"
+              max="15"
+              value={it.halfMonthlyStartDay ?? 1}
+              onChange={(e) =>
+                onUpdate?.(
+                  it.id,
+                  'halfMonthlyStartDay',
+                  Math.max(1, Math.min(15, parseInt(e.target.value) || 1))
+                )
+              }
+              className={`${shared.inputCls} ${s.inputNumber}`}
+            />
+            <span className={s.resetLbl}>
+              {t('halfMonthSuffix', { b: (it.halfMonthlyStartDay ?? 1) + 15 })}
+            </span>
           </div>
         ))
         .with({ type: MONTHLY }, (it) => (
           <div className={s.resetInputGroup}>
-            <input type="number" min="1" max="28" value={it.monthlyResetDay ?? 1}
-                     onChange={(e) => onUpdate?.(it.id, 'monthlyResetDay', Math.max(1, Math.min(28, parseInt(e.target.value) || 1)))}
-                   className={`${shared.inputCls} ${s.inputNumber}`} />
+            <input
+              type="number"
+              min="1"
+              max="28"
+              value={it.monthlyResetDay ?? 1}
+              onChange={(e) =>
+                onUpdate?.(
+                  it.id,
+                  'monthlyResetDay',
+                  Math.max(1, Math.min(28, parseInt(e.target.value) || 1))
+                )
+              }
+              className={`${shared.inputCls} ${s.inputNumber}`}
+            />
             <span className={s.resetLbl}>{t('dayUnit')}</span>
           </div>
         ))
@@ -83,38 +137,69 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
           <div className={s.resetInputGroupLong}>
             <div className={s.resetInputBlock}>
               <div className={s.resetSupport}>
-                <input type="date" value={it.deadline ?? ''}
-                         onChange={(e) => onUpdate?.(it.id, 'deadline', e.target.value || null)}
-                       className={`${shared.inputCls} ${s.inputDate}`} />
+                <input
+                  type="date"
+                  value={it.deadline ?? ''}
+                  onChange={(e) =>
+                    onUpdate?.(it.id, 'deadline', e.target.value || null)
+                  }
+                  className={`${shared.inputCls} ${s.inputDate}`}
+                />
               </div>
               <div className={s.resetSupport}>
                 {it.deadline && deadlineMs !== null && (
-                  <span className={s.deadlineInfo} style={{ color: deadlineColor }}>
-                    {deadlineExpired ? t('expired') : `⏱${formatCountdown(deadlineMs, cd)}`}
+                  <span
+                    className={s.deadlineInfo}
+                    style={{ color: deadlineColor }}
+                  >
+                    {deadlineExpired ?
+                      t('expired')
+                    : `⏱${formatCountdown(deadlineMs, cd)}`}
                   </span>
                 )}
               </div>
               <div className={s.resetSupport}>
                 {[1, 2, 5, 10].map((n) => (
-                  <button key={n} className={`${shared.btn} ${s.quickBtn}`} onClick={() => onUpdate?.(it.id, 'deadline', addDaysToDate(it.deadline, n))}>
-                    +{n}{t('cd.d')}
+                  <button
+                    key={n}
+                    className={`${shared.btn} ${s.quickBtn}`}
+                    onClick={() =>
+                      onUpdate?.(
+                        it.id,
+                        'deadline',
+                        addDaysToDate(it.deadline, n)
+                      )
+                    }
+                  >
+                    +{n}
+                    {t('cd.d')}
                   </button>
                 ))}
               </div>
             </div>
             <div className={s.resetInputBlock}>
-              <input type="time" value={it.deadlineTime ? utcToLocalHHMM(it.deadlineTime) : ''}
-                       onChange={(e) => onUpdate?.(it.id, 'deadlineTime', e.target.value ? localToUtcHHMM(asLocal(e.target.value)) : null)}
-                     disabled={!it.deadline}
-                     className={`${shared.inputCls} ${s.inputTime}`}
-                     style={{ opacity: it.deadline ? 1 : 0.35 }} />
+              <input
+                type="time"
+                value={it.deadlineTime ? utcToLocalHHMM(it.deadlineTime) : ''}
+                onChange={(e) =>
+                  onUpdate?.(
+                    it.id,
+                    'deadlineTime',
+                    e.target.value ?
+                      localToUtcHHMM(asLocal(e.target.value))
+                    : null
+                  )
+                }
+                disabled={!it.deadline}
+                className={`${shared.inputCls} ${s.inputTime}`}
+                style={{ opacity: it.deadline ? 1 : 0.35 }}
+              />
             </div>
           </div>
         ))
-        .exhaustive()
-      }
+        .exhaustive()}
     </div>
-  );
+  )
 
   return (
     <div className={shared.taskInfo}>
@@ -132,10 +217,8 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
             placeholder={t(`types.${item.type}`)}
           />
         </div>
-        <div className={shared.meta}>
-          {resetMeta}
-        </div>
+        <div className={shared.meta}>{resetMeta}</div>
       </div>
     </div>
-  );
+  )
 }

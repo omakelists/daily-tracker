@@ -1,163 +1,269 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { PointerEvent } from "react";
-import { t } from '../util/i18n';
-import s from './CropModal.module.css';
-import shared from './shared.module.css';
+import { useState, useEffect, useRef, useCallback } from 'react'
+import type { PointerEvent } from 'react'
+import { t } from '../util/i18n'
+import s from './CropModal.module.css'
+import shared from './shared.module.css'
 
-const MAX_DISPLAY = 700;
+const MAX_DISPLAY = 700
 
-interface CropRect { x: number; y: number; w: number; h: number; }
+interface CropRect {
+  x: number
+  y: number
+  w: number
+  h: number
+}
 interface DragState {
-  mode: 'draw' | 'move';
-  ox: number; oy: number;
-  cx?: number; cy?: number;
+  mode: 'draw' | 'move'
+  ox: number
+  oy: number
+  cx?: number
+  cy?: number
 }
 
 interface CropModalProps {
-  file: File;
-  onConfirm: (dataUrl: string, opacity: number) => void;
-  onCancel: () => void;
+  file: File
+  onConfirm: (dataUrl: string, opacity: number) => void
+  onCancel: () => void
 }
 
 export function CropModal({ file, onConfirm, onCancel }: CropModalProps) {
-  const [transformedBitmap, setTransformedBitmap] = useState<ImageBitmap | null>(null);
-  const [dispSize, setDispSize] = useState({ w: 0, h: 0 });
-  const [crop,    setCrop]    = useState<CropRect | null>(null);
-  const [flipH,   setFlipH]   = useState(false);
-  const [flipV,   setFlipV]   = useState(false);
-  const [rot,     setRot]     = useState(0);
-  const [opacity, setOpacity] = useState(0.5);
+  const [transformedBitmap, setTransformedBitmap] =
+    useState<ImageBitmap | null>(null)
+  const [dispSize, setDispSize] = useState({ w: 0, h: 0 })
+  const [crop, setCrop] = useState<CropRect | null>(null)
+  const [flipH, setFlipH] = useState(false)
+  const [flipV, setFlipV] = useState(false)
+  const [rot, setRot] = useState(0)
+  const [opacity, setOpacity] = useState(0.5)
 
-  const rawImgRef     = useRef<HTMLImageElement | null>(null);
-  const cropCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const dragRef       = useRef<DragState | null>(null);
-
-  useEffect(() => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => { rawImgRef.current = img; URL.revokeObjectURL(url); rebuildBitmap(img, false, false, 0); };
-    img.src = url;
-  }, [file]);
-
-  const rebuildBitmap = useCallback((imgEl: HTMLImageElement, fH: boolean, fV: boolean, r: number) => {
-    const nw = imgEl.naturalWidth, nh = imgEl.naturalHeight;
-    const swapped = r === 90 || r === 270;
-    const bw = swapped ? nh : nw, bh = swapped ? nw : nh;
-    const tmp = document.createElement('canvas');
-    tmp.width = bw; tmp.height = bh;
-    const ctx = tmp.getContext('2d')!;
-    ctx.save();
-    ctx.translate(bw / 2, bh / 2);
-    if (r)  ctx.rotate(r * Math.PI / 180);
-    if (fH) ctx.scale(-1, 1);
-    if (fV) ctx.scale(1, -1);
-    ctx.drawImage(imgEl, -nw / 2, -nh / 2, nw, nh);
-    ctx.restore();
-    createImageBitmap(tmp).then((bmp) => {
-      setTransformedBitmap(bmp);
-      const maxW = Math.min(MAX_DISPLAY, window.innerWidth * 0.88);
-      const maxH = window.innerHeight * 0.55;
-      const scale = Math.min(1, maxW / bw, maxH / bh);
-      const dw = Math.floor(bw * scale), dh = Math.floor(bh * scale);
-      setDispSize({ w: dw, h: dh });
-      setCrop({ x: 0, y: 0, w: dw, h: dh });
-    });
-  }, []);
+  const rawImgRef = useRef<HTMLImageElement | null>(null)
+  const cropCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const dragRef = useRef<DragState | null>(null)
 
   useEffect(() => {
-    if (rawImgRef.current) rebuildBitmap(rawImgRef.current, flipH, flipV, rot);
-  }, [flipH, flipV, rot, rebuildBitmap]);
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      rawImgRef.current = img
+      URL.revokeObjectURL(url)
+      rebuildBitmap(img, false, false, 0)
+    }
+    img.src = url
+  }, [file])
+
+  const rebuildBitmap = useCallback(
+    (imgEl: HTMLImageElement, fH: boolean, fV: boolean, r: number) => {
+      const nw = imgEl.naturalWidth,
+        nh = imgEl.naturalHeight
+      const swapped = r === 90 || r === 270
+      const bw = swapped ? nh : nw,
+        bh = swapped ? nw : nh
+      const tmp = document.createElement('canvas')
+      tmp.width = bw
+      tmp.height = bh
+      const ctx = tmp.getContext('2d')!
+      ctx.save()
+      ctx.translate(bw / 2, bh / 2)
+      if (r) ctx.rotate((r * Math.PI) / 180)
+      if (fH) ctx.scale(-1, 1)
+      if (fV) ctx.scale(1, -1)
+      ctx.drawImage(imgEl, -nw / 2, -nh / 2, nw, nh)
+      ctx.restore()
+      createImageBitmap(tmp).then((bmp) => {
+        setTransformedBitmap(bmp)
+        const maxW = Math.min(MAX_DISPLAY, window.innerWidth * 0.88)
+        const maxH = window.innerHeight * 0.55
+        const scale = Math.min(1, maxW / bw, maxH / bh)
+        const dw = Math.floor(bw * scale),
+          dh = Math.floor(bh * scale)
+        setDispSize({ w: dw, h: dh })
+        setCrop({ x: 0, y: 0, w: dw, h: dh })
+      })
+    },
+    []
+  )
 
   useEffect(() => {
-    const canvas = cropCanvasRef.current;
-    if (!canvas || !transformedBitmap || !dispSize.w) return;
-    canvas.width = dispSize.w; canvas.height = dispSize.h;
-    const ctx = canvas.getContext('2d')!;
-    ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h);
-    ctx.fillStyle = 'rgba(0,0,0,0.52)'; ctx.fillRect(0, 0, dispSize.w, dispSize.h);
+    if (rawImgRef.current) rebuildBitmap(rawImgRef.current, flipH, flipV, rot)
+  }, [flipH, flipV, rot, rebuildBitmap])
+
+  useEffect(() => {
+    const canvas = cropCanvasRef.current
+    if (!canvas || !transformedBitmap || !dispSize.w) return
+    canvas.width = dispSize.w
+    canvas.height = dispSize.h
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h)
+    ctx.fillStyle = 'rgba(0,0,0,0.52)'
+    ctx.fillRect(0, 0, dispSize.w, dispSize.h)
     if (crop && crop.w > 2 && crop.h > 2) {
-      const { x, y, w, h } = crop;
-      ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillRect(x, y, w, h); ctx.restore();
-      ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-      ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h); ctx.restore();
-      ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5);
-      ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 0.5;
+      const { x, y, w, h } = crop
+      ctx.save()
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.fillRect(x, y, w, h)
+      ctx.restore()
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(x, y, w, h)
+      ctx.clip()
+      ctx.drawImage(transformedBitmap, 0, 0, dispSize.w, dispSize.h)
+      ctx.restore()
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5)
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+      ctx.lineWidth = 0.5
       for (let i = 1; i < 3; i++) {
-        ctx.beginPath(); ctx.moveTo(x + w*i/3, y); ctx.lineTo(x + w*i/3, y+h); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x, y + h*i/3); ctx.lineTo(x+w, y + h*i/3); ctx.stroke();
+        ctx.beginPath()
+        ctx.moveTo(x + (w * i) / 3, y)
+        ctx.lineTo(x + (w * i) / 3, y + h)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(x, y + (h * i) / 3)
+        ctx.lineTo(x + w, y + (h * i) / 3)
+        ctx.stroke()
       }
-      const hs = 8; ctx.fillStyle = 'white';
-      ([[x,y],[x+w,y],[x,y+h],[x+w,y+h]] as [number,number][]).forEach(([hx,hy]) => ctx.fillRect(hx-hs/2, hy-hs/2, hs, hs));
-      const cx2 = x+w/2, cy2 = y+h/2;
-      ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.beginPath(); ctx.arc(cx2, cy2, 10, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('✥', cx2, cy2);
+      const hs = 8
+      ctx.fillStyle = 'white'
+      ;(
+        [
+          [x, y],
+          [x + w, y],
+          [x, y + h],
+          [x + w, y + h],
+        ] as [number, number][]
+      ).forEach(([hx, hy]) => ctx.fillRect(hx - hs / 2, hy - hs / 2, hs, hs))
+      const cx2 = x + w / 2,
+        cy2 = y + h / 2
+      ctx.fillStyle = 'rgba(255,255,255,0.65)'
+      ctx.beginPath()
+      ctx.arc(cx2, cy2, 10, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(0,0,0,0.7)'
+      ctx.font = 'bold 13px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('✥', cx2, cy2)
     }
-  }, [transformedBitmap, dispSize, crop]);
+  }, [transformedBitmap, dispSize, crop])
 
-  const getRelXY = useCallback((e: PointerEvent) => {
-    const canvas = cropCanvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
-    return {
-      x: Math.max(0, Math.min(dispSize.w, (e.clientX - rect.left) * scaleX)),
-      y: Math.max(0, Math.min(dispSize.h, (e.clientY - rect.top)  * scaleY)),
-    };
-  }, [dispSize]);
+  const getRelXY = useCallback(
+    (e: PointerEvent) => {
+      const canvas = cropCanvasRef.current!
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = canvas.width / rect.width,
+        scaleY = canvas.height / rect.height
+      return {
+        x: Math.max(0, Math.min(dispSize.w, (e.clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(dispSize.h, (e.clientY - rect.top) * scaleY)),
+      }
+    },
+    [dispSize]
+  )
 
-  const inMoveHandle = useCallback((px: number, py: number) => {
-    if (!crop || crop.w < 10 || crop.h < 10) return false;
-    return Math.hypot(px - (crop.x + crop.w/2), py - (crop.y + crop.h/2)) <= 14;
-  }, [crop]);
+  const inMoveHandle = useCallback(
+    (px: number, py: number) => {
+      if (!crop || crop.w < 10 || crop.h < 10) return false
+      return (
+        Math.hypot(px - (crop.x + crop.w / 2), py - (crop.y + crop.h / 2)) <= 14
+      )
+    },
+    [crop]
+  )
 
-  const onPointerDown = useCallback((e: PointerEvent) => {
-    e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId);
-    const { x, y } = getRelXY(e);
-    if (inMoveHandle(x, y)) {
-      dragRef.current = { mode: 'move', ox: x, oy: y, cx: crop!.x, cy: crop!.y };
-    } else {
-      dragRef.current = { mode: 'draw', ox: x, oy: y };
-      setCrop({ x, y, w: 0, h: 0 });
-    }
-  }, [getRelXY, inMoveHandle, crop]);
+  const onPointerDown = useCallback(
+    (e: PointerEvent) => {
+      e.preventDefault()
+      e.currentTarget.setPointerCapture(e.pointerId)
+      const { x, y } = getRelXY(e)
+      if (inMoveHandle(x, y)) {
+        dragRef.current = {
+          mode: 'move',
+          ox: x,
+          oy: y,
+          cx: crop!.x,
+          cy: crop!.y,
+        }
+      } else {
+        dragRef.current = { mode: 'draw', ox: x, oy: y }
+        setCrop({ x, y, w: 0, h: 0 })
+      }
+    },
+    [getRelXY, inMoveHandle, crop]
+  )
 
-  const onPointerMove = useCallback((e: PointerEvent) => {
-    if (!dragRef.current) return;
-    const d = dragRef.current, { x, y } = getRelXY(e);
-    if (d.mode === 'draw') {
-      const nx = Math.min(d.ox, x), ny = Math.min(d.oy, y);
-      setCrop({ x: nx, y: ny, w: Math.min(Math.abs(x-d.ox), dispSize.w-nx), h: Math.min(Math.abs(y-d.oy), dispSize.h-ny) });
-    } else {
-      setCrop((prev) => prev ? {
-        ...prev,
-        x: Math.max(0, Math.min(dispSize.w-prev.w, (d.cx ?? 0) + (x-d.ox))),
-        y: Math.max(0, Math.min(dispSize.h-prev.h, (d.cy ?? 0) + (y-d.oy))),
-      } : prev);
-    }
-  }, [getRelXY, dispSize]);
+  const onPointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!dragRef.current) return
+      const d = dragRef.current,
+        { x, y } = getRelXY(e)
+      if (d.mode === 'draw') {
+        const nx = Math.min(d.ox, x),
+          ny = Math.min(d.oy, y)
+        setCrop({
+          x: nx,
+          y: ny,
+          w: Math.min(Math.abs(x - d.ox), dispSize.w - nx),
+          h: Math.min(Math.abs(y - d.oy), dispSize.h - ny),
+        })
+      } else {
+        setCrop((prev) =>
+          prev ?
+            {
+              ...prev,
+              x: Math.max(
+                0,
+                Math.min(dispSize.w - prev.w, (d.cx ?? 0) + (x - d.ox))
+              ),
+              y: Math.max(
+                0,
+                Math.min(dispSize.h - prev.h, (d.cy ?? 0) + (y - d.oy))
+              ),
+            }
+          : prev
+        )
+      }
+    },
+    [getRelXY, dispSize]
+  )
 
-  const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
+  const onPointerUp = useCallback(() => {
+    dragRef.current = null
+  }, [])
 
-  const onPointerMoveForCursor = useCallback((e: PointerEvent) => {
-    const canvas = cropCanvasRef.current; if (!canvas) return;
-    const { x, y } = getRelXY(e);
-    canvas.style.cursor = inMoveHandle(x, y) ? 'move' : 'crosshair';
-    onPointerMove(e);
-  }, [getRelXY, inMoveHandle, onPointerMove]);
+  const onPointerMoveForCursor = useCallback(
+    (e: PointerEvent) => {
+      const canvas = cropCanvasRef.current
+      if (!canvas) return
+      const { x, y } = getRelXY(e)
+      canvas.style.cursor = inMoveHandle(x, y) ? 'move' : 'crosshair'
+      onPointerMove(e)
+    },
+    [getRelXY, inMoveHandle, onPointerMove]
+  )
 
   const handleConfirm = () => {
-    if (!crop || crop.w < 5 || crop.h < 5 || !transformedBitmap) { onCancel(); return; }
-    const scaleX = transformedBitmap.width / dispSize.w, scaleY = transformedBitmap.height / dispSize.h;
-    const sx = Math.round(crop.x*scaleX), sy = Math.round(crop.y*scaleY);
-    const sw = Math.round(crop.w*scaleX), sh = Math.round(crop.h*scaleY);
-    const ratio = Math.min(1, 1920 / Math.max(sw, sh));
-    const out = document.createElement('canvas');
-    out.width = Math.round(sw*ratio); out.height = Math.round(sh*ratio);
-    out.getContext('2d')!.drawImage(transformedBitmap, sx, sy, sw, sh, 0, 0, out.width, out.height);
-    onConfirm(out.toDataURL('image/jpeg', 0.85), opacity);
-  };
+    if (!crop || crop.w < 5 || crop.h < 5 || !transformedBitmap) {
+      onCancel()
+      return
+    }
+    const scaleX = transformedBitmap.width / dispSize.w,
+      scaleY = transformedBitmap.height / dispSize.h
+    const sx = Math.round(crop.x * scaleX),
+      sy = Math.round(crop.y * scaleY)
+    const sw = Math.round(crop.w * scaleX),
+      sh = Math.round(crop.h * scaleY)
+    const ratio = Math.min(1, 1920 / Math.max(sw, sh))
+    const out = document.createElement('canvas')
+    out.width = Math.round(sw * ratio)
+    out.height = Math.round(sh * ratio)
+    out
+      .getContext('2d')!
+      .drawImage(transformedBitmap, sx, sy, sw, sh, 0, 0, out.width, out.height)
+    onConfirm(out.toDataURL('image/jpeg', 0.85), opacity)
+  }
 
-  const loading = !transformedBitmap || !dispSize.w;
+  const loading = !transformedBitmap || !dispSize.w
 
   return (
     <div className={s.overlay}>
@@ -165,29 +271,74 @@ export function CropModal({ file, onConfirm, onCancel }: CropModalProps) {
       <div className={s.hint}>{t('crop.hint')}</div>
 
       <div className={s.toolbar}>
-        <button className={s.toolBtn} onClick={() => setFlipH((v) => !v)} title={t('crop.flipH')}>↔</button>
-        <button className={s.toolBtn} onClick={() => setFlipV((v) => !v)} title={t('crop.flipV')}>↕</button>
-        <button className={s.toolBtn} onClick={() => setRot((r) => (r+270)%360)} title={t('crop.rotateCCW')}>↺</button>
-        <button className={s.toolBtn} onClick={() => setRot((r) => (r+90) %360)} title={t('crop.rotateCW')}>↻</button>
+        <button
+          className={s.toolBtn}
+          onClick={() => setFlipH((v) => !v)}
+          title={t('crop.flipH')}
+        >
+          ↔
+        </button>
+        <button
+          className={s.toolBtn}
+          onClick={() => setFlipV((v) => !v)}
+          title={t('crop.flipV')}
+        >
+          ↕
+        </button>
+        <button
+          className={s.toolBtn}
+          onClick={() => setRot((r) => (r + 270) % 360)}
+          title={t('crop.rotateCCW')}
+        >
+          ↺
+        </button>
+        <button
+          className={s.toolBtn}
+          onClick={() => setRot((r) => (r + 90) % 360)}
+          title={t('crop.rotateCW')}
+        >
+          ↻
+        </button>
       </div>
 
-      {loading
-        ? <div className={s.loadingText}>{t('crop.loading')}</div>
-        : <canvas ref={cropCanvasRef} className={s.cropCanvas} onPointerDown={onPointerDown} onPointerMove={onPointerMoveForCursor} onPointerUp={onPointerUp} />
+      {loading ?
+        <div className={s.loadingText}>{t('crop.loading')}</div>
+      : <canvas
+          ref={cropCanvasRef}
+          className={s.cropCanvas}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMoveForCursor}
+          onPointerUp={onPointerUp}
+        />
       }
 
       {dispSize.w > 0 && (
         <div className={s.sliderWrap}>
           <span className={s.sliderLabel}>{t('crop.opacity')}</span>
-          <input type="range" min={0} max={1} step={0.05} value={1 - opacity} onChange={(e) => setOpacity(1 - parseFloat(e.target.value))} className={s.slider} />
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={1 - opacity}
+            onChange={(e) => setOpacity(1 - parseFloat(e.target.value))}
+            className={s.slider}
+          />
           <span className={s.sliderValue}>{opacity.toFixed(2)}</span>
         </div>
       )}
 
       <div className={s.actions}>
-        <button onClick={handleConfirm} className={`${shared.btn} ${shared.btnConfirm}`}>{t('crop.confirm')}</button>
-        <button onClick={onCancel}      className={shared.btn}>{t('cancel')}</button>
+        <button
+          onClick={handleConfirm}
+          className={`${shared.btn} ${shared.btnConfirm}`}
+        >
+          {t('crop.confirm')}
+        </button>
+        <button onClick={onCancel} className={shared.btn}>
+          {t('cancel')}
+        </button>
       </div>
     </div>
-  );
+  )
 }

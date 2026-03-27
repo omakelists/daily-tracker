@@ -8,11 +8,27 @@
   container-type: inline-size;
   container-name: taskInfo;
 }
-.gameItemDone { opacity: 0.62; }
+.gameItemDone {
+  opacity: 0.62;
+}
 
-.bgLayer   { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
-.bgOverlay { position: absolute; inset: 0; background: black; z-index: 1; }
-.content   { position: relative; z-index: 2; }
+.bgLayer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+.bgOverlay {
+  position: absolute;
+  inset: 0;
+  background: black;
+  z-index: 1;
+}
+.content {
+  position: relative;
+  z-index: 2;
+}
 
 /* ── Accordion toggle ────────────────────────────────────────────── */
 .accordionBtn {
@@ -31,11 +47,18 @@
   transition: color 0.15s;
   pointer-events: none;
 }
-.accordionBtn:hover { color: var(--text); }
+.accordionBtn:hover {
+  color: var(--text);
+}
 
 /* ── Card body ───────────────────────────────────────────────────── */
-.gameBody        { background: rgba(13, 17, 23, 0.50); padding: 8px 13px 10px; }
-.gameBodyWithBg  { background: rgba(13, 17, 23, 0.30); }
+.gameBody {
+  background: rgba(13, 17, 23, 0.5);
+  padding: 8px 13px 10px;
+}
+.gameBodyWithBg {
+  background: rgba(13, 17, 23, 0.3);
+}
 
 /* ── Header meta: countdown + reset time ────────────────────────── */
 .countdown {
@@ -69,7 +92,9 @@
   transition: all 0.3s;
 }
 
-.gameItemClickable { cursor: pointer; }
+.gameItemClickable {
+  cursor: pointer;
+}
 
 /* ── Checkbox ────────────────────────────────────────────────────── */
 .cb {
@@ -85,11 +110,20 @@
   background: rgba(0, 0, 0, 0.42);
   border: 2px solid var(--border);
   border-radius: 6px;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
 }
-.cbGame    { border-radius: 7px; font-size: 13px; border-color: rgba(255, 255, 255, 0.3); }
-.cbChecked { background: var(--checked-bg) !important; border-color: var(--checked-br) !important; }
+.cbGame {
+  border-radius: 7px;
+  font-size: 13px;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.cbChecked {
+  background: var(--checked-bg) !important;
+  border-color: var(--checked-br) !important;
+}
 .cbReadOnly {
   cursor: default !important;
   background: rgba(255, 255, 255, 0.06) !important;

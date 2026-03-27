@@ -1,20 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
-import { t } from './i18n';
+import { useState, useEffect, useCallback } from 'react'
+import { t } from './i18n'
 
-const VERSION_URL       = './version.json';
-const VERSION_CHECK_URL = './version.json?check=1';
-const UPDATED_FLAG      = 'app-updated';
-const SKIP_WAITING_MSG  = { type: 'SKIP_WAITING' };
+const VERSION_URL = './version.json'
+const VERSION_CHECK_URL = './version.json?check=1'
+const UPDATED_FLAG = 'app-updated'
+const SKIP_WAITING_MSG = { type: 'SKIP_WAITING' }
 
 interface VersionInfo {
-  version?: string;
+  version?: string
 }
 
 interface VersionState {
-  current: string;
-  latest: string;
-  hasUpdate: boolean;
-  timedOut?: boolean;
+  current: string
+  latest: string
+  hasUpdate: boolean
+  timedOut?: boolean
 }
 
 type VerState =
@@ -23,133 +23,155 @@ type VerState =
   | 'updating'
   | 'reloading'
   | 'error'
-  | VersionState;
+  | VersionState
 
-async function fetchVersions(): Promise<{ cached: VersionInfo; net: VersionInfo }> {
+async function fetchVersions(): Promise<{
+  cached: VersionInfo
+  net: VersionInfo
+}> {
   const [cachedRes, netRes] = await Promise.all([
     fetch(VERSION_URL),
     fetch(VERSION_CHECK_URL + '&t=' + Date.now()),
-  ]);
-  if (!cachedRes.ok || !netRes.ok) throw new Error('fetch failed');
+  ])
+  if (!cachedRes.ok || !netRes.ok) throw new Error('fetch failed')
   const [cached, net] = await Promise.all([
     cachedRes.json() as Promise<VersionInfo>,
     netRes.json() as Promise<VersionInfo>,
-  ]);
-  return { cached, net };
+  ])
+  return { cached, net }
 }
 
 function activateAndReload(reg: ServiceWorkerRegistration): void {
-  try { localStorage.setItem(UPDATED_FLAG, '1'); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(UPDATED_FLAG, '1')
+  } catch {
+    /* ignore */
+  }
   navigator.serviceWorker.addEventListener(
     'controllerchange',
     () => window.location.reload(),
-    { once: true },
-  );
-  reg.waiting?.postMessage(SKIP_WAITING_MSG);
+    { once: true }
+  )
+  reg.waiting?.postMessage(SKIP_WAITING_MSG)
 }
 
 export function useAppUpdate() {
-  const [updateInfo, setUpdateInfo] = useState<{ current: string; next: string } | null>(null);
-  const [flashMsg,   setFlashMsg]   = useState<string | null>(null);
-  const [verState,   setVerState]   = useState<VerState>(null);
+  const [updateInfo, setUpdateInfo] = useState<{
+    current: string
+    next: string
+  } | null>(null)
+  const [flashMsg, setFlashMsg] = useState<string | null>(null)
+  const [verState, setVerState] = useState<VerState>(null)
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem(UPDATED_FLAG)) return;
-      localStorage.removeItem(UPDATED_FLAG);
-      setFlashMsg(t('verUpdated'));
-      const timer = setTimeout(() => setFlashMsg(null), 4000);
-      return () => clearTimeout(timer);
-    } catch { /* ignore */ }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      if (!localStorage.getItem(UPDATED_FLAG)) return
+      localStorage.removeItem(UPDATED_FLAG)
+      setFlashMsg(t('verUpdated'))
+      const timer = setTimeout(() => setFlashMsg(null), 4000)
+      return () => clearTimeout(timer)
+    } catch {
+      /* ignore */
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
+    if (!('serviceWorker' in navigator)) return
 
     const checkVersions = async () => {
       try {
-        const { cached, net } = await fetchVersions();
+        const { cached, net } = await fetchVersions()
         if (net.version && net.version !== cached.version) {
-          setUpdateInfo({ current: cached.version ?? '?', next: net.version });
+          setUpdateInfo({ current: cached.version ?? '?', next: net.version })
         }
-      } catch { /* ignore */ }
-    };
+      } catch {
+        /* ignore */
+      }
+    }
 
     navigator.serviceWorker.ready.then((reg) => {
-      reg.update();
+      reg.update()
       reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
+        const nw = reg.installing
+        if (!nw) return
         nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) checkVersions();
-        });
-      });
-      if (reg.waiting && navigator.serviceWorker.controller) checkVersions();
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+          if (nw.state === 'installed' && navigator.serviceWorker.controller)
+            checkVersions()
+        })
+      })
+      if (reg.waiting && navigator.serviceWorker.controller) checkVersions()
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkVersion = useCallback(async () => {
-    setVerState('checking');
+    setVerState('checking')
     try {
-      const { cached, net } = await fetchVersions();
+      const { cached, net } = await fetchVersions()
       setVerState({
-        current:   cached.version ?? '?',
-        latest:    net.version    ?? '?',
+        current: cached.version ?? '?',
+        latest: net.version ?? '?',
         hasUpdate: !!(net.version && net.version !== cached.version),
-      });
+      })
     } catch {
-      setVerState('error');
+      setVerState('error')
     }
-  }, []);
+  }, [])
 
   const doUpdate = useCallback(async () => {
-    if (!('serviceWorker' in navigator)) return;
-    setVerState('updating');
+    if (!('serviceWorker' in navigator)) return
+    setVerState('updating')
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await navigator.serviceWorker.ready
 
       if (reg.waiting) {
-        setVerState('reloading');
-        activateAndReload(reg);
-        return;
+        setVerState('reloading')
+        activateAndReload(reg)
+        return
       }
 
-      await reg.update();
-      let settled = false;
+      await reg.update()
+      let settled = false
 
       const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        setVerState((prev) => ({
-          ...(typeof prev === 'object' && prev !== null ? prev : {}),
-          hasUpdate: true,
-          timedOut:  true,
-        } as VersionState));
-      }, 20_000);
+        if (settled) return
+        settled = true
+        setVerState(
+          (prev) =>
+            ({
+              ...(typeof prev === 'object' && prev !== null ? prev : {}),
+              hasUpdate: true,
+              timedOut: true,
+            }) as VersionState
+        )
+      }, 20_000)
 
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && !settled) {
-            settled = true;
-            clearTimeout(timeout);
-            setVerState('reloading');
-            activateAndReload(reg);
-          }
-        });
-      }, { once: true });
+      reg.addEventListener(
+        'updatefound',
+        () => {
+          const nw = reg.installing
+          if (!nw) return
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && !settled) {
+              settled = true
+              clearTimeout(timeout)
+              setVerState('reloading')
+              activateAndReload(reg)
+            }
+          })
+        },
+        { once: true }
+      )
 
       if (reg.waiting && !settled) {
-        settled = true;
-        clearTimeout(timeout);
-        setVerState('reloading');
-        activateAndReload(reg);
+        settled = true
+        clearTimeout(timeout)
+        setVerState('reloading')
+        activateAndReload(reg)
       }
     } catch {
-      setVerState('error');
+      setVerState('error')
     }
-  }, []);
+  }, [])
 
-  return { updateInfo, flashMsg, verState, checkVersion, doUpdate };
+  return { updateInfo, flashMsg, verState, checkVersion, doUpdate }
 }

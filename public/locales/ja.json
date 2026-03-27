@@ -36,24 +36,8 @@
   "everyWeek": "毎週{day}",
   "everyHalfMonth": "{a}・{b}日",
   "halfMonthSuffix": "・{b}日",
-  "dayNamesFull": [
-    "日曜",
-    "月曜",
-    "火曜",
-    "水曜",
-    "木曜",
-    "金曜",
-    "土曜"
-  ],
-  "dayNames": [
-    "日",
-    "月",
-    "火",
-    "水",
-    "木",
-    "金",
-    "土"
-  ],
+  "dayNamesFull": ["日曜", "月曜", "火曜", "水曜", "木曜", "金曜", "土曜"],
+  "dayNames": ["日", "月", "火", "水", "木", "金", "土"],
   "updateAvail": "アプリの更新があります",
   "updateBtn": "更新",
   "updateMsg": "アプリを更新しますか？\n\n現在: {current}\n最新: {next}",

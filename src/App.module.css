@@ -1,6 +1,11 @@
 @keyframes pulseUpdate {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(227, 179, 65, 0); }
-  50%       { box-shadow: 0 0 0 4px rgba(227, 179, 65, 0.25); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(227, 179, 65, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(227, 179, 65, 0.25);
+  }
 }
 
 .loading {
@@ -19,7 +24,12 @@
 }
 
 .rootNoBg {
-  background: linear-gradient(135deg, var(--bg-app) 0%, var(--bg-surface) 50%, var(--bg-app) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--bg-app) 0%,
+    var(--bg-surface) 50%,
+    var(--bg-app) 100%
+  );
 }
 
 /* ── App background image layers ─────────────────────────────────── */
@@ -34,7 +44,8 @@
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     var(--bg-app) 0%,
     var(--bg-app) 35%,
     rgba(13, 17, 23, 0.82) 58%,
@@ -60,7 +71,11 @@
   align-items: center;
   justify-content: space-between;
 }
-.headerLeft { display: flex; align-items: center; gap: 10px; }
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .title {
   font-size: 17px;
   font-weight: 800;
@@ -72,9 +87,9 @@
 /* ── WCO titlebar ────────────────────────────────────────────────── */
 .wcoBar {
   position: fixed;
-  top:    env(titlebar-area-y,      0px);
-  left:   env(titlebar-area-x,      0px);
-  width:  env(titlebar-area-width,  100%);
+  top: env(titlebar-area-y, 0px);
+  left: env(titlebar-area-x, 0px);
+  width: env(titlebar-area-width, 100%);
   height: env(titlebar-area-height, 40px);
   z-index: 200;
   display: flex;
@@ -128,7 +143,9 @@
   -webkit-app-region: no-drag;
   transition: background 0.12s;
 }
-.wcoBtn:hover { background: rgba(255, 255, 255, 0.1); }
+.wcoBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
 
 .wcoOffset {
   height: env(titlebar-area-height, 40px);
@@ -136,10 +153,26 @@
 }
 
 /* ── Shared header elements ──────────────────────────────────────── */
-.clock   { font-size: 11px; color: var(--muted); font-family: monospace; }
-.actions { display: flex; gap: 8px; }
-.main    { padding: 12px var(--page-m) 24px; max-width: 740px; margin: 0 auto; position: relative; }
-.noGames { text-align: center; padding: 60px 20px; color: var(--muted); }
+.clock {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: monospace;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.main {
+  padding: 12px var(--page-m) 24px;
+  max-width: 740px;
+  margin: 0 auto;
+  position: relative;
+}
+.noGames {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
 
 /* ── Header action buttons ───────────────────────────────────────── */
 .btnRecord {
@@ -188,11 +221,29 @@
   font-weight: 600;
   padding: 9px 20px;
   border-radius: 20px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   z-index: 9999;
   white-space: nowrap;
-  animation: flashIn 0.22s ease-out, flashOut 0.3s ease-in 3.7s forwards;
+  animation:
+    flashIn 0.22s ease-out,
+    flashOut 0.3s ease-in 3.7s forwards;
   pointer-events: none;
 }
-@keyframes flashIn  { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-@keyframes flashOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes flashIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+@keyframes flashOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

@@ -1,4 +1,8 @@
-.list { display: flex; flex-direction: column; gap: 0; }
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
 /* ── Game header row (settings variant — narrower padding than GameCard) */
 .gameHeaderRow {
@@ -12,7 +16,9 @@
   display: flex;
   align-items: center;
 }
-.colorSlot:empty { display: none; }
+.colorSlot:empty {
+  display: none;
+}
 
 /* ── Game item card ──────────────────────────────────────────────── */
 .gameItem {
@@ -23,9 +29,23 @@
   container-type: inline-size;
   container-name: taskInfo;
 }
-.colorInput { width: 26px; height: 26px; border: none; background: none; cursor: pointer; flex-shrink: 0; }
-.gameName   { flex: 1; min-width: 0; font-weight: 700; }
-.gameBody   { padding: 8px 8px 10px; gap: var(--row-gap); }
+.colorInput {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.gameName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+.gameBody {
+  padding: 8px 8px 10px;
+  gap: var(--row-gap);
+}
 
 /* Reset label + time input + image button grouped for meta slot */
 .gameResetGroup {
@@ -36,9 +56,20 @@
   flex-wrap: wrap;
   justify-content: flex-start;
 }
-.resetLbl  { font-size: 10px; color: var(--muted); white-space: nowrap; margin-left: 6px; }
-.resetTime { width: 5.5rem; font-family: monospace; flex-shrink: 0; }
-.addTaskBtn { margin-top: 4px; }
+.resetLbl {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  margin-left: 6px;
+}
+.resetTime {
+  width: 5.5rem;
+  font-family: monospace;
+  flex-shrink: 0;
+}
+.addTaskBtn {
+  margin-top: 4px;
+}
 
 /* ── New game form ───────────────────────────────────────────────── */
 .newGameBox {
@@ -48,8 +79,16 @@
   padding: 12px 13px;
   margin-bottom: 10px;
 }
-.newGameHeader  { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-.newGameActions { display: flex; gap: 8px; }
+.newGameHeader {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.newGameActions {
+  display: flex;
+  gap: 8px;
+}
 
 .addGameBtn {
   background: transparent;
@@ -61,9 +100,14 @@
   font-size: 14px;
   width: 100%;
   font-family: inherit;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
-.addGameBtn:hover { border-color: var(--link); color: var(--link); }
+.addGameBtn:hover {
+  border-color: var(--link);
+  color: var(--link);
+}
 
 /* ── Image section ───────────────────────────────────────────────── */
 .imgSection {
@@ -72,7 +116,13 @@
   border-radius: 10px;
   padding: 12px 13px;
 }
-.imgSectionTitle { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+.imgSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
 .listSeparator {
   border: none;
   border-top: 1px solid var(--border);
@@ -88,19 +138,47 @@
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   font-size: 12px;
   color: var(--muted);
   font-family: inherit;
   background: transparent;
 }
-.dropZone:hover  { border-color: var(--link); color: var(--link); background: rgba(88, 166, 255, 0.05); }
-.dropZoneLarge   { padding: 14px 0; width: 100%; }
-.dropZoneOver    { border-color: var(--link); background: rgba(88, 166, 255, 0.08); color: var(--link); }
+.dropZone:hover {
+  border-color: var(--link);
+  color: var(--link);
+  background: rgba(88, 166, 255, 0.05);
+}
+.dropZoneLarge {
+  padding: 14px 0;
+  width: 100%;
+}
+.dropZoneOver {
+  border-color: var(--link);
+  background: rgba(88, 166, 255, 0.08);
+  color: var(--link);
+}
 
-.thumbRow  { display: flex; align-items: center; gap: 10px; }
-.thumb     { width: 72px; height: 48px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
-.thumbInfo { flex: 1; font-size: 11px; color: var(--muted); }
+.thumbRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.thumb {
+  width: 72px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.thumbInfo {
+  flex: 1;
+  font-size: 11px;
+  color: var(--muted);
+}
 
 /* ── Compact image button ────────────────────────────────────────── */
 .imgBtn {
@@ -120,14 +198,26 @@
   overflow: hidden;
   padding: 0;
 }
-.imgBtn:hover { border-color: var(--link); }
-.imgBtnThumb  { width: 100%; height: 100%; object-fit: cover; display: block; }
+.imgBtn:hover {
+  border-color: var(--link);
+}
+.imgBtnThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
-.imgBtnCompactWrap { position: relative; flex-shrink: 0; }
+.imgBtnCompactWrap {
+  position: relative;
+  flex-shrink: 0;
+}
 .imgBtnRemove {
   position: absolute;
-  top: -5px; right: -5px;
-  width: 14px; height: 14px;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--danger);
   border: none;
@@ -156,9 +246,19 @@
   accent-color: var(--link);
   cursor: pointer;
 }
-.prefLabel    { font-size: 13px; color: var(--text); }
-.prefDayInput { width: 52px; text-align: center; flex-shrink: 0; }
-.prefDayDisabled { opacity: 0.35; pointer-events: none; }
+.prefLabel {
+  font-size: 13px;
+  color: var(--text);
+}
+.prefDayInput {
+  width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.prefDayDisabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
 
 /* ── Version panel ───────────────────────────────────────────────── */
 .verPanel {
@@ -188,10 +288,32 @@
   margin-top: 10px;
   font-size: 12px;
 }
-.verRow     { display: flex; align-items: center; gap: 6px; }
-.verLbl     { color: var(--muted); }
-.verVal     { font-family: monospace; font-weight: 600; color: var(--text); }
-.verChecking { color: var(--muted); font-size: 12px; }
-.verUpToDate { color: var(--muted); font-size: 12px; }
-.verError    { color: var(--danger); font-size: 12px; }
-.verUpdateBtn { font-size: 12px; padding: 3px 12px; }
+.verRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.verLbl {
+  color: var(--muted);
+}
+.verVal {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text);
+}
+.verChecking {
+  color: var(--muted);
+  font-size: 12px;
+}
+.verUpToDate {
+  color: var(--muted);
+  font-size: 12px;
+}
+.verError {
+  color: var(--danger);
+  font-size: 12px;
+}
+.verUpdateBtn {
+  font-size: 12px;
+  padding: 3px 12px;
+}

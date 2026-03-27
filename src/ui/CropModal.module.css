@@ -12,9 +12,21 @@
   overflow-y: auto;
 }
 
-.heading { color: white; font-size: 14px; font-weight: 700; text-align: center; }
-.hint    { color: rgba(255, 255, 255, 0.45); font-size: 11px; text-align: center; }
-.toolbar { display: flex; gap: 6px; }
+.heading {
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+.hint {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  text-align: center;
+}
+.toolbar {
+  display: flex;
+  gap: 6px;
+}
 
 .toolBtn {
   background: rgba(255, 255, 255, 0.1);
@@ -28,7 +40,9 @@
   line-height: 1;
   transition: background 0.12s;
 }
-.toolBtn:hover { background: rgba(255, 255, 255, 0.22); }
+.toolBtn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
 
 .cropCanvas {
   display: block;
@@ -38,11 +52,38 @@
   max-height: 55vh;
 }
 
-.actions     { display: flex; gap: 12px; }
-.sliderWrap  { display: flex; align-items: center; gap: 10px; width: 100%; max-width: min(88vw, 700px); }
-.sliderLabel { color: rgba(255, 255, 255, 0.6); font-size: 11px; white-space: nowrap; }
-.sliderValue { color: white; font-size: 11px; font-family: monospace; width: 30px; text-align: right; flex-shrink: 0; }
-.slider      { flex: 1; cursor: pointer; accent-color: var(--link); }
+.actions {
+  display: flex;
+  gap: 12px;
+}
+.sliderWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: min(88vw, 700px);
+}
+.sliderLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.sliderValue {
+  color: white;
+  font-size: 11px;
+  font-family: monospace;
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.slider {
+  flex: 1;
+  cursor: pointer;
+  accent-color: var(--link);
+}
 
 /* ── Loading state ───────────────────────────────────────────────── */
-.loadingText { color: rgba(255, 255, 255, 0.5); font-size: 13px; }
+.loadingText {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+}

@@ -45,15 +45,7 @@
     "Viernes",
     "Sábado"
   ],
-  "dayNames": [
-    "D",
-    "L",
-    "M",
-    "X",
-    "J",
-    "V",
-    "S"
-  ],
+  "dayNames": ["D", "L", "M", "X", "J", "V", "S"],
   "updateAvail": "Actualización disponible",
   "updateBtn": "Actualizar",
   "updateMsg": "¿Actualizar la app?\n\nActual: {current}\nNueva:  {next}",

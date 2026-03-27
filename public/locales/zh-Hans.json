@@ -36,24 +36,8 @@
   "everyWeek": "每周{day}",
   "everyHalfMonth": "{a}・{b}日",
   "halfMonthSuffix": "・{b}日",
-  "dayNamesFull": [
-    "周日",
-    "周一",
-    "周二",
-    "周三",
-    "周四",
-    "周五",
-    "周六"
-  ],
-  "dayNames": [
-    "日",
-    "一",
-    "二",
-    "三",
-    "四",
-    "五",
-    "六"
-  ],
+  "dayNamesFull": ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+  "dayNames": ["日", "一", "二", "三", "四", "五", "六"],
   "updateAvail": "有新版本",
   "updateBtn": "更新",
   "updateMsg": "是否更新应用？\n\n当前版本：{current}\n新版本：{next}",
