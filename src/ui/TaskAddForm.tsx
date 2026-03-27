@@ -111,6 +111,7 @@ export function TaskAddForm({
     <div className={s.form}>
       <div className={s.mainRow}>
         <TaskEdit
+          game={game}
           item={draft}
           onUpdate={updateDraft}
           handleSubmit={handleSubmit}
