@@ -73,7 +73,8 @@ function localToUtcTask(task: Task): object {
     .with({ type: EVENT }, (tk) => {
       const [y, mt, d] = parseYYYYMMDD(tk.deadline)
       const [h, m] = parseHHMM(tk.deadlineTime)
-      const dt = new Date(y, mt, d, h, m)
+      // parseYYYYMMDD returns a 1-indexed month; Date constructor expects 0-indexed
+      const dt = new Date(y, mt - 1, d, h, m)
       return { ...tk, deadline: utcFmtDate(dt), deadlineTime: utcFmtTime(dt) }
     })
     .otherwise((tk) => {
@@ -131,7 +132,8 @@ function utcToLocalTask(task: unknown): Task {
       if (!('deadlineTime' in tk)) throw new Error('invalid data')
       const [y, mt, d] = parseYYYYMMDD(tk.deadline as UtcYMDString)
       const [h, m] = parseHHMM(tk.deadlineTime as UtcTimeString)
-      const dt = new Date(Date.UTC(y, mt, d, h, m))
+      // parseYYYYMMDD returns a 1-indexed month; Date.UTC expects 0-indexed
+      const dt = new Date(Date.UTC(y, mt - 1, d, h, m))
       return {
         ...tk,
         deadline: localFmtDate(dt),

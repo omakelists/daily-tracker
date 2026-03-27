@@ -38,8 +38,7 @@ export function TaskAddForm({
     halfMonthlyStartDay:
       item?.type === HALFMONTHLY ? item.halfMonthlyStartDay : 1,
     deadline: item?.type === EVENT ? item.deadline : localFmtDate(new Date()),
-    // deadlineTime stays as UtcTimeString throughout the draft lifecycle —
-    // TaskEdit handles the UTC↔local conversion internally for the <input> display.
+    // Draft holds deadlineTime as LocalTimeString; no UTC conversion needed for <input type="time">
     deadlineTime:
       item?.type === EVENT ?
         item.deadlineTime

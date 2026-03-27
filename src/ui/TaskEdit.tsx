@@ -17,7 +17,8 @@ import shared from './shared.module.css'
 
 function addDaysToDate(dateStr: LocalYMDString, n: number): LocalYMDString {
   const [y, m, d] = parseYYYYMMDD(dateStr)
-  const base = new Date(y, m, d)
+  // parseYYYYMMDD returns a 1-indexed month; Date constructor expects 0-indexed
+  const base = new Date(y, m - 1, d)
   base.setDate(base.getDate() + n)
   return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}` as LocalYMDString
 }

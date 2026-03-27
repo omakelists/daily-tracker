@@ -91,7 +91,7 @@ export const localFmtDate = (d: Date): LocalYMDString =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` as LocalYMDString
 
 export const localFmtTime = (d: Date): LocalTimeString =>
-  `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` as LocalTimeString
+  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` as LocalTimeString
 
 // ── Local-date-based game day key ─────────────────────────────────
 export function getGameDateKey(
