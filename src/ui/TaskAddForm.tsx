@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { match } from 'ts-pattern';
 import { t } from '../util/i18n';
-import { uid, utcToLocalHHMM } from '../util/helpers';
+import { uid, localToUtcHHMM, asLocal } from '../util/helpers';
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
-import type { Game, Task, TaskType, TimeString, YMDString } from '../types';
+import type { Game, Task, TaskType, YMDString } from '../types';
 import { TaskEdit } from './TaskEdit';
 import s from './TaskAddForm.module.css';
 import shared from './shared.module.css';
@@ -30,11 +30,11 @@ export function TaskAddForm({ game, item, type, onAdd, onSave, onCancel }: TaskA
     monthlyResetDay:     item?.type === MONTHLY     ? item.monthlyResetDay     : 1,
     halfMonthlyStartDay: item?.type === HALFMONTHLY ? item.halfMonthlyStartDay : 1,
     deadline:     item?.type === EVENT ? item.deadline : new Date().toISOString().slice(0, 10) as YMDString,
+    // deadlineTime stays as UtcTimeString throughout the draft lifecycle —
+    // TaskEdit handles the UTC↔local conversion internally for the <input> display.
     deadlineTime: item?.type === EVENT
-      ? utcToLocalHHMM(item.deadlineTime)
-      : game?.resetTime
-        ? game.resetTime
-        : '00:00' as TimeString,
+      ? item.deadlineTime
+      : (game?.resetTime ?? localToUtcHHMM(asLocal('00:00'))),
   });
 
   const updateDraft = (_: string, key: string, val: unknown) =>

@@ -3,7 +3,7 @@ import type { ChangeEvent, DragEvent, Dispatch, SetStateAction } from "react";
 import { useDragSort, useScopedDragSort } from '../util/useDragSort';
 import { AnimatePresence, motion } from 'motion/react';
 import { t } from '../util/i18n';
-import { localToUtcHHMM, uid, utcToLocalHHMM } from '../util/helpers';
+import { localToUtcHHMM, uid, utcToLocalHHMM, asLocal } from '../util/helpers';
 import { ALL_TASK_TYPES, EVENT } from '../constants';
 import { imgDelete, imgGet, imgSet } from '../util/imageStorage';
 import { useAppUpdate } from '../util/useAppUpdate';
@@ -14,7 +14,7 @@ import { CropModal } from './CropModal';
 import { TaskAddForm } from './TaskAddForm';
 import { TaskRow } from './TaskRow';
 import { TaskEdit } from './TaskEdit';
-import type { Game, Task, TaskType, HexColor, TimeString } from '../types';
+import type { Game, Task, TaskType, HexColor } from '../types';
 import s from './Settings.module.css';
 import shared from './shared.module.css';
 
@@ -169,7 +169,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ games, setGames, onClose, showConfirm, refreshImages, prefs, onPrefs }: SettingsModalProps) {
-  const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff' as HexColor, resetTime: '00:00' as TimeString });
+  const [newGame,  setNewGame]  = useState({ name: '', color: '#4a9eff' as HexColor, resetTime: localToUtcHHMM(asLocal('00:00')) });
   const [showNG,   setShowNG]   = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -269,10 +269,10 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
       id: uid(),
       name: newGame.name,
       color: newGame.color as HexColor,
-      resetTime: localToUtcHHMM(newGame.resetTime) as TimeString,
+      resetTime: newGame.resetTime,
       items: [],
     }]);
-    setNewGame({ name: '', color: '#4a9eff', resetTime: '00:00' }); setShowNG(false);
+    setNewGame({ name: '', color: '#4a9eff', resetTime: localToUtcHHMM(asLocal('00:00')) }); setShowNG(false);
   };
 
   const upItem  = (gid: string, taskId: string, key: string, val: unknown) =>
@@ -324,7 +324,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                         <div className={s.gameResetGroup}>
                           <span className={s.resetLbl}>{t('resetLbl')}</span>
                           <input type="time" value={utcToLocalHHMM(game.resetTime)}
-                                 onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(e.target.value as TimeString))}
+                                 onChange={(e) => upGame(game.id, 'resetTime', localToUtcHHMM(asLocal(e.target.value)))}
                                  className={`${shared.inputCls} ${s.resetTime}`} />
                           <ImageDropZone currentDataUrl={gameBgThumbs[game.id] || null}
                                          onFile={(file) => openCrop(`game-${game.id}`, file)}
@@ -366,7 +366,7 @@ export function SettingsModal({ games, setGames, onClose, showConfirm, refreshIm
                            onKeyDown={(e) => e.key === 'Enter' && addGame()}
                            className={`${shared.inputCls} ${shared.flexInput}`} placeholder={t('gameName')} autoFocus />
                     <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: e.target.value as TimeString }))}
+                    <input type="time" value={newGame.resetTime} onChange={(e) => setNewGame((g) => ({ ...g, resetTime: localToUtcHHMM(asLocal(e.target.value)) }))}
                            className={`${shared.inputCls} ${s.resetTime}`} />
                   </div>
                   <div className={s.newGameActions}>

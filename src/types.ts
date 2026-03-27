@@ -1,6 +1,17 @@
 // ── Template literal types ────────────────────────────────────────
-export type HexColor  = `#${string}`;
+export type HexColor   = `#${string}`;
 export type TimeString = `${string}:${string}`;
+
+// ── Branded (phantom) types for timezone safety ───────────────────
+// Zero runtime cost — brand exists at the type level only.
+// Equivalent to Scala's tagged types (@@).
+type Brand<T, B> = T & { readonly _brand: B };
+
+/** HH:MM string stored/calculated in UTC (data model, all helpers). */
+export type UtcTimeString   = Brand<TimeString, 'utc'>;
+
+/** HH:MM string in the user's local timezone (<input type="time"> values only). */
+export type LocalTimeString = Brand<TimeString, 'local'>;
 export type YMDString  = `${string}-${string}-${string}`;
 
 // ── Task type ─────────────────────────────────────────────────────
@@ -12,12 +23,12 @@ export interface BaseTask {
   id: string;
   name: string;
   type: TaskType;
-  resetTime?: TimeString;
+  resetTime?: UtcTimeString;
 }
 
 export interface DailyTask extends BaseTask {
   type: 'daily';
-  resetTime: TimeString;
+  resetTime: UtcTimeString;
 }
 
 export interface WeeklyTask extends BaseTask {
@@ -38,7 +49,7 @@ export interface MonthlyTask extends BaseTask {
 export interface EventTask extends BaseTask {
   type: 'event';
   deadline: YMDString;
-  deadlineTime: TimeString;
+  deadlineTime: UtcTimeString;
 }
 
 export type Task = DailyTask | WeeklyTask | HalfMonthlyTask | MonthlyTask | EventTask;
@@ -49,12 +60,12 @@ export interface TaskDraft {
   id: string;
   name: string;
   type: TaskType;
-  resetTime?: string;
+  resetTime?: UtcTimeString;
   weeklyResetDay?: number;
   monthlyResetDay?: number;
   halfMonthlyStartDay?: number;
   deadline?: string | null;
-  deadlineTime?: string | null;
+  deadlineTime?: UtcTimeString | null;
 }
 
 // ── Game ──────────────────────────────────────────────────────────
@@ -62,7 +73,7 @@ export interface Game {
   id: string;
   name: string;
   color: HexColor;
-  resetTime: TimeString;
+  resetTime: UtcTimeString;
   items: Task[];
   itemOrder?: string[];
 }

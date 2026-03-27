@@ -1,5 +1,5 @@
 import { EVENT } from '../constants';
-import type { Game, Task, ChecksMap, TimeString } from '../types';
+import type { Game, Task, ChecksMap, UtcTimeString } from '../types';
 
 const GAMES_KEY  = 'dailytracker:games';
 const CHECKS_KEY = 'dailytracker:checks';
@@ -85,6 +85,6 @@ export function loadAll(): { games: Game[] | null; checks: ChecksMap } {
 
 // ── Helpers for building typed tasks from raw data ────────────────
 /** Ensure a daily task has an explicit resetTime (falls back to game resetTime). */
-export function normalizeDailyResetTime(task: LegacyGame, gameResetTime: TimeString): TimeString {
-  return (task.resetTime ?? gameResetTime) as TimeString;
+export function normalizeDailyResetTime(task: LegacyGame, gameResetTime: UtcTimeString): UtcTimeString {
+  return task.resetTime ?? gameResetTime;
 }

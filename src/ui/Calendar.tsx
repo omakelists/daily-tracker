@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { t, ta } from '../util/i18n';
 import { DAILY, EVENT } from '../constants';
-import { getDaysInMonth, fmtDate, checkKey } from '../util/helpers';
+import { getDaysInMonth, fmtDate, checkKey, asLocal, localToUtcHHMM } from '../util/helpers';
 import type { Game, Task, DailyTask, ChecksMap } from '../types';
 import { Modal } from './UI';
 import s from './Calendar.module.css';
@@ -31,7 +31,7 @@ export function CalendarModal({ games, checks, now, onClose }: CalendarModalProp
   const rawTasks = (game?.items ?? []).filter((it): it is Exclude<Task, { type: 'event' }> => it.type !== EVENT);
   const dailyTasks: Task[] = rawTasks.length
     ? rawTasks.filter((tk): tk is DailyTask => tk.type === DAILY)
-    : [{ id: `${game?.id}_solo`, type: DAILY, name: '', resetTime: (game?.resetTime ?? '00:00') } as DailyTask];
+    : [{ id: `${game?.id}_solo`, type: DAILY, name: '', resetTime: (game?.resetTime ?? localToUtcHHMM(asLocal('00:00'))) } as DailyTask];
 
   useEffect(() => { setSelTask(null); }, [selGame]);
 

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { KeyboardEvent } from "react";
 import { match } from 'ts-pattern';
 import { t } from '../util/i18n';
-import { cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM } from '../util/helpers';
+import { cdColor, formatCountdown, localToUtcHHMM, msUntilDeadline, utcToLocalHHMM, asLocal } from '../util/helpers';
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants';
-import type {Task, TimeString} from '../types';
+import type { Task } from '../types';
 import { Badge } from './UI';
 import s from './TaskEdit.module.css';
 import shared from './shared.module.css';
@@ -23,7 +23,8 @@ interface TaskEditProps {
 }
 
 export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditProps) {
-  const timeUtcForCd = item.type === EVENT ? localToUtcHHMM(item.deadlineTime) : undefined;
+  // item.deadlineTime is UtcTimeString — pass directly without re-converting
+  const timeUtcForCd = item.type === EVENT ? item.deadlineTime : undefined;
   const deadlineMs   = item.type === EVENT && timeUtcForCd
     ? msUntilDeadline(item.deadline, new Date(), timeUtcForCd)
     : null;
@@ -46,8 +47,8 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
       {match(item)
         .with({ type: DAILY }, (it) => (
           <div className={s.resetInputGroup}>
-            <input type="time" value={utcToLocalHHMM(it.resetTime ?? '00:00')}
-                     onChange={(e) => onUpdate?.(it.id, 'resetTime', localToUtcHHMM(e.target.value as TimeString))}
+            <input type="time" value={utcToLocalHHMM(it.resetTime)}
+                     onChange={(e) => onUpdate?.(it.id, 'resetTime', localToUtcHHMM(asLocal(e.target.value)))}
                    className={`${shared.inputCls} ${s.inputTime}`} />
           </div>
         ))
@@ -103,7 +104,7 @@ export function TaskEdit({ item, onUpdate, handleSubmit, onCancel }: TaskEditPro
             </div>
             <div className={s.resetInputBlock}>
               <input type="time" value={it.deadlineTime ? utcToLocalHHMM(it.deadlineTime) : ''}
-                       onChange={(e) => onUpdate?.(it.id, 'deadlineTime', e.target.value ? localToUtcHHMM(e.target.value as TimeString) : null)}
+                       onChange={(e) => onUpdate?.(it.id, 'deadlineTime', e.target.value ? localToUtcHHMM(asLocal(e.target.value)) : null)}
                      disabled={!it.deadline}
                      className={`${shared.inputCls} ${s.inputTime}`}
                      style={{ opacity: it.deadline ? 1 : 0.35 }} />
