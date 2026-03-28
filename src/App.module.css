@@ -55,6 +55,18 @@
 }
 
 /* ── Non-WCO header ──────────────────────────────────────────────── */
+/* Both .header and .wcoBar are always in the DOM; CSS picks which one to show.
+   This avoids JS startup timing issues where wco.visible and matchMedia can
+   both return wrong values for several seconds after PWA launch. */
+.wcoBar { display: none; }
+.wcoOffset { display: none; }
+
+@media (display-mode: window-controls-overlay) {
+  .wcoBar { display: flex; }
+  .wcoOffset { display: block; }
+  .header { display: none; }
+}
+
 .header {
   background: var(--bg-header);
   backdrop-filter: blur(10px);
@@ -85,6 +97,7 @@
 }
 
 /* ── WCO titlebar ────────────────────────────────────────────────── */
+/* display is controlled by the @media block above; only layout props here */
 .wcoBar {
   position: fixed;
   top: env(titlebar-area-y, 0px);
@@ -92,7 +105,6 @@
   width: env(titlebar-area-width, 100%);
   height: env(titlebar-area-height, 40px);
   z-index: 200;
-  display: flex;
   align-items: center;
   background: var(--bg-header);
   backdrop-filter: blur(12px);

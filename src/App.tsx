@@ -54,23 +54,6 @@ export function App() {
     refreshImages,
   } = useAppSettings(games ?? [], setSafeGames, now)
 
-  // ── WCO (Window Controls Overlay) ────────────────────────────
-  // Use the CSS display-mode media query instead of navigator.windowControlsOverlay.visible
-  // for initial state detection. The media query is evaluated by the browser layout engine
-  // before JavaScript runs, making it reliable even during PWA startup.
-  // wco.visible can be transiently true during the startup sequence (before the browser
-  // applies the user hidden-overlay preference), and geometrychange only fires on changes —
-  // so if visible stays true and never changes, the event never fires to correct it.
-  const [wcoVisible, setWcoVisible] = useState(
-    () => window.matchMedia('(display-mode: window-controls-overlay)').matches
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(display-mode: window-controls-overlay)')
-    const handler = (e: MediaQueryListEvent) => setWcoVisible(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
   // Unified clock
   useEffect(() => {
     let minMs = 30_000
@@ -223,96 +206,102 @@ export function App() {
 
       {flashMsg && <div className={s.flashToast}>{flashMsg}</div>}
 
-      {wcoVisible ?
-        <div className={s.wcoBar}>
-          <img src="./icon-192.png" className={s.wcoIcon} alt="" />
-          <span className={s.wcoTitle}>{t('appTitle')}</span>
-          <span className={s.wcoClock}>
-            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          {updateInfo && (
-            <button
-              onClick={() =>
-                showConfirm(
-                  t('updateMsg', {
-                    current: updateInfo.current,
-                    next: updateInfo.next,
-                  }),
-                  doUpdate,
-                  t('updateBtn')
-                )
-              }
-              className={s.wcoBtn}
-              title={t('updateAvail')}
-            >
-              ⬆️
-            </button>
-          )}
+      {/* WCO (Window Controls Overlay) titlebar.
+         Visibility is controlled entirely by CSS @media (display-mode: window-controls-overlay)
+         in App.module.css. Both header elements are always rendered; CSS picks which one to show.
+         This avoids JS startup timing issues where wco.visible and matchMedia can both return
+         a wrong value for several seconds after PWA launch before the browser settles. */}
+      <div className={s.wcoBar}>
+        <img src="./icon-192.png" className={s.wcoIcon} alt="" />
+        <span className={s.wcoTitle}>{t('appTitle')}</span>
+        <span className={s.wcoClock}>
+          {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+        {updateInfo && (
           <button
-            onClick={() => setShowCalendar(true)}
+            onClick={() =>
+              showConfirm(
+                t('updateMsg', {
+                  current: updateInfo.current,
+                  next: updateInfo.next,
+                }),
+                doUpdate,
+                t('updateBtn')
+              )
+            }
             className={s.wcoBtn}
-            title={t('record')}
+            title={t('updateAvail')}
           >
-            📅
+            ⬆️
           </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className={s.wcoBtn}
-            title={t('settings')}
-          >
-            ⚙️
-          </button>
-        </div>
-      : <header className={s.header}>
-          <div className={s.headerInner}>
-            <div className={s.headerLeft}>
-              <span className={s.title}>{t('appTitle')}</span>
-              <span className={s.clock}>
-                {now.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-            </div>
-            <div className={s.actions}>
-              {updateInfo && (
-                <button
-                  onClick={() =>
-                    showConfirm(
-                      t('updateMsg', {
-                        current: updateInfo.current,
-                        next: updateInfo.next,
-                      }),
-                      doUpdate,
-                      t('updateBtn')
-                    )
-                  }
-                  className={s.btnUpdate}
-                  title={t('updateAvail')}
-                >
-                  ⬆️
-                </button>
-              )}
-              <button
-                onClick={() => setShowCalendar(true)}
-                className={s.btnRecord}
-                title={t('record')}
-              >
-                📅
-              </button>
-              <button
-                onClick={() => setShowSettings(true)}
-                className={s.btnSettings}
-                title={t('settings')}
-              >
-                ⚙️
-              </button>
-            </div>
-          </div>
-        </header>
-      }
+        )}
+        <button
+          onClick={() => setShowCalendar(true)}
+          className={s.wcoBtn}
+          title={t('record')}
+        >
+          📅
+        </button>
+        <button
+          onClick={() => setShowSettings(true)}
+          className={s.wcoBtn}
+          title={t('settings')}
+        >
+          ⚙️
+        </button>
+      </div>
 
-      {wcoVisible && <div className={s.wcoOffset} />}
+      {/* Standard header — hidden via CSS when display-mode is window-controls-overlay */}
+      <header className={s.header}>
+        <div className={s.headerInner}>
+          <div className={s.headerLeft}>
+            <span className={s.title}>{t('appTitle')}</span>
+            <span className={s.clock}>
+              {now.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+          <div className={s.actions}>
+            {updateInfo && (
+              <button
+                onClick={() =>
+                  showConfirm(
+                    t('updateMsg', {
+                      current: updateInfo.current,
+                      next: updateInfo.next,
+                    }),
+                    doUpdate,
+                    t('updateBtn')
+                  )
+                }
+                className={s.btnUpdate}
+                title={t('updateAvail')}
+              >
+                ⬆️
+              </button>
+            )}
+            <button
+              onClick={() => setShowCalendar(true)}
+              className={s.btnRecord}
+              title={t('record')}
+            >
+              📅
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className={s.btnSettings}
+              title={t('settings')}
+            >
+              ⚙️
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Spacer below the WCO bar — hidden via CSS when not in WCO mode */}
+      <div className={s.wcoOffset} />
 
       <main className={s.main}>
         <AnimatePresence mode="popLayout" initial={false}>
