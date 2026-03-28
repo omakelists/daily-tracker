@@ -29,6 +29,7 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
+  const [isWCO, setIsWCO] = useState(false)
 
   const setSafeGames: Dispatch<SetStateAction<Game[]>> = (param) => {
     setGames((prev) => {
@@ -88,6 +89,19 @@ export function App() {
   useEffect(() => {
     if (games !== null) saveGames(games)
   }, [games])
+
+  // Monitor WCO (Window Controls Overlay) state
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(display-mode: window-controls-overlay)')
+    setIsWCO(mediaQuery.matches)
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsWCO(e.matches)
+    }
+    
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
 
   const soloId = (game: Game): string => `${game.id}_solo`
 
@@ -195,7 +209,7 @@ export function App() {
   if (games === null) return <div className={s.loading}>{t('loading')}</div>
 
   return (
-    <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}`}>
+    <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}${isWCO ? ` ${s.wco}` : ''}`}>
       {appBg && (
         <div
           className={s.appBgImg}
@@ -207,10 +221,10 @@ export function App() {
       {flashMsg && <div className={s.flashToast}>{flashMsg}</div>}
 
       {/* WCO (Window Controls Overlay) titlebar.
-         Visibility is controlled entirely by CSS @media (display-mode: window-controls-overlay)
-         in App.module.css. Both header elements are always rendered; CSS picks which one to show.
-         This avoids JS startup timing issues where wco.visible and matchMedia can both return
-         a wrong value for several seconds after PWA launch before the browser settles. */}
+         Visibility is controlled by JavaScript state monitoring the media query
+         (display-mode: window-controls-overlay). Both header elements are always
+         rendered; CSS picks which one to show based on the .wco class.
+         This ensures immediate correct display without startup timing issues. */}
       <div className={s.wcoBar}>
         <img src="./icon-192.png" className={s.wcoIcon} alt="" />
         <span className={s.wcoTitle}>{t('appTitle')}</span>

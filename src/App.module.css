@@ -56,16 +56,15 @@
 
 /* ── Non-WCO header ──────────────────────────────────────────────── */
 /* Both .header and .wcoBar are always in the DOM; CSS picks which one to show.
-   This avoids JS startup timing issues where wco.visible and matchMedia can
-   both return wrong values for several seconds after PWA launch. */
+   Display is controlled by JavaScript monitoring the media query
+   (display-mode: window-controls-overlay) and applying the .wco class.
+   This ensures immediate correct display without startup timing issues. */
 .wcoBar { display: none; }
 .wcoOffset { display: none; }
 
-@media (display-mode: window-controls-overlay) {
-  .wcoBar { display: flex; }
-  .wcoOffset { display: block; }
-  .header { display: none; }
-}
+.wco .wcoBar { display: flex; }
+.wco .wcoOffset { display: block; }
+.wco .header { display: none; }
 
 .header {
   background: var(--bg-header);
@@ -97,7 +96,7 @@
 }
 
 /* ── WCO titlebar ────────────────────────────────────────────────── */
-/* display is controlled by the @media block above; only layout props here */
+/* Display is controlled by JavaScript state; only layout props here */
 .wcoBar {
   position: fixed;
   top: env(titlebar-area-y, 0px);
