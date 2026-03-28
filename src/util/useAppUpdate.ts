@@ -94,7 +94,15 @@ export function useAppUpdate() {
     }
 
     navigator.serviceWorker.ready.then((reg) => {
-      reg.update()
+      // Do NOT call reg.update() here. Calling it on every page load causes the
+      // browser to actively fetch a new SW on every reload, which installs a new
+      // cache and then activates automatically on the next reload — without any
+      // explicit user action. Updates are only fetched when the user triggers
+      // doUpdate() from the settings screen.
+      // The browser still performs its own background SW check (per spec, on
+      // navigation after 24 h since last check). If it finds a new SW naturally,
+      // updatefound fires and we surface the notification badge; the user must
+      // still confirm to apply it.
       reg.addEventListener('updatefound', () => {
         const nw = reg.installing
         if (!nw) return
@@ -103,6 +111,8 @@ export function useAppUpdate() {
             checkVersions()
         })
       })
+      // Also handle a SW that was already waiting from a previous
+      // browser-initiated check before this page loaded.
       if (reg.waiting && navigator.serviceWorker.controller) checkVersions()
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
