@@ -98,19 +98,23 @@ export function getGameDateKey(
   now: Date,
   resetTime: LocalTimeString
 ): UtcYMDString {
-  const [rh, rm] = (resetTime || '00:00').split(':').map(Number)
-  const tmp = new Date(now)
-  tmp.setHours(rh, rm, 0, 0)
-  const localResetMin = tmp.getHours() * 60 + tmp.getMinutes()
-  const localNowMin = now.getHours() * 60 + now.getMinutes()
-  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  if (localNowMin < localResetMin) base.setUTCDate(base.getUTCDate() - 1)
-  return utcFmtDate(base)
+  // Convert local reset time to UTC for comparison so all arithmetic stays in UTC.
+  // This makes the returned key equal to utcFmtDate(now) when now is past the reset,
+  // allowing callers to use utcFmtDate(now) directly as "today's key".
+  const utcRT = localToUtcHHMM(resetTime)
+  const [rh, rm] = parseHHMM(utcRT)
+  const utcNowMin = now.getUTCHours() * 60 + now.getUTCMinutes()
+  const utcResetMin = rh * 60 + rm
+  const baseKey = utcFmtDate(now)
+  // Before the UTC reset time: still in the previous game day
+  if (utcNowMin < utcResetMin) return shiftDate(baseKey, -1)
+  return baseKey
 }
 
 export function shiftDate(dateKey: UtcYMDString, days: number): UtcYMDString {
   const [y, m, d] = dateKey.split('-').map(Number)
-  const date = new Date(Date.UTC(y, m, d))
+  // m from the date string is 1-indexed; Date.UTC expects 0-indexed
+  const date = new Date(Date.UTC(y, m - 1, d))
   date.setUTCDate(date.getUTCDate() + days)
   return utcFmtDate(date)
 }
@@ -123,7 +127,8 @@ export const getPrevGameDateKey = (
 // ── Period key helpers ────────────────────────────────────────────
 export function dateToWeekKey(dk: UtcYMDString, rd = 1): string {
   const [h, m, s] = dk.split('-').map(Number)
-  const date = new Date(Date.UTC(h, m, s))
+  // m from the date string is 1-indexed; Date.UTC expects 0-indexed
+  const date = new Date(Date.UTC(h, m - 1, s))
   const day = date.getUTCDay()
   const daysBack = (day - rd + 7) % 7
   date.setUTCDate(date.getUTCDate() - daysBack)

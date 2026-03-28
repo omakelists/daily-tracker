@@ -5,7 +5,7 @@ import {
   getDaysInMonth,
   checkKey,
   asLocal,
-  localFmtDate,
+  utcFmtDate,
 } from '../util/helpers'
 import type { Game, Task, DailyTask, ChecksMap } from '../types'
 import { Modal } from './UI'
@@ -59,7 +59,8 @@ export function CalendarModal({
 
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = new Date(year, month, 1).getDay()
-  const today = localFmtDate(now)
+  // today is the UTC date of the current moment, matching getGameDateKey's output
+  const today = utcFmtDate(now)
 
   const getStatus = (dk: string): 'all' | 'partial' | 'none' => {
     if (!game) return 'none'
@@ -137,7 +138,8 @@ export function CalendarModal({
           ))}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1
-            const dk = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+            // Calendar year/month/day are treated as UTC dates, matching getGameDateKey's UTC keys
+            const dk = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` as const
             const st = getStatus(dk)
             return (
               <div
