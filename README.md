@@ -2,7 +2,7 @@
 
 A simple TODO app for tracking game daily/weekly/monthly tasks.
 
-> **Note:** This project was generated with the assistance of [Claude](https://claude.ai) by Anthropic.
+> **Note:** This project was developed with the assistance of [Claude](https://claude.ai) by Anthropic and GitHub Copilot.
 
 [![Preview](preview.png)](https://omakelists.github.io/daily-tracker)
 
@@ -53,4 +53,4 @@ MIT — free to use, modify, and distribute.
 
 ---
 
-*Generated with [Claude](https://claude.ai) by Anthropic.*
+*Developed with the assistance of [Claude](https://claude.ai) by Anthropic and GitHub Copilot.*
