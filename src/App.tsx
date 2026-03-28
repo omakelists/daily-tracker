@@ -55,12 +55,18 @@ export function App() {
   } = useAppSettings(games ?? [], setSafeGames, now)
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  const [wcoVisible, setWcoVisible] = useState(
-    () => !!navigator.windowControlsOverlay?.visible
-  )
+  // Initialize to false; the effect below reads the authoritative value after
+  // mount and keeps it in sync via geometrychange. Using a lazy initializer
+  // here is unreliable because the browser may not have finalized the WCO
+  // geometry yet at the time the first render runs, causing a stale true value
+  // that geometrychange never corrects (it only fires on changes, not on load).
+  const [wcoVisible, setWcoVisible] = useState(false)
   useEffect(() => {
     const wco = navigator.windowControlsOverlay
     if (!wco) return
+    // Read the authoritative value immediately after mount to correct any
+    // mismatch from the false initial state or from a stale startup read.
+    setWcoVisible(wco.visible)
     const handler = () => setWcoVisible(wco.visible)
     wco.addEventListener('geometrychange', handler)
     return () => wco.removeEventListener('geometrychange', handler)
