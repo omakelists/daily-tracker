@@ -55,21 +55,20 @@ export function App() {
   } = useAppSettings(games ?? [], setSafeGames, now)
 
   // ── WCO (Window Controls Overlay) ────────────────────────────
-  // Initialize to false; the effect below reads the authoritative value after
-  // mount and keeps it in sync via geometrychange. Using a lazy initializer
-  // here is unreliable because the browser may not have finalized the WCO
-  // geometry yet at the time the first render runs, causing a stale true value
-  // that geometrychange never corrects (it only fires on changes, not on load).
-  const [wcoVisible, setWcoVisible] = useState(false)
+  // Use the CSS display-mode media query instead of navigator.windowControlsOverlay.visible
+  // for initial state detection. The media query is evaluated by the browser layout engine
+  // before JavaScript runs, making it reliable even during PWA startup.
+  // wco.visible can be transiently true during the startup sequence (before the browser
+  // applies the user hidden-overlay preference), and geometrychange only fires on changes —
+  // so if visible stays true and never changes, the event never fires to correct it.
+  const [wcoVisible, setWcoVisible] = useState(
+    () => window.matchMedia('(display-mode: window-controls-overlay)').matches
+  )
   useEffect(() => {
-    const wco = navigator.windowControlsOverlay
-    if (!wco) return
-    // Read the authoritative value immediately after mount to correct any
-    // mismatch from the false initial state or from a stale startup read.
-    setWcoVisible(wco.visible)
-    const handler = () => setWcoVisible(wco.visible)
-    wco.addEventListener('geometrychange', handler)
-    return () => wco.removeEventListener('geometrychange', handler)
+    const mq = window.matchMedia('(display-mode: window-controls-overlay)')
+    const handler = (e: MediaQueryListEvent) => setWcoVisible(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
   }, [])
 
   // Unified clock
