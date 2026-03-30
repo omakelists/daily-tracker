@@ -127,38 +127,39 @@ export const getPrevGameDateKey = (
 // ── Period key helpers ────────────────────────────────────────────
 export function dateToWeekKey(dk: UtcYMDString, rd = 1): string {
   const [h, m, s] = dk.split('-').map(Number)
-  // m from the date string is 1-indexed; Date.UTC expects 0-indexed
   const date = new Date(Date.UTC(h, m - 1, s))
-  const day = date.getUTCDay()
-  const daysBack = (day - rd + 7) % 7
-  date.setUTCDate(date.getUTCDate() - daysBack)
+  const localDay = date.getDay()
+  const daysBack = (localDay - rd + 7) % 7
+  date.setDate(date.getDate() - daysBack)
   return 'W' + utcFmtDate(date)
 }
 
 export function getMonthPeriodKey(dk: UtcYMDString, rd = 1): string {
-  const r = rd
-  const day = parseInt(dk.slice(8))
-  const y = parseInt(dk.slice(0, 4))
-  const mo = parseInt(dk.slice(5, 7))
-  if (day >= r)
-    return `M-${y}-${String(mo).padStart(2, '0')}-${String(r).padStart(2, '0')}`
-  const p = new Date(Date.UTC(y, mo - 2, r))
-  return `M-${p.getUTCFullYear()}-${String(p.getUTCMonth() + 1).padStart(2, '0')}-${String(r).padStart(2, '0')}`
+  const [y, m, s] = dk.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m - 1, s))
+  const localD = date.getDate()
+  if (localD >= rd)
+    return `M-${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(rd).padStart(2, '0')}`
+  const p = new Date(date)
+  p.setMonth(p.getMonth() - 1, rd)
+  return `M-${p.getUTCFullYear()}-${String(p.getUTCMonth() + 1).padStart(2, '0')}-${String(rd).padStart(2, '0')}`
 }
 
 export function getPrevMonthPeriodKey(k: string): string {
   const m = k.match(/M-(\d+)-(\d+)-(\d+)/)
   if (!m) return k
   const [, y, mo, dd] = m
-  const p = new Date(Date.UTC(parseInt(y), parseInt(mo) - 2, parseInt(dd)))
-  return `M-${p.getUTCFullYear()}-${String(p.getUTCMonth() + 1).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+  const p = new Date(parseInt(y), parseInt(mo) - 2, parseInt(dd))
+  return `M-${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
 }
 
-export const dateToHalfMonthKey = (dk: string, startDay = 1): string => {
-  const day = parseInt(dk.slice(8))
+export const dateToHalfMonthKey = (dk: UtcYMDString, startDay = 1): string => {
+  const [y, m, s] = dk.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m - 1, s))
+  const localD = date.getDate()
   const b = startDay + 15
-  const inB = b <= 28 ? day >= b : day >= b || day < startDay
-  return 'H-' + dk.slice(0, 7) + '-' + (inB ? 'B' : 'A')
+  const inB = b <= 28 ? localD >= b : localD >= b || localD < startDay
+  return 'H-' + date.getUTCFullYear() + '-' + String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + (inB ? 'B' : 'A')
 }
 
 export function prevHalfMonthKey(k: string, startDay = 1): string {
@@ -166,8 +167,8 @@ export function prevHalfMonthKey(k: string, startDay = 1): string {
   if (!m) return k
   const [, y, mo, half] = m
   if (half === 'B') return `H-${y}-${mo}-A`
-  const p = new Date(Date.UTC(parseInt(y), parseInt(mo) - 2, startDay))
-  return `H-${p.getUTCFullYear()}-${String(p.getUTCMonth() + 1).padStart(2, '0')}-B`
+  const p = new Date(parseInt(y), parseInt(mo) - 2, startDay)
+  return `H-${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}-B`
 }
 
 // Task-level resetTime takes precedence over game resetTime.
@@ -447,3 +448,5 @@ export function fmtDeadlineDate(
   const [, m, d] = dateStr.split('-').map(Number)
   return tFn('dateFmt', { m, d })
 }
+
+
