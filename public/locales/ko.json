@@ -6,6 +6,7 @@
   "noGames": "설정에서 게임을 추가하세요",
   "gameName": "게임 이름",
   "resetLbl": "리셋",
+  "eventDeadlineLbl": "기한",
   "delete": "삭제",
   "cancel": "취소",
   "add": "추가",

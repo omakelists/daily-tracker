@@ -6,6 +6,7 @@
   "noGames": "请在设置中添加游戏",
   "gameName": "游戏名称",
   "resetLbl": "重置",
+  "eventDeadlineLbl": "截止日期",
   "delete": "删除",
   "cancel": "取消",
   "add": "添加",

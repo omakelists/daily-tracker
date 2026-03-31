@@ -6,6 +6,7 @@
   "noGames": "Add a game from Settings",
   "gameName": "Game name",
   "resetLbl": "Reset",
+  "eventDeadlineLbl": "Deadline",
   "delete": "Delete",
   "cancel": "Cancel",
   "add": "Add",

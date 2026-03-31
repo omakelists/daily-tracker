@@ -6,6 +6,7 @@
   "noGames": "請在設定中新增遊戲",
   "gameName": "遊戲名稱",
   "resetLbl": "重置",
+  "eventDeadlineLbl": "截止日期",
   "delete": "刪除",
   "cancel": "取消",
   "add": "新增",

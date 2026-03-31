@@ -60,7 +60,9 @@ export function TaskEdit({
 
   const resetMeta = (
     <div className={s.resetGroup}>
-      <div className={s.resetLbl}>{t('resetLbl')}</div>
+      <div className={s.resetLbl}>
+        {item.type === EVENT ? t('eventDeadlineLbl') : t('resetLbl')}
+      </div>
       {match(item)
         .with({ type: DAILY }, (it) => (
           <div className={s.resetInputGroup}>

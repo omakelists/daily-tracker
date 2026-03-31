@@ -6,6 +6,7 @@
   "noGames": "設定からゲームを追加してください",
   "gameName": "ゲーム名",
   "resetLbl": "リセット",
+  "eventDeadlineLbl": "期限",
   "delete": "削除",
   "cancel": "キャンセル",
   "add": "追加",

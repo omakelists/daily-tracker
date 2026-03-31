@@ -6,6 +6,7 @@
   "noGames": "Añade un juego desde Configuración",
   "gameName": "Nombre del juego",
   "resetLbl": "Reinicio",
+  "eventDeadlineLbl": "Plazo",
   "delete": "Eliminar",
   "cancel": "Cancelar",
   "add": "Añadir",
