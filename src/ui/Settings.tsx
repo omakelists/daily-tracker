@@ -709,18 +709,20 @@ export function SettingsModal({
                       placeholder={t('gameName')}
                       autoFocus
                     />
-                    <span className={s.resetLbl}>{t('resetLbl')}</span>
-                    <input
-                      type="time"
-                      value={newGame.resetTime}
-                      onChange={(e) =>
-                        setNewGame((g) => ({
-                          ...g,
-                          resetTime: asLocal(e.target.value),
-                        }))
-                      }
-                      className={`${shared.inputCls} ${s.resetTime}`}
-                    />
+                    <div className={s.gameResetGroup}>
+                      <span className={s.resetLbl}>{t('resetLbl')}</span>
+                      <input
+                        type="time"
+                        value={newGame.resetTime}
+                        onChange={(e) =>
+                          setNewGame((g) => ({
+                            ...g,
+                            resetTime: asLocal(e.target.value),
+                          }))
+                        }
+                        className={`${shared.inputCls} ${s.resetTime}`}
+                      />
+                    </div>
                   </div>
                   <div className={s.newGameActions}>
                     <button

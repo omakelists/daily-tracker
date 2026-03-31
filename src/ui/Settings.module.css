@@ -86,6 +86,7 @@
   margin-bottom: 10px;
 }
 .newGameActions {
+  justify-content: flex-end;
   display: flex;
   gap: 8px;
 }
