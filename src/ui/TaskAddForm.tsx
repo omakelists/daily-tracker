@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { match } from 'ts-pattern'
 import { t } from '../util/i18n'
-import { uid, asLocal, localFmtDate } from '../util/helpers'
+import {
+  uid,
+  asLocal,
+  localFmtDate,
+  localDowToUtcDow,
+  localMonthDayToUtcDay,
+  localHalfMonthDayToStoredB,
+} from '../util/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
 import type { Game, Task, TaskType } from '../types'
 import { TaskEdit } from './TaskEdit'
@@ -33,10 +40,20 @@ export function TaskAddForm({
     type: item?.type ?? type ?? DAILY,
     name: item?.name ?? '',
     resetTime: item?.resetTime ?? game?.resetTime,
-    weeklyResetDay: item?.type === WEEKLY ? item.weeklyResetDay : 1,
-    monthlyResetDay: item?.type === MONTHLY ? item.monthlyResetDay : 1,
+    // For existing items the values are already in UTC (stored format).
+    // For new items, convert the default local value (1 / Monday) to UTC.
+    weeklyResetDay:
+      item?.type === WEEKLY ?
+        item.weeklyResetDay
+      : localDowToUtcDow(1, game?.resetTime),
+    monthlyResetDay:
+      item?.type === MONTHLY ?
+        item.monthlyResetDay
+      : localMonthDayToUtcDay(1, game?.resetTime),
     halfMonthlyStartDay:
-      item?.type === HALFMONTHLY ? item.halfMonthlyStartDay : 1,
+      item?.type === HALFMONTHLY ?
+        item.halfMonthlyStartDay
+      : localHalfMonthDayToStoredB(1, game?.resetTime),
     deadline: item?.type === EVENT ? item.deadline : localFmtDate(new Date()),
     // Draft holds deadlineTime as LocalTimeString; no UTC conversion needed for <input type="time">
     deadlineTime:

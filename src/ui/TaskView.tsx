@@ -6,6 +6,9 @@ import {
   formatCountdown,
   msUntilDeadline,
   msUntilTaskReset,
+  utcDowToLocalDow,
+  utcDayToLocalMonthDay,
+  storedBToLocalHalfMonthDay,
 } from '../util/helpers'
 import {
   DAILY,
@@ -91,21 +94,35 @@ export function TaskView({
             .with({ type: WEEKLY }, (tk) => (
               <span className={s.resetLbl}>
                 {t('everyWeek', {
-                  day: t('dayNamesFull.' + tk.weeklyResetDay),
+                  day: t(
+                    'dayNamesFull.'
+                      + utcDowToLocalDow(tk.weeklyResetDay, game.resetTime)
+                  ),
                 })}
               </span>
             ))
-            .with({ type: HALFMONTHLY }, (tk) => (
-              <span className={s.resetLbl}>
-                {t('everyHalfMonth', {
-                  a: tk.halfMonthlyStartDay,
-                  b: tk.halfMonthlyStartDay + 15,
-                })}
-              </span>
-            ))
+            .with({ type: HALFMONTHLY }, (tk) => {
+              const localA = storedBToLocalHalfMonthDay(
+                tk.halfMonthlyStartDay,
+                game.resetTime
+              )
+              return (
+                <span className={s.resetLbl}>
+                  {t('everyHalfMonth', {
+                    a: localA,
+                    b: localA + 15,
+                  })}
+                </span>
+              )
+            })
             .with({ type: MONTHLY }, (tk) => (
               <span className={s.resetLbl}>
-                {t('everyDay', { day: tk.monthlyResetDay })}
+                {t('everyDay', {
+                  day: utcDayToLocalMonthDay(
+                    tk.monthlyResetDay,
+                    game.resetTime
+                  ),
+                })}
               </span>
             ))
             .with({ type: EVENT }, (tk) =>

@@ -20,11 +20,17 @@ import {
   utcFmtDate,
   utcFmtTime,
   utcToLocalHHMM,
+  localDowToUtcDow,
+  localMonthDayToUtcDay,
+  localHalfMonthDayToStoredB,
 } from './helpers.ts'
 import { match } from 'ts-pattern'
 
 const GAMES_KEY = 'dailytracker:games'
 const CHECKS_KEY = 'dailytracker:checks'
+
+/** Increment when the stored data format changes to trigger auto-migration. */
+export const STORAGE_VERSION = 1
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LegacyGame = any
@@ -135,7 +141,7 @@ function localToUtcTask(task: Task): object {
     })
 }
 
-function localToUtcGame(game: Game): Record<string, unknown> {
+export function localToUtcGame(game: Game): Record<string, unknown> {
   return {
     ...game,
     resetTime: localToUtcHHMM(game.resetTime),
@@ -145,7 +151,11 @@ function localToUtcGame(game: Game): Record<string, unknown> {
 
 export function saveGames(games: Game[]): void {
   try {
-    localStorage.setItem(GAMES_KEY, JSON.stringify(games.map(localToUtcGame)))
+    const payload = {
+      version: STORAGE_VERSION,
+      games: games.map(localToUtcGame),
+    }
+    localStorage.setItem(GAMES_KEY, JSON.stringify(payload))
   } catch {
     /* ignore */
   }
@@ -211,25 +221,94 @@ export function utcToLocalGame(game: unknown): Game {
   } as Game
 }
 
+/**
+ * v0 → v1 migration (runs on local-time data, after utcToLocalGame).
+ *
+ * v0 stored weeklyResetDay / monthlyResetDay / halfMonthlyStartDay as
+ * *local* values.  v1 stores them in UTC so period-key arithmetic is
+ * independent of the viewer's timezone.
+ *
+ * - weeklyResetDay   : local DOW  → UTC DOW
+ * - monthlyResetDay  : local day  → UTC day  (-1 = last day of prev month)
+ * - halfMonthlyStartDay : local A day → storedB = utcA + 15
+ */
+export function migrateV0ToV1(game: Game): Game {
+  const rt = game.resetTime // already local after utcToLocalGame
+  const items = game.items.map((task): Task => {
+    if (task.type === WEEKLY) {
+      return {
+        ...task,
+        weeklyResetDay: localDowToUtcDow(task.weeklyResetDay, rt),
+      }
+    }
+    if (task.type === MONTHLY) {
+      return {
+        ...task,
+        monthlyResetDay: localMonthDayToUtcDay(task.monthlyResetDay, rt),
+      }
+    }
+    if (task.type === HALFMONTHLY) {
+      return {
+        ...task,
+        halfMonthlyStartDay: localHalfMonthDayToStoredB(
+          task.halfMonthlyStartDay,
+          rt
+        ),
+      }
+    }
+    return task
+  })
+  return { ...game, items }
+}
+
 export function loadAll(): { games: Game[] | null; checks: ChecksMap } {
   let checks = loadChecks()
   let games: Game[] | null = null
   try {
     const v = localStorage.getItem(GAMES_KEY)
     if (!v) return { games: null, checks }
-    const raw = JSON.parse(v) as unknown
-    if (!Array.isArray(raw)) return { games: null, checks }
+
+    const parsed = JSON.parse(v) as unknown
+
+    // Support both the legacy plain-array format (no version) and the new
+    // versioned object format  { version: N, games: [...] }
+    let rawGames: LegacyGame[]
+    let dataVersion = 0
+
+    if (Array.isArray(parsed)) {
+      rawGames = parsed
+      dataVersion = 0
+    } else if (
+      typeof parsed === 'object'
+      && parsed !== null
+      && 'games' in parsed
+      && Array.isArray((parsed as Record<string, unknown>).games)
+    ) {
+      rawGames = (parsed as Record<string, unknown>).games as LegacyGame[]
+      dataVersion =
+        typeof (parsed as Record<string, unknown>).version === 'number' ?
+          ((parsed as Record<string, unknown>).version as number)
+        : 0
+    } else {
+      return { games: null, checks }
+    }
 
     let migrated = false
-    games = (raw as LegacyGame[])
+    games = rawGames
       .map((g) => {
-        const [games, _migrated] = migrateGame(g, (key, val) => {
+        const [migratedGame, wasMigrated] = migrateGame(g, (key, val) => {
           checks[key] = val
         })
-        migrated = migrated || _migrated
-        return games
+        migrated = migrated || wasMigrated
+        return migratedGame
       })
       .map(utcToLocalGame)
+
+    // v0 → v1: convert local DOW/day fields to UTC
+    if (dataVersion < 1) {
+      games = games.map(migrateV0ToV1)
+      migrated = true
+    }
 
     if (migrated) {
       saveGames(games)

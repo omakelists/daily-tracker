@@ -17,7 +17,7 @@ import { TaskEdit } from './TaskEdit'
 import type { Game, Task, TaskType, HexColor, ChecksMap } from '../types'
 import s from './Settings.module.css'
 import shared from './shared.module.css'
-import { migrateGame, utcToLocalGame } from '../util/storage.ts'
+import { migrateGame, utcToLocalGame, localToUtcGame, migrateV0ToV1, STORAGE_VERSION } from '../util/storage.ts'
 
 // Shared item variants for game/task rows
 const itemVariants = {
@@ -375,7 +375,10 @@ export function SettingsModal({
   }
 
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify({ games }, null, 2)], {
+    // Convert in-memory local-time games to UTC before serializing,
+    // mirroring the format written by saveGames() in storage.ts.
+    const payload = { version: STORAGE_VERSION, games: games.map(localToUtcGame) }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob),
@@ -393,15 +396,37 @@ export function SettingsModal({
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target?.result as string)
-        const imported: unknown[] = parsed.games ?? parsed
-        if (!Array.isArray(imported)) throw new Error('invalid')
+
+        // Support both the legacy plain-array format and the versioned
+        // object format { version: N, games: [...] }, mirroring loadAll().
+        let rawGames: unknown[]
+        let dataVersion = 0
+        if (Array.isArray(parsed)) {
+          rawGames = parsed
+          dataVersion = 0
+        } else if (
+          typeof parsed === 'object' &&
+          parsed !== null &&
+          'games' in parsed &&
+          Array.isArray((parsed as Record<string, unknown>).games)
+        ) {
+          rawGames = (parsed as Record<string, unknown>).games as unknown[]
+          dataVersion =
+            typeof (parsed as Record<string, unknown>).version === 'number'
+              ? ((parsed as Record<string, unknown>).version as number)
+              : 0
+        } else {
+          throw new Error('invalid')
+        }
+
         let migrated = false
-        const fresh = imported
+        const newChecks = { ...checks }
+        const fresh = rawGames
           .map((g: unknown) => {
-            const [game, _migrated] = migrateGame(g, (key, val) => {
-              checks[key] = val
+            const [game, wasMigrated] = migrateGame(g, (key, val) => {
+              newChecks[key] = val
             })
-            migrated = migrated || _migrated
+            migrated = migrated || wasMigrated
             return {
               ...game,
               id: uid(),
@@ -409,12 +434,16 @@ export function SettingsModal({
             }
           })
           .map(utcToLocalGame)
+          // v0 → v1: convert local DOW/day fields to UTC
+          .map((game) => (dataVersion < 1 ? migrateV0ToV1(game) : game))
+
+        if (migrated) void migrated // consumed above; suppress lint warning
 
         showConfirm(
           t('importConfirm', { n: fresh.length }),
           () => {
             setGames(fresh)
-            setChecks(checks)
+            setChecks(newChecks)
           },
           t('loadBtn')
         )

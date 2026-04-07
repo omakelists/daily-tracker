@@ -8,6 +8,12 @@ import {
   msUntilDeadline,
   asLocal,
   parseYYYYMMDD,
+  utcDowToLocalDow,
+  localDowToUtcDow,
+  utcDayToLocalMonthDay,
+  localMonthDayToUtcDay,
+  storedBToLocalHalfMonthDay,
+  localHalfMonthDayToStoredB,
 } from '../util/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
 import type { Game, LocalYMDString, Task } from '../types'
@@ -79,9 +85,13 @@ export function TaskEdit({
         .with({ type: WEEKLY }, (it) => (
           <div className={s.resetInputGroup}>
             <select
-              value={it.weeklyResetDay ?? 1}
+              value={utcDowToLocalDow(it.weeklyResetDay ?? 1, game.resetTime)}
               onChange={(e) =>
-                onUpdate?.(it.id, 'weeklyResetDay', Number(e.target.value))
+                onUpdate?.(
+                  it.id,
+                  'weeklyResetDay',
+                  localDowToUtcDow(Number(e.target.value), game.resetTime)
+                )
               }
               className={`${shared.inputCls} ${s.inputDow}`}
             >
@@ -93,41 +103,59 @@ export function TaskEdit({
             </select>
           </div>
         ))
-        .with({ type: HALFMONTHLY }, (it) => (
-          <div className={s.resetInputGroup}>
-            <input
-              type="number"
-              min="1"
-              max="15"
-              value={it.halfMonthlyStartDay ?? 1}
-              onChange={(e) =>
-                onUpdate?.(
-                  it.id,
-                  'halfMonthlyStartDay',
-                  Math.max(1, Math.min(15, parseInt(e.target.value) || 1))
-                )
-              }
-              className={`${shared.inputCls} ${s.inputNumber}`}
-            />
-            <span className={s.resetLbl}>
-              {t('halfMonthSuffix', { b: (it.halfMonthlyStartDay ?? 1) + 15 })}
-            </span>
-          </div>
-        ))
+        .with({ type: HALFMONTHLY }, (it) => {
+          const localA = storedBToLocalHalfMonthDay(
+            it.halfMonthlyStartDay
+              ?? localHalfMonthDayToStoredB(1, game.resetTime),
+            game.resetTime
+          )
+          return (
+            <div className={s.resetInputGroup}>
+              <input
+                type="number"
+                min="1"
+                max="15"
+                value={localA}
+                onChange={(e) => {
+                  const v = Math.max(
+                    1,
+                    Math.min(15, parseInt(e.target.value) || 1)
+                  )
+                  onUpdate?.(
+                    it.id,
+                    'halfMonthlyStartDay',
+                    localHalfMonthDayToStoredB(v, game.resetTime)
+                  )
+                }}
+                className={`${shared.inputCls} ${s.inputNumber}`}
+              />
+              <span className={s.resetLbl}>
+                {t('halfMonthSuffix', { b: localA + 15 })}
+              </span>
+            </div>
+          )
+        })
         .with({ type: MONTHLY }, (it) => (
           <div className={s.resetInputGroup}>
             <input
               type="number"
               min="1"
               max="28"
-              value={it.monthlyResetDay ?? 1}
-              onChange={(e) =>
+              value={utcDayToLocalMonthDay(
+                it.monthlyResetDay ?? localMonthDayToUtcDay(1, game.resetTime),
+                game.resetTime
+              )}
+              onChange={(e) => {
+                const v = Math.max(
+                  1,
+                  Math.min(28, parseInt(e.target.value) || 1)
+                )
                 onUpdate?.(
                   it.id,
                   'monthlyResetDay',
-                  Math.max(1, Math.min(28, parseInt(e.target.value) || 1))
+                  localMonthDayToUtcDay(v, game.resetTime)
                 )
-              }
+              }}
               className={`${shared.inputCls} ${s.inputNumber}`}
             />
             <span className={s.resetLbl}>{t('dayUnit')}</span>
