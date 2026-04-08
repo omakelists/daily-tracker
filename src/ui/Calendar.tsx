@@ -5,9 +5,16 @@ import {
   getDaysInMonth,
   checkKey,
   asLocal,
-  utcFmtDate,
+  getGameDateKey,
+  parseHHMM,
 } from '../util/helpers'
-import type { Game, Task, DailyTask, ChecksMap } from '../types'
+import type {
+  Game,
+  Task,
+  DailyTask,
+  ChecksMap,
+  LocalTimeString,
+} from '../types'
 import { Modal } from './UI'
 import s from './Calendar.module.css'
 import shared from './shared.module.css'
@@ -32,6 +39,7 @@ export function CalendarModal({
   now,
   onClose,
 }: CalendarModalProps) {
+  // year / month are local-time values — the calendar is a local-date display.
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [selGame, setSelGame] = useState<string | null>(games[0]?.id ?? null)
@@ -57,10 +65,26 @@ export function CalendarModal({
     setSelTask(null)
   }, [selGame])
 
+  // Layout values derived from local time — purely for visual calendar grid.
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = new Date(year, month, 1).getDay()
-  // today is the UTC date of the current moment, matching getGameDateKey's output
-  const today = utcFmtDate(now)
+
+  // Reference reset time used to map each local calendar day to a UTC game-date key.
+  // game.resetTime is already local (App state is local-time).
+  const rt: LocalTimeString = game?.resetTime ?? asLocal('00:00')
+  const [rh, rm] = parseHHMM(rt)
+
+  /**
+   * Convert a local calendar day (year, month, day) to its UTC game-date key.
+   * We construct a Date at the exact reset moment on that local day so that
+   * getGameDateKey returns the UTC date that corresponds to "local day N".
+   *
+   * Example: Japan (UTC+9), reset 05:00 JST, local Apr 1
+   *   → new Date(2026, 3, 1, 5, 0) = Mar 31 20:00 UTC
+   *   → getGameDateKey returns "2026-03-31"  ← correct check key
+   */
+  const localDayToDk = (d: number): string =>
+    getGameDateKey(new Date(year, month, d, rh, rm), rt)
 
   const getStatus = (dk: string): 'all' | 'partial' | 'none' => {
     if (!game) return 'none'
@@ -138,17 +162,22 @@ export function CalendarModal({
           ))}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1
-            // Calendar year/month/day are treated as UTC dates, matching getGameDateKey's UTC keys
-            const dk = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` as const
+            // Compute UTC game-date key for this local calendar day
+            const dk = localDayToDk(day)
             const st = getStatus(dk)
+            // Highlight the cell whose local date matches today (local-time comparison)
+            const isToday =
+              year === now.getFullYear()
+              && month === now.getMonth()
+              && day === now.getDate()
             return (
               <div
-                key={dk}
+                key={day}
                 className={`${
                   st === 'all' ? s.dayAll
                   : st === 'partial' ? s.dayPartial
                   : s.dayDefault
-                } ${s.day}${dk === today ? ` ${s.dayToday}` : ''}`}
+                } ${s.day}${isToday ? ` ${s.dayToday}` : ''}`}
               >
                 {day}
               </div>
