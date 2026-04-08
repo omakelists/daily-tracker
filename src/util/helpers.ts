@@ -42,25 +42,88 @@ export const getDaysInMonth = (y: number, m: number): number =>
   new Date(y, m + 1, 0).getDate()
 
 // ── Timezone conversion ───────────────────────────────────────────
+/**
+ * Returns the IANA timezone name for the current environment.
+ * Cached at module load time; the value is stable for the lifetime of the page.
+ */
+const LOCAL_TZ: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+/**
+ * Formats a Date as "HH:MM" in the given IANA timezone using Intl.
+ * Using formatToParts avoids relying on locale-specific separators.
+ */
+function fmtHHMM(d: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone,
+  }).formatToParts(d)
+  const hh =
+    parts.find((p) => p.type === 'hour')?.value.padStart(2, '0') ?? '00'
+  const mm =
+    parts.find((p) => p.type === 'minute')?.value.padStart(2, '0') ?? '00'
+  return `${hh}:${mm}`
+}
+
+/**
+ * Returns the local calendar date components {y, m, d} for a given Date
+ * in the specified IANA timezone, DST-safe via Intl.
+ */
+function localDateParts(
+  date: Date,
+  timeZone: string
+): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone,
+  }).formatToParts(date)
+  return {
+    y: Number(parts.find((p) => p.type === 'year')?.value),
+    m: Number(parts.find((p) => p.type === 'month')?.value),
+    d: Number(parts.find((p) => p.type === 'day')?.value),
+  }
+}
+
 export function utcToLocalHHMM(utcHHMM?: UtcTimeString): LocalTimeString {
   if (!utcHHMM) return asLocal('00:00')
-  const [h, m] = utcHHMM.split(':').map(Number)
-  const d = new Date()
-  d.setUTCHours(h, m, 0, 0)
-  return asLocal(
-    `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const [h, m] = parseHHMM(utcHHMM)
+  const now = new Date()
+  // Anchor to today's UTC date at the given UTC time so the DST offset for
+  // that specific date is applied correctly by Intl.
+  const d = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      h,
+      m,
+      0,
+      0
+    )
   )
+  return asLocal(fmtHHMM(d, LOCAL_TZ))
 }
 
 export function localToUtcHHMM(
   localHHMM: LocalTimeString = asLocal('00:00')
 ): UtcTimeString {
-  const [h, m] = localHHMM.split(':').map(Number)
-  const d = new Date()
-  d.setHours(h, m, 0, 0)
-  return asUtc(
-    `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+  const [h, m] = parseHHMM(localHHMM)
+  const now = new Date()
+  // Construct a Date at the given local wall-clock time on today's date.
+  // JavaScript applies the correct DST offset for this specific date and time.
+  const d = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    h,
+    m,
+    0,
+    0
   )
+  return asUtc(fmtHHMM(d, 'UTC'))
 }
 
 // ── Luminance / contrast ──────────────────────────────────────────
@@ -176,7 +239,10 @@ export function getPrevMonthPeriodKey(k: string): string {
  *                 may be ≤ 0 (meaning the first half starts at the end of the
  *                 previous month).
  */
-export const dateToHalfMonthKey = (dk: UtcYMDString, storedB: number): string => {
+export const dateToHalfMonthKey = (
+  dk: UtcYMDString,
+  storedB: number
+): string => {
   const [y, m, s] = dk.split('-').map(Number)
   const date = new Date(Date.UTC(y, m - 1, s))
   const utcD = date.getUTCDate()
@@ -247,9 +313,7 @@ export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
     )
     .with({ type: HALFMONTHLY }, (t) => {
       const dk = getGameDateKey(now, getTaskRT(t, game))
-      return prevHalfMonthKey(
-        dateToHalfMonthKey(dk, t.halfMonthlyStartDay)
-      )
+      return prevHalfMonthKey(dateToHalfMonthKey(dk, t.halfMonthlyStartDay))
     })
     .with({ type: MONTHLY }, (t) =>
       getPrevMonthPeriodKey(
@@ -266,7 +330,7 @@ export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
 // ── Countdown helpers (all UTC) ───────────────────────────────────
 export function msUntilReset(now: Date, rt: LocalTimeString): number {
   const [rh, rm] = parseHHMM(rt)
-  const n = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60
+  const n = now.getHours() * 60 + now.getMinutes()
   let d = rh * 60 + rm - n
   if (d <= 0) d += 24 * 60
   return d * 60 * 1000
@@ -344,12 +408,20 @@ export function msUntilTaskReset(task: Task, game: Game, now: Date): number {
     .with({ type: HALFMONTHLY }, (t) => {
       const rt = getTaskRT(t, game)
       // halfMonthlyStartDay is stored as UTC B value; derive local A day for countdown
-      return msUntilNextHalfMonth(now, rt, storedBToLocalHalfMonthDay(t.halfMonthlyStartDay, rt))
+      return msUntilNextHalfMonth(
+        now,
+        rt,
+        storedBToLocalHalfMonthDay(t.halfMonthlyStartDay, rt)
+      )
     })
     .with({ type: MONTHLY }, (t) => {
       const rt = getTaskRT(t, game)
       // monthlyResetDay is stored in UTC (-1 = last of month); convert to local day for countdown
-      return msUntilNextMonth(now, rt, utcDayToLocalMonthDay(t.monthlyResetDay, rt))
+      return msUntilNextMonth(
+        now,
+        rt,
+        utcDayToLocalMonthDay(t.monthlyResetDay, rt)
+      )
     })
     .with({ type: EVENT }, () => Infinity)
     .exhaustive()
@@ -500,20 +572,42 @@ export function fmtDeadlineDate(
  *   -1  local reset fires on "yesterday" in UTC  (UTC+ zones, early reset)
  *    0  same calendar date in both local and UTC
  *   +1  local reset fires on "tomorrow" in UTC   (UTC- zones, late reset)
+ *
+ * Uses Intl.DateTimeFormat with the explicit IANA timezone name so that DST
+ * transitions are handled correctly — the offset is resolved for the specific
+ * date/time rather than being assumed constant.
  */
 export function getResetDayOffset(rt: LocalTimeString): number {
   const [lh, lm] = parseHHMM(rt)
-  const d = new Date()
-  d.setHours(lh, lm, 0, 0) // set to the reset moment in local wall-clock time
-  // Build midnight-only timestamps so the diff is purely in whole days
-  const localMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const utcMidnight = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-  return Math.round((utcMidnight.getTime() - localMidnight.getTime()) / DAY_MS)
+  const now = new Date()
+  // Construct the reset moment in local wall-clock time on today's date.
+  // JavaScript applies the DST-correct offset for this specific date and time.
+  const d = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    lh,
+    lm,
+    0,
+    0
+  )
+  // Extract local date via Intl (DST-safe) and UTC date directly from the Date object
+  const local = localDateParts(d, LOCAL_TZ)
+  const localMidnight = Date.UTC(local.y, local.m - 1, local.d)
+  const utcMidnight = Date.UTC(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate()
+  )
+  return Math.round((utcMidnight - localMidnight) / DAY_MS)
 }
 
 // ── Day-of-week conversions ───────────────────────────────────────
 /** Convert local day-of-week (0=Sun…6=Sat) to the UTC DOW for storage. */
-export function localDowToUtcDow(localDow: number, rt: LocalTimeString): number {
+export function localDowToUtcDow(
+  localDow: number,
+  rt: LocalTimeString
+): number {
   return (localDow + getResetDayOffset(rt) + 7) % 7
 }
 
@@ -528,7 +622,10 @@ export function utcDowToLocalDow(utcDow: number, rt: LocalTimeString): number {
  * Returns -1 as a sentinel when the raw UTC day ≤ 0 (i.e. the reset falls
  * on the last day of the previous UTC month).
  */
-export function localMonthDayToUtcDay(localDay: number, rt: LocalTimeString): number {
+export function localMonthDayToUtcDay(
+  localDay: number,
+  rt: LocalTimeString
+): number {
   const raw = localDay + getResetDayOffset(rt)
   return raw <= 0 ? -1 : raw
 }
@@ -537,7 +634,10 @@ export function localMonthDayToUtcDay(localDay: number, rt: LocalTimeString): nu
  * Converts a stored UTC day back to a local calendar day for display.
  * The -1 sentinel is treated as UTC raw-day 0 (last day of previous month).
  */
-export function utcDayToLocalMonthDay(utcDay: number, rt: LocalTimeString): number {
+export function utcDayToLocalMonthDay(
+  utcDay: number,
+  rt: LocalTimeString
+): number {
   const raw = utcDay === -1 ? 0 : utcDay
   return raw - getResetDayOffset(rt)
 }
@@ -548,7 +648,10 @@ export function utcDayToLocalMonthDay(utcDay: number, rt: LocalTimeString): numb
  * (= UTC second-half start = utcA + 15).
  * Example: Japan UTC+9, reset 05:00, localA=1 → utcA=0, storedB=15.
  */
-export function localHalfMonthDayToStoredB(localA: number, rt: LocalTimeString): number {
+export function localHalfMonthDayToStoredB(
+  localA: number,
+  rt: LocalTimeString
+): number {
   return localA + getResetDayOffset(rt) + 15
 }
 
@@ -556,9 +659,10 @@ export function localHalfMonthDayToStoredB(localA: number, rt: LocalTimeString):
  * Converts the stored B value back to the local first-half start day (A)
  * for display and UI inputs.
  */
-export function storedBToLocalHalfMonthDay(storedB: number, rt: LocalTimeString): number {
+export function storedBToLocalHalfMonthDay(
+  storedB: number,
+  rt: LocalTimeString
+): number {
   const aUtcRaw = storedB - 15
   return aUtcRaw - getResetDayOffset(rt)
 }
-
-
