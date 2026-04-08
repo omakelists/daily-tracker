@@ -126,8 +126,8 @@ export const getPrevGameDateKey = (
 
 // ── Period key helpers ────────────────────────────────────────────
 export function dateToWeekKey(dk: UtcYMDString, rd = 1): string {
-  const [h, m, s] = dk.split('-').map(Number)
-  const date = new Date(Date.UTC(h, m - 1, s))
+  const [y, m, d] = dk.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m - 1, d))
   // Use UTC day-of-week so the key is independent of the viewer's local timezone.
   // `rd` is stored as a UTC day-of-week (0 = Sun … 6 = Sat).
   const utcDow = date.getUTCDay()
@@ -149,7 +149,7 @@ export function getMonthPeriodKey(dk: UtcYMDString, rd = 1): string {
     }
     // Before the last day → still in the previous month's period
     const prev = new Date(Date.UTC(y, m - 1, 0)) // last day of previous month
-    return `M-${prev.getUTCFullYear()}-${String(prev.getUTCMonth() + 1).padStart(2, '00')}-last`
+    return `M-${prev.getUTCFullYear()}-${String(prev.getUTCMonth() + 1).padStart(2, '0')}-last`
   }
 
   if (utcD >= rd)
@@ -176,27 +176,28 @@ export function getPrevMonthPeriodKey(k: string): string {
  *                 may be ≤ 0 (meaning the first half starts at the end of the
  *                 previous month).
  */
-export const dateToHalfMonthKey = (
-  dk: UtcYMDString,
-  storedB: number
-): string => {
+export const dateToHalfMonthKey = (dk: UtcYMDString, storedB: number): string => {
   const [y, m, s] = dk.split('-').map(Number)
   const date = new Date(Date.UTC(y, m - 1, s))
   const utcD = date.getUTCDate()
   const a = storedB - 15 // first-half UTC start day (may be ≤ 0)
-  // When storedB ≤ 28: no month-end wrap needed.
-  //   B period = [storedB … end-of-month], A period = everything else.
-  // When storedB > 28: B period wraps across the month boundary.
-  //   B = [storedB … end] ∪ [1 … a-1]
-  const inB = storedB > 28 ? utcD >= storedB || utcD < a : utcD >= storedB
-  return (
-    'H-'
-    + date.getUTCFullYear()
-    + '-'
-    + String(date.getUTCMonth() + 1).padStart(2, '0')
-    + '-'
-    + (inB ? 'B' : 'A')
-  )
+
+  let inB: boolean
+  if (a <= 0) {
+    // First-half start is in the previous month (a ≤ 0 means day 0 or earlier).
+    // B period spans [storedB … end-of-month]; everything else is A.
+    // Since a ≤ 0, the cross-month A region is handled by the previous month's B
+    // key, so within this month we only need: inB = utcD >= storedB.
+    inB = utcD >= storedB
+  } else if (storedB > 28) {
+    // B period wraps across the month boundary: [storedB … end] ∪ [1 … a-1]
+    inB = utcD >= storedB || utcD < a
+  } else {
+    // Normal case: B period = [storedB … end-of-month]
+    inB = utcD >= storedB
+  }
+
+  return `H-${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${inB ? 'B' : 'A'}`
 }
 
 export function prevHalfMonthKey(k: string): string {
@@ -246,7 +247,9 @@ export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
     )
     .with({ type: HALFMONTHLY }, (t) => {
       const dk = getGameDateKey(now, getTaskRT(t, game))
-      return prevHalfMonthKey(dateToHalfMonthKey(dk, t.halfMonthlyStartDay))
+      return prevHalfMonthKey(
+        dateToHalfMonthKey(dk, t.halfMonthlyStartDay)
+      )
     })
     .with({ type: MONTHLY }, (t) =>
       getPrevMonthPeriodKey(
@@ -341,20 +344,12 @@ export function msUntilTaskReset(task: Task, game: Game, now: Date): number {
     .with({ type: HALFMONTHLY }, (t) => {
       const rt = getTaskRT(t, game)
       // halfMonthlyStartDay is stored as UTC B value; derive local A day for countdown
-      return msUntilNextHalfMonth(
-        now,
-        rt,
-        storedBToLocalHalfMonthDay(t.halfMonthlyStartDay, rt)
-      )
+      return msUntilNextHalfMonth(now, rt, storedBToLocalHalfMonthDay(t.halfMonthlyStartDay, rt))
     })
     .with({ type: MONTHLY }, (t) => {
       const rt = getTaskRT(t, game)
       // monthlyResetDay is stored in UTC (-1 = last of month); convert to local day for countdown
-      return msUntilNextMonth(
-        now,
-        rt,
-        utcDayToLocalMonthDay(t.monthlyResetDay, rt)
-      )
+      return msUntilNextMonth(now, rt, utcDayToLocalMonthDay(t.monthlyResetDay, rt))
     })
     .with({ type: EVENT }, () => Infinity)
     .exhaustive()
@@ -398,12 +393,11 @@ export function calcAllDone(
     return checks[checkKey(solo.id, getPeriodKey(solo, game, now))]
   }
   if (dailyItems.length > 0) {
-    const urgent = allItems.filter(
-      (it) =>
-        it.type !== EVENT
-        && msUntilTaskReset(it, game, now) > 0
-        && msUntilTaskReset(it, game, now) < DAY_MS
-    )
+    const urgent = allItems.filter((it) => {
+      if (it.type === EVENT) return false
+      const ms = msUntilTaskReset(it, game, now)
+      return ms > 0 && ms < DAY_MS
+    })
     return (
       urgent.length > 0
       && urgent.every(
@@ -419,11 +413,11 @@ export function calcAllDone(
 export function msUntilDeadline(
   dateStr: LocalYMDString,
   now: Date,
-  timeUtc: LocalTimeString
+  deadlineTime: LocalTimeString
 ): number {
   const [y, m, d] = dateStr.split('-').map(Number)
-  if (timeUtc && timeUtc.includes(':')) {
-    const [th, tm] = timeUtc.split(':').map(Number)
+  if (deadlineTime && deadlineTime.includes(':')) {
+    const [th, tm] = deadlineTime.split(':').map(Number)
     return new Date(y, m - 1, d, th, tm, 0, 0).getTime() - now.getTime()
   }
   return new Date(y, m - 1, d, 0, 0, 0, 0).getTime() - now.getTime()
@@ -434,14 +428,15 @@ export function applyOrder<T extends { id: string }>(
   items: T[],
   storedOrder: string[] = []
 ): T[] {
-  const orderedIds = storedOrder.filter((id) => items.some((x) => x.id === id))
-  const unordered = items.filter((x) => !orderedIds.includes(x.id))
-  return [
-    ...orderedIds
-      .map((id) => items.find((x) => x.id === id))
-      .filter((x): x is T => x !== undefined),
-    ...unordered,
-  ]
+  const itemById = new Map(items.map((x) => [x.id, x]))
+  // Keep only IDs that still exist in items, preserving stored order
+  const ordered = storedOrder
+    .map((id) => itemById.get(id))
+    .filter((x): x is T => x !== undefined)
+  const orderedIdSet = new Set(storedOrder)
+  // Append any items not present in storedOrder (newly added tasks)
+  const unordered = items.filter((x) => !orderedIdSet.has(x.id))
+  return [...ordered, ...unordered]
 }
 
 // ── Sound effects ─────────────────────────────────────────────────
@@ -512,20 +507,13 @@ export function getResetDayOffset(rt: LocalTimeString): number {
   d.setHours(lh, lm, 0, 0) // set to the reset moment in local wall-clock time
   // Build midnight-only timestamps so the diff is purely in whole days
   const localMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const utcMidnight = new Date(
-    d.getUTCFullYear(),
-    d.getUTCMonth(),
-    d.getUTCDate()
-  )
+  const utcMidnight = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
   return Math.round((utcMidnight.getTime() - localMidnight.getTime()) / DAY_MS)
 }
 
 // ── Day-of-week conversions ───────────────────────────────────────
 /** Convert local day-of-week (0=Sun…6=Sat) to the UTC DOW for storage. */
-export function localDowToUtcDow(
-  localDow: number,
-  rt: LocalTimeString
-): number {
+export function localDowToUtcDow(localDow: number, rt: LocalTimeString): number {
   return (localDow + getResetDayOffset(rt) + 7) % 7
 }
 
@@ -540,10 +528,7 @@ export function utcDowToLocalDow(utcDow: number, rt: LocalTimeString): number {
  * Returns -1 as a sentinel when the raw UTC day ≤ 0 (i.e. the reset falls
  * on the last day of the previous UTC month).
  */
-export function localMonthDayToUtcDay(
-  localDay: number,
-  rt: LocalTimeString
-): number {
+export function localMonthDayToUtcDay(localDay: number, rt: LocalTimeString): number {
   const raw = localDay + getResetDayOffset(rt)
   return raw <= 0 ? -1 : raw
 }
@@ -552,10 +537,7 @@ export function localMonthDayToUtcDay(
  * Converts a stored UTC day back to a local calendar day for display.
  * The -1 sentinel is treated as UTC raw-day 0 (last day of previous month).
  */
-export function utcDayToLocalMonthDay(
-  utcDay: number,
-  rt: LocalTimeString
-): number {
+export function utcDayToLocalMonthDay(utcDay: number, rt: LocalTimeString): number {
   const raw = utcDay === -1 ? 0 : utcDay
   return raw - getResetDayOffset(rt)
 }
@@ -566,10 +548,7 @@ export function utcDayToLocalMonthDay(
  * (= UTC second-half start = utcA + 15).
  * Example: Japan UTC+9, reset 05:00, localA=1 → utcA=0, storedB=15.
  */
-export function localHalfMonthDayToStoredB(
-  localA: number,
-  rt: LocalTimeString
-): number {
+export function localHalfMonthDayToStoredB(localA: number, rt: LocalTimeString): number {
   return localA + getResetDayOffset(rt) + 15
 }
 
@@ -577,10 +556,9 @@ export function localHalfMonthDayToStoredB(
  * Converts the stored B value back to the local first-half start day (A)
  * for display and UI inputs.
  */
-export function storedBToLocalHalfMonthDay(
-  storedB: number,
-  rt: LocalTimeString
-): number {
+export function storedBToLocalHalfMonthDay(storedB: number, rt: LocalTimeString): number {
   const aUtcRaw = storedB - 15
   return aUtcRaw - getResetDayOffset(rt)
 }
+
+
