@@ -45,6 +45,9 @@ export default defineConfig({
         'motion',
         'motion/react',
         'ts-pattern',
+        'dayjs',
+        'dayjs/plugin/utc',
+        'dayjs/plugin/timezone',
       ],
       // preserveModules requires preserveEntrySignatures to be non-false.
       // Vite sets it to false by default, so we override it here.
