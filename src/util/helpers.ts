@@ -157,32 +157,27 @@ export function getPrevMonthPeriodKey(k: string): string {
 
 /**
  * Returns the half-month period key for the given UTC game-date string.
- * @param storedB  UTC second-half start day (= utcFirstHalfStart + 15).
- *                 The first-half start is derived as (storedB - 15), which
- *                 may be <= 0 (meaning the first half starts at the end of the
- *                 previous month).
+ *
+ * @param storedB  UTC second-half start day (= localFirstHalfStart + offset + 15).
+ * @param rt       Game reset time in local wall-clock (needed to derive the
+ *                 UTC<->local day offset so that period boundaries align with
+ *                 the local calendar the user sees).
+ *
+ * The period key is expressed in **local** calendar month/day terms so that
+ * the B->A transition at month-end fires at the correct local reset moment.
+ * Without the offset correction, UTC+ zones would see the reset one game-day
+ * late (e.g. JST May 2 05:00 instead of JST May 1 05:00).
  */
-export const dateToHalfMonthKey = (dk: UtcYMDString, storedB: number): string => {
-  const date = dayjs.utc(dk)
-  const utcD = date.date()
-  const a = storedB - 15 // first-half UTC start day (may be <= 0)
-
-  let inB: boolean
-  if (a <= 0) {
-    // First-half start is in the previous month (a <= 0 means day 0 or earlier).
-    // B period spans [storedB ... end-of-month]; everything else is A.
-    // Since a <= 0, the cross-month A region is handled by the previous month's B
-    // key, so within this month we only need: inB = utcD >= storedB.
-    inB = utcD >= storedB
-  } else if (storedB > 28) {
-    // B period wraps across the month boundary: [storedB ... end] U [1 ... a-1]
-    inB = utcD >= storedB || utcD < a
-  } else {
-    // Normal case: B period = [storedB ... end-of-month]
-    inB = utcD >= storedB
-  }
-
-  return `H-${date.format('YYYY-MM')}-${inB ? 'B' : 'A'}`
+export const dateToHalfMonthKey = (dk: UtcYMDString, storedB: number, rt: LocalTimeString): string => {
+  const offset = getResetDayOffset(rt)
+  // Shift the UTC game-date to the corresponding local calendar date.
+  // For Japan (offset = -1): UTC April 30 -> local May 1 (correct local game day).
+  const localDate = dayjs.utc(dk).add(-offset, 'day')
+  const localD = localDate.date()
+  // Local second-half start day = stored UTC B day minus the day offset.
+  const localB = storedB - offset
+  const inB = localD >= localB
+  return `H-${localDate.format('YYYY-MM')}-${inB ? 'B' : 'A'}`
 }
 
 export function prevHalfMonthKey(k: string): string {
@@ -205,12 +200,10 @@ export function getPeriodKey(task: Task, game: Game, now: Date): string {
     .with({ type: WEEKLY }, (t) =>
       dateToWeekKey(getGameDateKey(now, getTaskRT(t, game)), t.weeklyResetDay)
     )
-    .with({ type: HALFMONTHLY }, (t) =>
-      dateToHalfMonthKey(
-        getGameDateKey(now, getTaskRT(t, game)),
-        t.halfMonthlyStartDay
-      )
-    )
+    .with({ type: HALFMONTHLY }, (t) => {
+      const rt = getTaskRT(t, game)
+      return dateToHalfMonthKey(getGameDateKey(now, rt), t.halfMonthlyStartDay, rt)
+    })
     .with({ type: MONTHLY }, (t) =>
       getMonthPeriodKey(
         getGameDateKey(now, getTaskRT(t, game)),
@@ -231,10 +224,9 @@ export function getPrevPeriodKey(task: Task, game: Game, now: Date): string {
       )
     )
     .with({ type: HALFMONTHLY }, (t) => {
-      const dk = getGameDateKey(now, getTaskRT(t, game))
-      return prevHalfMonthKey(
-        dateToHalfMonthKey(dk, t.halfMonthlyStartDay)
-      )
+      const rt = getTaskRT(t, game)
+      const dk = getGameDateKey(now, rt)
+      return prevHalfMonthKey(dateToHalfMonthKey(dk, t.halfMonthlyStartDay, rt))
     })
     .with({ type: MONTHLY }, (t) =>
       getPrevMonthPeriodKey(
