@@ -6,6 +6,27 @@ export default defineConfig({
   plugins: [
     react(),
 
+    /**
+     * Suppress spurious <script> tags that Vite injects for bare-specifier
+     * externals (e.g. <script src="react">) when preserveModules is active.
+     * The importmap in index.html already resolves those specifiers at runtime,
+     * so these auto-injected tags would cause 404s.
+     */
+    {
+      name: 'suppress-external-script-injection',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html) {
+          // Remove <script> tags whose src is a bare specifier (no leading
+          // protocol, slash, or dot) — these are the externalized module names.
+          return html.replace(
+            /<script[^>]+\bsrc="(?!https?:\/\/|\/|\.)[^"]*"[^>]*>\s*<\/script>\s*/g,
+            ''
+          )
+        },
+      },
+    },
+
     VitePWA({
       // Use our hand-written sw.js as the source; Workbox injects __WB_MANIFEST into it.
       strategies: 'injectManifest',

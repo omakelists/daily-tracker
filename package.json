@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/patch-sw.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prebuild": "node scripts/build-vendors.mjs"
   },
   "dependencies": {
     "dayjs": "^1.11.20",
@@ -15,10 +16,14 @@
     "ts-pattern": "^5.9.0"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
     "prettier": "^3.8.1",
+    "rollup": "^4.60.1",
     "typescript": "^6.0.2",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0"
