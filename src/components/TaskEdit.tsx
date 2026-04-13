@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 import { match } from 'ts-pattern'
-import { t } from '../util/i18n'
+import { t } from '../utils/i18n'
 import {
   cdColor,
   formatCountdown,
@@ -14,7 +14,7 @@ import {
   localMonthDayToUtcDay,
   storedBToLocalHalfMonthDay,
   localHalfMonthDayToStoredB,
-} from '../util/helpers'
+} from '../utils/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
 import type { Game, LocalYMDString, Task } from '../types'
 import { Badge } from './UI'

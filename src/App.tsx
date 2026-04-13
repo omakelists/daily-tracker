@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { flushSync } from 'react-dom'
 import { AnimatePresence } from 'motion/react'
-import { t } from './util/i18n'
+import { t } from './utils/i18n'
 import { DEFAULT_GAMES, DAILY, EVENT } from './constants'
-import { loadAll, saveGames, saveChecks, utcToLocalGame } from './util/storage'
+import { loadAll, saveGames, saveChecks, utcToLocalGame } from './utils/storage'
 import {
   getPeriodKey,
   checkKey,
@@ -12,13 +12,13 @@ import {
   playAllDoneSound,
   msUntilTaskReset,
   calcAllDone,
-} from './util/helpers'
-import { useAppUpdate } from './util/useAppUpdate'
-import { useAppSettings } from './util/useAppSettings'
-import { ConfirmDialog } from './ui/UI'
-import { GameCard } from './ui/GameCard'
-import { SettingsModal } from './ui/Settings'
-import { CalendarModal } from './ui/Calendar'
+} from './utils/helpers'
+import { useAppUpdate } from './hooks/useAppUpdate.ts'
+import { useAppSettings } from './hooks/useAppSettings.ts'
+import { ConfirmDialog } from './components/UI'
+import { GameCard } from './components/GameCard'
+import { SettingsModal } from './components/Settings'
+import { CalendarModal } from './components/Calendar'
 import type { Game, Task, DailyTask, ChecksMap, ConfirmState } from './types'
 import s from './App.module.css'
 
@@ -92,13 +92,15 @@ export function App() {
 
   // Monitor WCO (Window Controls Overlay) state
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(display-mode: window-controls-overlay)')
+    const mediaQuery = window.matchMedia(
+      '(display-mode: window-controls-overlay)'
+    )
     setIsWCO(mediaQuery.matches)
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       setIsWCO(e.matches)
     }
-    
+
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
@@ -209,7 +211,9 @@ export function App() {
   if (games === null) return <div className={s.loading}>{t('loading')}</div>
 
   return (
-    <div className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}${isWCO ? ` ${s.wco}` : ''}`}>
+    <div
+      className={`${s.root}${!appBg ? ` ${s.rootNoBg}` : ''}${isWCO ? ` ${s.wco}` : ''}`}
+    >
       {appBg && (
         <div
           className={s.appBgImg}

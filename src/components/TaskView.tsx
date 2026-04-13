@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { t } from '../util/i18n'
+import { t } from '../utils/i18n'
 import {
   cdColor,
   fmtDeadlineDate,
@@ -9,7 +9,7 @@ import {
   utcDowToLocalDow,
   utcDayToLocalMonthDay,
   storedBToLocalHalfMonthDay,
-} from '../util/helpers'
+} from '../utils/helpers'
 import {
   DAILY,
   WEEKLY,

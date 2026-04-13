@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { t, ta } from '../util/i18n'
+import { t, ta } from '../utils/i18n'
 import { DAILY, EVENT } from '../constants'
 import {
   getDaysInMonth,
@@ -7,7 +7,7 @@ import {
   asLocal,
   getGameDateKey,
   parseHHMM,
-} from '../util/helpers'
+} from '../utils/helpers'
 import type {
   Game,
   Task,

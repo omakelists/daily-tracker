@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { t } from './i18n'
+import { t } from '../utils/i18n.ts'
 
 const VERSION_URL = './version.json'
 const VERSION_CHECK_URL = './version.json?check=1'

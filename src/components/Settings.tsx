@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, Dispatch, SetStateAction } from 'react'
-import { useDragSort, useScopedDragSort } from '../util/useDragSort'
+import { useDragSort, useScopedDragSort } from '../hooks/useDragSort.ts'
 import { AnimatePresence, motion } from 'motion/react'
-import { t } from '../util/i18n'
-import { uid, asLocal } from '../util/helpers'
+import { t } from '../utils/i18n'
+import { uid, asLocal } from '../utils/helpers'
 import { ALL_TASK_TYPES, EVENT } from '../constants'
-import { imgDelete, imgGet, imgSet } from '../util/imageStorage'
-import type { VerState } from '../util/useAppUpdate'
+import { imgDelete, imgGet, imgSet } from '../utils/imageStorage'
+import type { VerState } from '../hooks/useAppUpdate.ts'
 import { Modal } from './UI'
 import { ContextMenu } from './ContextMenu'
 import type { ContextMenuItem } from './ContextMenu'
@@ -17,7 +17,13 @@ import { TaskEdit } from './TaskEdit'
 import type { Game, Task, TaskType, HexColor, ChecksMap } from '../types'
 import s from './Settings.module.css'
 import shared from './shared.module.css'
-import { migrateGame, utcToLocalGame, localToUtcGame, migrateV0ToV1, STORAGE_VERSION } from '../util/storage.ts'
+import {
+  migrateGame,
+  utcToLocalGame,
+  localToUtcGame,
+  migrateV0ToV1,
+  STORAGE_VERSION,
+} from '../utils/storage.ts'
 
 // Shared item variants for game/task rows
 const itemVariants = {
@@ -377,7 +383,10 @@ export function SettingsModal({
   const handleExport = () => {
     // Convert in-memory local-time games to UTC before serializing,
     // mirroring the format written by saveGames() in storage.ts.
-    const payload = { version: STORAGE_VERSION, games: games.map(localToUtcGame) }
+    const payload = {
+      version: STORAGE_VERSION,
+      games: games.map(localToUtcGame),
+    }
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     })
@@ -405,16 +414,16 @@ export function SettingsModal({
           rawGames = parsed
           dataVersion = 0
         } else if (
-          typeof parsed === 'object' &&
-          parsed !== null &&
-          'games' in parsed &&
-          Array.isArray((parsed as Record<string, unknown>).games)
+          typeof parsed === 'object'
+          && parsed !== null
+          && 'games' in parsed
+          && Array.isArray((parsed as Record<string, unknown>).games)
         ) {
           rawGames = (parsed as Record<string, unknown>).games as unknown[]
           dataVersion =
-            typeof (parsed as Record<string, unknown>).version === 'number'
-              ? ((parsed as Record<string, unknown>).version as number)
-              : 0
+            typeof (parsed as Record<string, unknown>).version === 'number' ?
+              ((parsed as Record<string, unknown>).version as number)
+            : 0
         } else {
           throw new Error('invalid')
         }

@@ -1,5 +1,5 @@
-import { t } from '../util/i18n'
-import { useContextTrigger } from '../util/useContextTrigger'
+import { t } from '../utils/i18n'
+import { useContextTrigger } from '../hooks/useContextTrigger.ts'
 import type { ReactNode, CSSProperties } from 'react'
 import type { Task } from '../types'
 import s from './TaskRow.module.css'

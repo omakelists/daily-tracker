@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { t } from '../util/i18n'
+import { t } from '../utils/i18n'
 import type { ReactNode } from 'react'
 import type { Game, Task } from '../types'
 import s from './UI.module.css'

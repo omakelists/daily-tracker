@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { PointerEvent } from 'react'
-import { t } from '../util/i18n'
+import { t } from '../utils/i18n'
 import s from './CropModal.module.css'
 import shared from './shared.module.css'
 

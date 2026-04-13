@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { match } from 'ts-pattern'
-import { t } from '../util/i18n'
+import { t } from '../utils/i18n'
 import {
   uid,
   asLocal,
@@ -8,7 +8,7 @@ import {
   localDowToUtcDow,
   localMonthDayToUtcDay,
   localHalfMonthDayToStoredB,
-} from '../util/helpers'
+} from '../utils/helpers'
 import { DAILY, WEEKLY, HALFMONTHLY, MONTHLY, EVENT } from '../constants'
 import type { Game, Task, TaskType } from '../types'
 import { TaskEdit } from './TaskEdit'

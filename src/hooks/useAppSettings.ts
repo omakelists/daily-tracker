@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { EVENT } from '../constants'
-import { useLocalStoragePref, BOOL_PREF, INT_PREF } from './useLocalStoragePref'
-import { imgGet, imgPurgeOrphans } from './imageStorage'
-import { msUntilDeadline } from './helpers'
-import type { Game, GameBgEntry } from '../types'
+import { EVENT } from '../constants.ts'
+import {
+  useLocalStoragePref,
+  BOOL_PREF,
+  INT_PREF,
+} from './useLocalStoragePref.ts'
+import { imgGet, imgPurgeOrphans } from '../utils/imageStorage.ts'
+import { msUntilDeadline } from '../utils/helpers.ts'
+import type { Game, GameBgEntry } from '../types.ts'
 
 export function useAppSettings(
   games: Game[],

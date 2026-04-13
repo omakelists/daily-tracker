@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, forwardRef } from 'react'
 import type { MouseEvent } from 'react'
 import { motion, AnimatePresence, useAnimate } from 'motion/react'
-import { t } from '../util/i18n'
+import { t } from '../utils/i18n'
 import {
   DAY_MS,
   DAILY,
@@ -23,8 +23,8 @@ import {
   checkKey,
   calcAllDone,
   applyOrder,
-} from '../util/helpers'
-import { useContextTrigger } from '../util/useContextTrigger'
+} from '../utils/helpers'
+import { useContextTrigger } from '../hooks/useContextTrigger.ts'
 import { GameHeader, PrevBar } from './UI'
 import { TaskRow } from './TaskRow'
 import { TaskAddForm } from './TaskAddForm'
