@@ -176,8 +176,15 @@ export const dateToHalfMonthKey = (dk: UtcYMDString, storedB: number, rt: LocalT
   const localD = localDate.date()
   // Local second-half start day = stored UTC B day minus the day offset.
   const localB = storedB - offset
-  const inB = localD >= localB
-  return `H-${localDate.format('YYYY-MM')}-${inB ? 'B' : 'A'}`
+  const localA = localB - 15 // local first-half start day
+  // B period spans two ranges when localA > 1:
+  //   [localB ... end-of-month]  (front half of B, in the same local month)
+  //   [1 ... localA-1]           (tail of B, at the start of the next local month)
+  // When localA == 1, the second range is empty (localD < 1 is never true).
+  const inB = localD >= localB || localD < localA
+  // Days in the tail range [1..localA-1] belong to the PREVIOUS local month's B period.
+  const monthDate = localD < localA ? localDate.subtract(1, 'month') : localDate
+  return `H-${monthDate.format('YYYY-MM')}-${inB ? 'B' : 'A'}`
 }
 
 export function prevHalfMonthKey(k: string): string {
